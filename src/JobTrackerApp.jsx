@@ -6,7 +6,7 @@ import {
   ArrowLeft, ArrowRight, Download, Upload, Filter, Layout, List, Activity, AlertTriangle,
   Cloud, CloudOff, Languages
 } from 'lucide-react';
-import { initDriveSync, signIn, signOut, readFromDrive, writeToDrive, DRIVE_CLIENT_ID } from './driveSync';
+import { signInWithGoogle, signOut, onAuthChange, loadUserData, saveUserData } from './firebase';
 
 const Linkedin = ({ size = 16, ...p }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
@@ -114,10 +114,9 @@ export default function JobTrackerApp() {
   const [activeTab, setActiveTab] = useState('board');
   const [toastMessage, setToastMessage] = useState('');
 
-  const [driveReady, setDriveReady] = useState(false);
-  const [driveConnected, setDriveConnected] = useState(false);
-  const [driveSyncing, setDriveSyncing] = useState(false);
-  const driveWriteTimer = useRef(null);
+  const [user, setUser] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+  const saveTimer = useRef(null);
 
   const initialFormState = {
     name: '', role: '', location: '', status: 'applied', priority: 'medium',
@@ -138,43 +137,46 @@ export default function JobTrackerApp() {
   }, [companies]);
 
   useEffect(() => {
-    if (DRIVE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID') return;
-    initDriveSync().then(() => setDriveReady(true)).catch(() => {});
+    const unsub = onAuthChange(async (firebaseUser) => {
+      setUser(firebaseUser);
+      if (firebaseUser) {
+        setSyncing(true);
+        try {
+          const data = await loadUserData(firebaseUser.uid);
+          if (data && data.length > 0) {
+            setCompanies(data);
+            showToast(t('toast.driveConnectedWithData'));
+          } else {
+            showToast(t('toast.driveConnectedEmpty'));
+          }
+        } catch (e) { console.error(e); }
+        setSyncing(false);
+      }
+    });
+    return unsub;
   }, []);
 
   useEffect(() => {
-    if (!driveConnected || companies.length === 0) return;
-    if (driveWriteTimer.current) clearTimeout(driveWriteTimer.current);
-    driveWriteTimer.current = setTimeout(async () => {
-      setDriveSyncing(true);
-      try { await writeToDrive(companies); } catch (e) { console.error('Drive write failed:', e); }
-      setDriveSyncing(false);
+    if (!user || companies.length === 0) return;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      setSyncing(true);
+      try { await saveUserData(user.uid, companies); } catch (e) { console.error(e); }
+      setSyncing(false);
     }, 3000);
-    return () => clearTimeout(driveWriteTimer.current);
-  }, [companies, driveConnected]);
+    return () => clearTimeout(saveTimer.current);
+  }, [companies, user]);
 
-  const handleConnectDrive = async () => {
+  const handleSignIn = async () => {
     try {
-      setDriveSyncing(true);
-      await signIn();
-      const driveData = await readFromDrive();
-      if (driveData && Array.isArray(driveData) && driveData.length > 0) {
-        setCompanies(driveData);
-        showToast(t('toast.driveConnectedWithData'));
-      } else {
-        showToast(t('toast.driveConnectedEmpty'));
-      }
-      setDriveConnected(true);
+      await signInWithGoogle();
     } catch {
       showToast(t('toast.driveFailed'));
-    } finally {
-      setDriveSyncing(false);
     }
   };
 
-  const handleDisconnectDrive = () => {
+  const handleSignOut = () => {
     signOut();
-    setDriveConnected(false);
     showToast(t('toast.driveDisconnected'));
   };
 
@@ -431,25 +433,23 @@ export default function JobTrackerApp() {
               <Plus size={18} /> {t('header.addCompany')}
             </button>
 
-            {driveReady && (
-              driveConnected ? (
-                <button
-                  onClick={handleDisconnectDrive}
-                  title={t('header.driveOnTooltip')}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-colors border ${driveSyncing ? 'bg-yellow-500/20 border-yellow-400/30 text-yellow-100' : 'bg-green-500/20 border-green-400/30 text-green-100 hover:bg-red-500/20 hover:border-red-400/30 hover:text-red-100'}`}
-                >
-                  <Cloud size={16} className={driveSyncing ? 'animate-pulse' : ''} />
-                  {driveSyncing ? t('header.driveSyncing') : t('header.driveOn')}
-                </button>
-              ) : (
-                <button
-                  onClick={handleConnectDrive}
-                  title={t('header.connectDriveTooltip')}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-blue-100 transition-colors"
-                >
-                  <CloudOff size={16} /> {t('header.connectDrive')}
-                </button>
-              )
+            {user ? (
+              <button
+                onClick={handleSignOut}
+                title={t('header.driveOnTooltip')}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-colors border ${syncing ? 'bg-yellow-500/20 border-yellow-400/30 text-yellow-100' : 'bg-green-500/20 border-green-400/30 text-green-100 hover:bg-red-500/20 hover:border-red-400/30 hover:text-red-100'}`}
+              >
+                <Cloud size={16} className={syncing ? 'animate-pulse' : ''} />
+                {syncing ? t('header.driveSyncing') : user.displayName?.split(' ')[0] || t('header.driveOn')}
+              </button>
+            ) : (
+              <button
+                onClick={handleSignIn}
+                title={t('header.connectDriveTooltip')}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-blue-100 transition-colors"
+              >
+                <CloudOff size={16} /> {t('header.connectDrive')}
+              </button>
             )}
 
             <button
