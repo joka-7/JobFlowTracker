@@ -1,0 +1,126 @@
+{
+  "status": {
+    "applied": "נשלחו קורות חיים",
+    "hr_call": "שיחת משאבי אנוש",
+    "tech_interview": "ראיון טכני",
+    "manager_interview": "ראיון מנהל",
+    "home_assignment": "עבודת בית",
+    "references": "בדיקת ממליצים",
+    "offer": "הצעת שכר",
+    "frozen": "הוקפא",
+    "rejected": "נדחה",
+    "ghosted": "נעלמו (Ghosted)",
+    "withdrawn": "ויתרתי / הוסר",
+    "unknown": "לא ידוע"
+  },
+  "priority": {
+    "high": "גבוהה",
+    "medium": "בינונית",
+    "low": "נמוכה"
+  },
+  "interviewType": {
+    "Intro Call / HR": "שיחת היכרות / HR",
+    "Technical Interview": "ראיון טכני",
+    "Manager Interview": "ראיון מנהל",
+    "Home Assignment / Task": "מבחן בית / מטלה",
+    "VP / CEO Interview": "ראיון סמנכ\"ל / מנכ\"ל",
+    "References Check": "בדיקת ממליצים",
+    "Salary Offer": "הצעת שכר",
+    "Other": "אחר"
+  },
+  "header": {
+    "title": "מעקב חיפוש עבודה",
+    "savedInBrowser": "שמור בדפדפן",
+    "saving": "שומר...",
+    "subtitle": "הקפד להוריד גיבוי (JSON) בסיום העבודה",
+    "addCompany": "הוסף חברה",
+    "downloadTooltip": "הורד עותק גיבוי למחשב (מומלץ!)",
+    "uploadTooltip": "טען קובץ גיבוי קיים",
+    "driveOn": "Drive פעיל",
+    "driveSyncing": "מסנכרן...",
+    "connectDrive": "חבר Drive",
+    "driveOnTooltip": "Drive מסנכרן — לחץ לניתוק",
+    "connectDriveTooltip": "חבר Google Drive לסנכרון בין מכשירים"
+  },
+  "tabs": {
+    "board": "לוח סטטוסים",
+    "list": "רשימה ועריכה",
+    "timeline": "ציר זמן"
+  },
+  "board": {
+    "emptyTitle": "המערכת מוכנה לנתונים שלך",
+    "emptyDesc": "כדי להתחיל, בחר את קובץ ה-JSON הפיזי ששמרת במכשיר שלך. מנגנון ההגנה יוודא שהקובץ יעלה בהצלחה ללא קריסות.",
+    "loadButton": "טען נתונים מקובץ גיבוי (JSON)",
+    "noteLabel": "שים לב:",
+    "noteText": "בסיום העבודה להיום, אל תשכח ללחוץ על סמל ההורדה בסרגל העליון כדי לשמור עותק חדש ועדכני אצלך במחשב."
+  },
+  "timeline": {
+    "title": "היסטוריית פעילויות",
+    "empty": "אין אירועים להצגה על ציר הזמן.",
+    "interview": "ראיון",
+    "assignmentSubmission": "הגשת עבודה",
+    "interviewer": "מראיין/ת:"
+  },
+  "list": {
+    "searchPlaceholder": "חיפוש חברה...",
+    "allStatuses": "כל הסטטוסים",
+    "noResults": "לא נמצאו תוצאות.",
+    "backToList": "חזור לרשימה"
+  },
+  "form": {
+    "editTitle": "עריכת פרטי חברה",
+    "addTitle": "הוספת חברה חדשה",
+    "cancel": "ביטול",
+    "save": "שמור שינויים",
+    "companyName": "שם החברה *",
+    "role": "התפקיד",
+    "processStatus": "סטטוס תהליך",
+    "priority": "עדיפות",
+    "linksSection": "קישורים ומידע נוסף",
+    "websitePlaceholder": "אתר החברה (URL)",
+    "linkedinPlaceholder": "לינקדין החברה",
+    "locationPlaceholder": "מיקום המשרה",
+    "descriptionPlaceholder": "תיאור החברה ומה היא עושה...",
+    "interviews": "ראיונות",
+    "addInterview": "הוסף ראיון",
+    "selectInterviewType": "בחר סוג ראיון...",
+    "interviewerPlaceholder": "שם המראיין/ת",
+    "summaryPlaceholder": "סיכום שלך, שאלות ששאלו, תחושות...",
+    "notes": "הערות נוספות",
+    "notesPlaceholder": "הקלד כאן מחשבות אישיות...",
+    "requiredName": "חובה להזין שם חברה"
+  },
+  "detail": {
+    "editDetails": "ערוך פרטים",
+    "deleteCompany": "מחק חברה",
+    "companyWebsite": "אתר החברה",
+    "companyLinkedin": "לינקדין חברה",
+    "aboutTitle": "על החברה",
+    "whatTheyDo": "מה הם עושים?",
+    "products": "מוצרים",
+    "personalNotes": "הערות אישיות",
+    "processHistory": "היסטוריית תהליך",
+    "processStage": "שלב בתהליך",
+    "noInterviews": "אין מידע על ראיונות לחברה זו. לחץ על \"ערוך פרטים\" כדי להוסיף.",
+    "selectCompany": "בחר חברה מהרשימה",
+    "selectCompanyHint": "או השתמש בלחצני העלאת JSON למעלה כדי לטעון נתונים",
+    "priorityLabel": "עדיפות"
+  },
+  "toast": {
+    "saved": "השינויים נשמרו בהצלחה!",
+    "deleted": "החברה נמחקה.",
+    "exported": "קובץ גיבוי הורד בהצלחה - שמור אותו במקום בטוח!",
+    "imported": "הקובץ נטען בהצלחה!",
+    "driveConnectedWithData": "Drive מחובר — הנתונים נטענו מ-Drive!",
+    "driveConnectedEmpty": "Drive מחובר — הנתונים יסונכרנו אוטומטית.",
+    "driveFailed": "החיבור ל-Drive נכשל.",
+    "driveDisconnected": "Drive נותק."
+  },
+  "alert": {
+    "deleteConfirm": "האם אתה בטוח שברצונך למחוק חברה זו?",
+    "noCompanyData": "לא זוהו נתוני חברות בקובץ שהועלה.",
+    "importError": "שגיאה בייבוא הקובץ. ודא שזהו קובץ JSON חוקי ששמרת מקודם.",
+    "unnamedCompany": "חברה ללא שם",
+    "noName": "ללא שם"
+  }
+}
