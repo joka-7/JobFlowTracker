@@ -32,7 +32,7 @@
     "title": "Job Search Tracker",
     "savedInBrowser": "Saved in browser",
     "saving": "Saving...",
-    "subtitle": "Remember to download a backup (JSON) when done",
+    "subtitle": "Sign in to sync across devices · use JSON for offline backup",
     "addCompany": "Add Company",
     "downloadTooltip": "Download backup copy to computer (Recommended!)",
     "uploadTooltip": "Load existing backup file",
