@@ -1,0 +1,126 @@
+{
+  "status": {
+    "applied": "Applied",
+    "hr_call": "HR Call",
+    "tech_interview": "Technical Interview",
+    "manager_interview": "Manager Interview",
+    "home_assignment": "Home Assignment",
+    "references": "References Check",
+    "offer": "Offer",
+    "frozen": "Frozen",
+    "rejected": "Rejected",
+    "ghosted": "Ghosted",
+    "withdrawn": "Withdrawn",
+    "unknown": "Unknown"
+  },
+  "priority": {
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low"
+  },
+  "interviewType": {
+    "Intro Call / HR": "Intro Call / HR",
+    "Technical Interview": "Technical Interview",
+    "Manager Interview": "Manager Interview",
+    "Home Assignment / Task": "Home Assignment / Task",
+    "VP / CEO Interview": "VP / CEO Interview",
+    "References Check": "References Check",
+    "Salary Offer": "Salary Offer",
+    "Other": "Other"
+  },
+  "header": {
+    "title": "Job Search Tracker",
+    "savedInBrowser": "Saved in browser",
+    "saving": "Saving...",
+    "subtitle": "Remember to download a backup (JSON) when done",
+    "addCompany": "Add Company",
+    "downloadTooltip": "Download backup copy to computer (Recommended!)",
+    "uploadTooltip": "Load existing backup file",
+    "driveOn": "Drive On",
+    "driveSyncing": "Syncing...",
+    "connectDrive": "Connect Drive",
+    "driveOnTooltip": "Drive syncing — click to disconnect",
+    "connectDriveTooltip": "Connect Google Drive for cross-device sync"
+  },
+  "tabs": {
+    "board": "Status Board",
+    "list": "List & Edit",
+    "timeline": "Timeline"
+  },
+  "board": {
+    "emptyTitle": "System Ready for Your Data",
+    "emptyDesc": "To get started, select your JSON backup file from your device. The protection mechanism will ensure the file loads without crashes.",
+    "loadButton": "Load Data from Backup File (JSON)",
+    "noteLabel": "Note:",
+    "noteText": "When you're done for the day, don't forget to click the download icon in the top bar to save an updated copy on your computer."
+  },
+  "timeline": {
+    "title": "Activity History",
+    "empty": "No events to display on the timeline.",
+    "interview": "Interview",
+    "assignmentSubmission": "Assignment Submission",
+    "interviewer": "Interviewer:"
+  },
+  "list": {
+    "searchPlaceholder": "Search company...",
+    "allStatuses": "All Statuses",
+    "noResults": "No results found.",
+    "backToList": "Back to List"
+  },
+  "form": {
+    "editTitle": "Edit Company Details",
+    "addTitle": "Add New Company",
+    "cancel": "Cancel",
+    "save": "Save Changes",
+    "companyName": "Company Name *",
+    "role": "Role",
+    "processStatus": "Process Status",
+    "priority": "Priority",
+    "linksSection": "Links & Additional Info",
+    "websitePlaceholder": "Company Website (URL)",
+    "linkedinPlaceholder": "Company LinkedIn",
+    "locationPlaceholder": "Job Location",
+    "descriptionPlaceholder": "Company description and what they do...",
+    "interviews": "Interviews",
+    "addInterview": "Add Interview",
+    "selectInterviewType": "Select interview type...",
+    "interviewerPlaceholder": "Interviewer name",
+    "summaryPlaceholder": "Your summary, questions asked, impressions...",
+    "notes": "Additional Notes",
+    "notesPlaceholder": "Type your personal thoughts here...",
+    "requiredName": "Company name is required"
+  },
+  "detail": {
+    "editDetails": "Edit Details",
+    "deleteCompany": "Delete Company",
+    "companyWebsite": "Company Website",
+    "companyLinkedin": "Company LinkedIn",
+    "aboutTitle": "About the Company",
+    "whatTheyDo": "What do they do?",
+    "products": "Products",
+    "personalNotes": "Personal Notes",
+    "processHistory": "Process History",
+    "processStage": "Process Stage",
+    "noInterviews": "No interview information for this company. Click \"Edit Details\" to add.",
+    "selectCompany": "Select a company from the list",
+    "selectCompanyHint": "or use the JSON upload buttons above to load data",
+    "priorityLabel": "Priority"
+  },
+  "toast": {
+    "saved": "Changes saved successfully!",
+    "deleted": "Company deleted.",
+    "exported": "Backup file downloaded - save it somewhere safe!",
+    "imported": "File loaded successfully!",
+    "driveConnectedWithData": "Drive connected — data loaded from Drive!",
+    "driveConnectedEmpty": "Drive connected — data will sync automatically.",
+    "driveFailed": "Drive connection failed.",
+    "driveDisconnected": "Drive disconnected."
+  },
+  "alert": {
+    "deleteConfirm": "Are you sure you want to delete this company?",
+    "noCompanyData": "No company data found in the uploaded file.",
+    "importError": "Error importing file. Make sure this is a valid JSON file you saved previously.",
+    "unnamedCompany": "Unnamed Company",
+    "noName": "No Name"
+  }
+}
