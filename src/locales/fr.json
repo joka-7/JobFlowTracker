@@ -1,0 +1,152 @@
+{
+  "status": {
+    "applied": "Candidature envoyée",
+    "hr_call": "Appel RH",
+    "tech_interview": "Entretien technique",
+    "manager_interview": "Entretien manager",
+    "home_assignment": "Exercice à domicile",
+    "references": "Vérification références",
+    "offer": "Offre reçue",
+    "frozen": "En pause",
+    "rejected": "Refusé",
+    "ghosted": "Sans réponse",
+    "withdrawn": "Candidature retirée",
+    "unknown": "Inconnu"
+  },
+  "priority": {
+    "high": "Haute",
+    "medium": "Moyenne",
+    "low": "Basse"
+  },
+  "interviewType": {
+    "Intro Call / HR": "Appel intro / RH",
+    "Technical Interview": "Entretien technique",
+    "Manager Interview": "Entretien manager",
+    "Home Assignment / Task": "Exercice à domicile",
+    "VP / CEO Interview": "Entretien VP / PDG",
+    "References Check": "Vérification références",
+    "Salary Offer": "Proposition salariale",
+    "Other": "Autre"
+  },
+  "header": {
+    "title": "Suivi de Recherche d'Emploi",
+    "savedInBrowser": "Enregistré",
+    "saving": "Enregistrement...",
+    "subtitle": "Connectez-vous pour synchroniser · JSON pour sauvegarde hors ligne",
+    "addCompany": "Ajouter une entreprise",
+    "downloadTooltip": "Télécharger une copie de sauvegarde (Recommandé !)",
+    "uploadTooltip": "Charger un fichier de sauvegarde",
+    "driveOn": "Drive actif",
+    "driveSyncing": "Synchronisation...",
+    "connectDrive": "Connecter Drive",
+    "driveOnTooltip": "Drive synchronisé — cliquer pour déconnecter",
+    "connectDriveTooltip": "Connecter Google Drive pour synchroniser sur tous les appareils"
+  },
+  "tabs": {
+    "board": "Tableau",
+    "list": "Liste & Édition",
+    "timeline": "Chronologie",
+    "stats": "Statistiques"
+  },
+  "board": {
+    "emptyTitle": "Système prêt pour vos données",
+    "emptyDesc": "Pour commencer, sélectionnez votre fichier de sauvegarde JSON depuis votre appareil.",
+    "loadButton": "Charger les données (JSON)",
+    "noteLabel": "Note :",
+    "noteText": "En fin de journée, pensez à télécharger une copie mise à jour sur votre ordinateur."
+  },
+  "timeline": {
+    "title": "Historique des activités",
+    "empty": "Aucun événement à afficher.",
+    "interview": "Entretien",
+    "assignmentSubmission": "Rendu d'exercice",
+    "interviewer": "Intervieweur :"
+  },
+  "list": {
+    "searchPlaceholder": "Rechercher une entreprise...",
+    "allStatuses": "Tous les statuts",
+    "noResults": "Aucun résultat trouvé.",
+    "backToList": "Retour à la liste"
+  },
+  "form": {
+    "editTitle": "Modifier les détails",
+    "addTitle": "Ajouter une entreprise",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "companyName": "Nom de l'entreprise *",
+    "role": "Poste",
+    "processStatus": "Statut du processus",
+    "priority": "Priorité",
+    "linksSection": "Liens & informations complémentaires",
+    "websitePlaceholder": "Site web de l'entreprise (URL)",
+    "linkedinPlaceholder": "LinkedIn de l'entreprise",
+    "locationPlaceholder": "Lieu du poste",
+    "descriptionPlaceholder": "Description de l'entreprise et leur activité...",
+    "interviews": "Entretiens",
+    "addInterview": "Ajouter un entretien",
+    "selectInterviewType": "Sélectionner le type d'entretien...",
+    "interviewerPlaceholder": "Nom de l'intervieweur",
+    "summaryPlaceholder": "Résumé, questions posées, impressions...",
+    "notes": "Notes complémentaires",
+    "notesPlaceholder": "Vos réflexions personnelles...",
+    "requiredName": "Le nom de l'entreprise est obligatoire",
+    "rejectionTitle": "Détails du refus",
+    "rejectionDate": "Date du refus",
+    "rejectionMethod": "Comment avez-vous été informé",
+    "rejectionMethodSelect": "Sélectionner...",
+    "rejectionNotes": "Notes / Retours",
+    "rejectionNotesPlaceholder": "Quel était le retour ?"
+  },
+  "rejectionMethod": {
+    "Automatic Email": "E-mail automatique",
+    "Personal Email": "E-mail personnel",
+    "Phone Call": "Appel téléphonique",
+    "No Response": "Aucune réponse",
+    "During Interview": "Pendant l'entretien",
+    "Other": "Autre"
+  },
+  "detail": {
+    "editDetails": "Modifier",
+    "deleteCompany": "Supprimer",
+    "companyWebsite": "Site web",
+    "companyLinkedin": "LinkedIn",
+    "aboutTitle": "À propos de l'entreprise",
+    "whatTheyDo": "Que font-ils ?",
+    "products": "Produits",
+    "personalNotes": "Notes personnelles",
+    "processHistory": "Historique du processus",
+    "processStage": "Étape du processus",
+    "noInterviews": "Aucun entretien enregistré. Cliquez sur « Modifier » pour en ajouter.",
+    "selectCompany": "Sélectionnez une entreprise dans la liste",
+    "selectCompanyHint": "ou utilisez les boutons JSON ci-dessus pour charger des données",
+    "priorityLabel": "Priorité",
+    "rejectionTitle": "Détails du refus"
+  },
+  "stats": {
+    "title": "Statistiques",
+    "total": "Candidatures",
+    "active": "En cours",
+    "responseRate": "Taux de réponse",
+    "interviews": "Entretiens",
+    "byStatus": "Par statut",
+    "upcoming": "À venir — 14 prochains jours",
+    "today": "Aujourd'hui"
+  },
+  "toast": {
+    "saved": "Modifications enregistrées !",
+    "deleted": "Entreprise supprimée.",
+    "exported": "Sauvegarde téléchargée !",
+    "imported": "Fichier chargé avec succès !",
+    "driveConnectedWithData": "Drive connecté — données chargées !",
+    "driveConnectedEmpty": "Drive connecté — synchronisation automatique activée.",
+    "driveFailed": "Échec de la connexion Drive.",
+    "driveDisconnected": "Drive déconnecté."
+  },
+  "alert": {
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cette entreprise ?",
+    "noCompanyData": "Aucune donnée d'entreprise trouvée dans le fichier.",
+    "importError": "Erreur lors de l'importation. Vérifiez que le fichier JSON est valide.",
+    "unnamedCompany": "Entreprise sans nom",
+    "noName": "Sans nom"
+  }
+}
