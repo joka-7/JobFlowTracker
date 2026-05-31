@@ -125,13 +125,6 @@ export default function JobTrackerApp() {
     } catch { return strDate; }
   };
 
-  const toggleLanguage = () => {
-    const cycle = { en: 'he', he: 'fr', fr: 'en' };
-    const next = cycle[i18n.language] || 'en';
-    i18n.changeLanguage(next);
-    localStorage.setItem('appLanguage', next);
-  };
-
   const [isSaved, setIsSaved] = useState(true);
 
   const [companies, setCompanies] = useState(() => {
@@ -648,14 +641,18 @@ export default function JobTrackerApp() {
               </button>
             )}
 
-            <button
-              onClick={toggleLanguage}
-              title="Switch language / החלף שפה"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-blue-100 transition-colors"
-            >
-              <Languages size={16} />
-              {{ en: 'עב', he: 'FR', fr: 'EN' }[i18n.language] || 'עב'}
-            </button>
+            <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-white/10 border border-white/20">
+              <Languages size={16} className="text-blue-100 flex-shrink-0" />
+              <select
+                value={i18n.language}
+                onChange={e => { i18n.changeLanguage(e.target.value); localStorage.setItem('appLanguage', e.target.value); }}
+                className="bg-transparent text-blue-100 text-sm font-bold border-none outline-none cursor-pointer"
+              >
+                <option value="en" className="text-gray-800">English</option>
+                <option value="he" className="text-gray-800">עברית</option>
+                <option value="fr" className="text-gray-800">Français</option>
+              </select>
+            </div>
 
             <div className="flex bg-white/10 rounded-lg p-1">
               <button onClick={handleExport} title={t('header.downloadTooltip')} className="p-2 bg-green-500/20 hover:bg-green-500/40 rounded text-white transition-colors border border-green-400/30">
