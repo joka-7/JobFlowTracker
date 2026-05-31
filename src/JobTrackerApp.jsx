@@ -4,7 +4,7 @@ import {
   Search, Plus, MapPin, Globe, Calendar,
   User, CheckCircle, Clock, Trash2, Edit2,
   ArrowLeft, ArrowRight, Download, Upload, Filter, Layout, List, Activity, AlertTriangle,
-  Cloud, CloudOff, Languages
+  Cloud, CloudOff, Languages, BarChart2
 } from 'lucide-react';
 import { signInWithGoogle, signOut, onAuthChange, loadUserData, saveUserData } from './firebase';
 
@@ -57,6 +57,15 @@ const INTERVIEW_TYPE_KEYS = [
   'Other',
 ];
 
+const REJECTION_METHOD_KEYS = [
+  'Automatic Email',
+  'Personal Email',
+  'Phone Call',
+  'No Response',
+  'During Interview',
+  'Other',
+];
+
 const getAvatarColor = (name) => {
   const strName = safeStr(name);
   if (!strName) return 'bg-gray-500';
@@ -69,6 +78,37 @@ const getInitials = (name) => {
   const strName = safeStr(name);
   if (!strName) return '?';
   return strName.substring(0, 2).toUpperCase();
+};
+
+const getJourneySteps = (company) => {
+  const interviews = Array.isArray(company.interviews) ? company.interviews : [];
+  if (interviews.length === 0) return [];
+  return [...interviews]
+    .filter(i => i && safeStr(i.type))
+    .sort((a, b) => new Date(safeStr(a.date) || 0) - new Date(safeStr(b.date) || 0))
+    .map(i => safeStr(i.type));
+};
+
+const STEP_SHORT = {
+  'Intro Call / HR': 'HR',
+  'Technical Interview': 'Tech',
+  'Manager Interview': 'Mgr',
+  'Home Assignment / Task': 'Task',
+  'VP / CEO Interview': 'VP',
+  'References Check': 'Refs',
+  'Salary Offer': 'Offer',
+  'Other': 'Other',
+};
+const shortenStep = (s) => STEP_SHORT[s] || s.substring(0, 6);
+
+const getDaysUntil = (dateString) => {
+  if (!dateString) return null;
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  date.setHours(0, 0, 0, 0);
+  return Math.ceil((date - today) / (1000 * 60 * 60 * 24));
 };
 
 export default function JobTrackerApp() {
@@ -117,11 +157,13 @@ export default function JobTrackerApp() {
   const [user, setUser] = useState(null);
   const [syncing, setSyncing] = useState(false);
   const saveTimer = useRef(null);
+  const dragCompanyId = useRef(null);
 
   const initialFormState = {
     name: '', role: '', location: '', status: 'applied', priority: 'medium',
     website: '', linkedinCompany: '', linkedinHR: '', description: '', products: '',
-    interviews: [], homeworks: [], contacts: [], generalNotes: ''
+    interviews: [], homeworks: [], contacts: [], generalNotes: '',
+    rejection: { date: '', method: '', notes: '' },
   };
   const [formData, setFormData] = useState(initialFormState);
 
@@ -167,6 +209,16 @@ export default function JobTrackerApp() {
     return () => clearTimeout(saveTimer.current);
   }, [companies, user]);
 
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+      if (e.key === 'n' || e.key === 'N') openNewForm();
+      if (e.key === 'Escape') { setSelectedId(null); setIsEditing(false); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
   const handleSignIn = async () => {
     try {
       await signInWithGoogle();
@@ -210,6 +262,23 @@ export default function JobTrackerApp() {
     return events.sort((a, b) => new Date(safeStr(b.date)) - new Date(safeStr(a.date)));
   }, [companies, i18n.language]);
 
+  const stats = useMemo(() => {
+    const total = companies.length;
+    const byStatus = {};
+    STATUSES.forEach(s => { byStatus[s.id] = companies.filter(c => c.status === s.id).length; });
+    const active = companies.filter(c => !['rejected', 'ghosted', 'withdrawn', 'offer'].includes(c.status)).length;
+    const responded = companies.filter(c => c.status !== 'applied').length;
+    const responseRate = total > 0 ? Math.round((responded / total) * 100) : 0;
+    const interviewCount = companies.reduce((acc, c) => acc + (Array.isArray(c.interviews) ? c.interviews.length : 0), 0);
+    return { total, byStatus, active, responseRate, interviewCount };
+  }, [companies]);
+
+  const upcomingEvents = useMemo(() => {
+    return timelineEvents
+      .filter(e => { const d = getDaysUntil(e.date); return d !== null && d >= 0 && d <= 14; })
+      .sort((a, b) => new Date(safeStr(a.date)) - new Date(safeStr(b.date)));
+  }, [timelineEvents]);
+
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(''), 3000);
@@ -217,10 +286,16 @@ export default function JobTrackerApp() {
 
   const handleSave = () => {
     if (!formData.name) { alert(t('form.requiredName')); return; }
-    if (formData.id) {
-      setCompanies(companies.map(c => String(c.id) === String(formData.id) ? formData : c));
+    const dataToSave = {
+      ...formData,
+      rejection: ['rejected', 'ghosted'].includes(formData.status)
+        ? (formData.rejection || { date: '', method: '', notes: '' })
+        : { date: '', method: '', notes: '' },
+    };
+    if (dataToSave.id) {
+      setCompanies(companies.map(c => String(c.id) === String(dataToSave.id) ? dataToSave : c));
     } else {
-      const newCompany = { ...formData, id: Date.now().toString() };
+      const newCompany = { ...dataToSave, id: Date.now().toString() };
       setCompanies([newCompany, ...companies]);
       setSelectedId(newCompany.id);
     }
@@ -268,6 +343,7 @@ export default function JobTrackerApp() {
               name: safeStr(c.name || c.company || t('alert.unnamedCompany')),
               role: safeStr(c.role || c.position || ''),
               interviews: Array.isArray(c.interviews) ? c.interviews.map(inv => ({ ...inv, type: safeStr(inv.type || inv.round || '') })) : [],
+              rejection: c.rejection || { date: '', method: '', notes: '' },
               id: c.id ? String(c.id) : Date.now().toString() + idx,
             }));
             setCompanies(sanitizedData);
@@ -293,13 +369,27 @@ export default function JobTrackerApp() {
 
   const selectCompany = (company) => {
     setSelectedId(company.id);
-    setFormData(company);
+    setFormData({ ...initialFormState, ...company, rejection: company.rejection || { date: '', method: '', notes: '' } });
     setIsEditing(false);
   };
 
   const triggerFileInput = () => document.getElementById('main-file-upload').click();
 
-  // RTL-aware helpers
+  const handleDragStart = (e, companyId) => {
+    dragCompanyId.current = companyId;
+    e.currentTarget.style.opacity = '0.5';
+  };
+  const handleDragEnd = (e) => { e.currentTarget.style.opacity = '1'; };
+  const handleDragOver = (e) => { e.preventDefault(); };
+  const handleDrop = (e, statusId) => {
+    e.preventDefault();
+    const id = dragCompanyId.current;
+    if (!id) return;
+    setCompanies(prev => prev.map(c => String(c.id) === String(id) ? { ...c, status: statusId } : c));
+    dragCompanyId.current = null;
+    showToast(t('toast.saved'));
+  };
+
   const timelineBorder = isRTL ? 'border-r-2 pr-6' : 'border-l-2 pl-6';
   const timelineDot = isRTL ? '-right-[31px]' : '-left-[31px]';
   const BackArrow = isRTL ? ArrowRight : ArrowLeft;
@@ -310,26 +400,58 @@ export default function JobTrackerApp() {
         const statusCompanies = companies.filter(c => c.status === statusObj.id);
         if (statusCompanies.length === 0) return null;
         return (
-          <div key={statusObj.id} className="w-80 flex-shrink-0 flex flex-col h-full">
+          <div
+            key={statusObj.id}
+            className="w-80 flex-shrink-0 flex flex-col h-full"
+            onDragOver={handleDragOver}
+            onDrop={e => handleDrop(e, statusObj.id)}
+          >
             <div className={`rounded-t-xl px-4 py-3 font-bold border-b-4 shadow-sm ${statusObj.color}`}>
               {t(`status.${statusObj.id}`)} ({statusCompanies.length})
             </div>
             <div className="bg-gray-100 rounded-b-xl p-3 flex-1 overflow-y-auto space-y-3 custom-scrollbar">
-              {statusCompanies.map(company => (
-                <div
-                  key={company.id}
-                  onClick={() => { selectCompany(company); setActiveTab('list'); }}
-                  className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-shadow"
-                >
-                  <div className="font-bold text-gray-800 mb-1">{safeStr(company.name)}</div>
-                  <div className="text-sm text-gray-600">{safeStr(company.role)}</div>
-                  {company.location && (
-                    <div className="text-xs text-gray-500 mt-2 flex items-center gap-1">
-                      <MapPin size={12} /> {safeStr(company.location)}
-                    </div>
-                  )}
-                </div>
-              ))}
+              {statusCompanies.map(company => {
+                const journeySteps = getJourneySteps(company);
+                const isRejected = ['rejected', 'ghosted'].includes(company.status);
+                return (
+                  <div
+                    key={company.id}
+                    draggable
+                    onDragStart={e => handleDragStart(e, company.id)}
+                    onDragEnd={handleDragEnd}
+                    onClick={() => { selectCompany(company); setActiveTab('list'); }}
+                    className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
+                  >
+                    <div className="font-bold text-gray-800 mb-1">{safeStr(company.name)}</div>
+                    <div className="text-sm text-gray-600">{safeStr(company.role)}</div>
+                    {company.location && (
+                      <div className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                        <MapPin size={12} /> {safeStr(company.location)}
+                      </div>
+                    )}
+                    {journeySteps.length > 0 && (
+                      <div className="mt-2 flex flex-wrap items-center gap-0.5">
+                        {journeySteps.map((step, i) => (
+                          <React.Fragment key={i}>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${isRejected ? 'bg-red-50 text-red-500' : 'bg-indigo-50 text-indigo-500'}`}>
+                              {shortenStep(step)}
+                            </span>
+                            {i < journeySteps.length - 1 && <span className="text-gray-300 text-[10px]">›</span>}
+                          </React.Fragment>
+                        ))}
+                        {isRejected && (
+                          <>
+                            <span className="text-gray-300 text-[10px]">›</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-red-100 text-red-600">
+                              {t(`status.${company.status}`)}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         );
@@ -399,6 +521,79 @@ export default function JobTrackerApp() {
       </div>
     </div>
   );
+
+  const renderStats = () => {
+    const statCards = [
+      { label: t('stats.total', 'Total Applications'), value: stats.total, color: 'text-blue-600' },
+      { label: t('stats.active', 'Active'), value: stats.active, color: 'text-indigo-600' },
+      { label: t('stats.responseRate', 'Response Rate'), value: `${stats.responseRate}%`, color: 'text-green-600' },
+      { label: t('stats.interviews', 'Interviews'), value: stats.interviewCount, color: 'text-purple-600' },
+    ];
+    const maxCount = Math.max(...STATUSES.map(s => stats.byStatus[s.id] || 0), 1);
+
+    return (
+      <div className="flex-1 overflow-y-auto p-6 bg-slate-50 min-h-0 custom-scrollbar">
+        <div className="max-w-4xl mx-auto space-y-8">
+          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+            <BarChart2 className="text-indigo-600" /> {t('stats.title', 'Statistics')}
+          </h2>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {statCards.map(card => (
+              <div key={card.label} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 text-center">
+                <div className={`text-3xl font-black mb-1 ${card.color}`}>{card.value}</div>
+                <div className="text-sm text-gray-500">{card.label}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 className="font-bold text-gray-800 mb-5">{t('stats.byStatus', 'By Status')}</h3>
+            <div className="space-y-3">
+              {STATUSES.filter(s => (stats.byStatus[s.id] || 0) > 0).map(s => (
+                <div key={s.id} className="flex items-center gap-3">
+                  <div className="w-32 text-sm text-gray-600 flex-shrink-0 truncate">{t(`status.${s.id}`)}</div>
+                  <div className="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${s.color.split(' ')[0]}`}
+                      style={{ width: `${((stats.byStatus[s.id] || 0) / maxCount) * 100}%` }}
+                    />
+                  </div>
+                  <div className="w-6 text-sm font-bold text-gray-700 text-right">{stats.byStatus[s.id] || 0}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {upcomingEvents.length > 0 && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+              <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <Calendar size={18} className="text-orange-500" />
+                {t('stats.upcoming', 'Upcoming — Next 14 Days')}
+              </h3>
+              <div className="space-y-3">
+                {upcomingEvents.map((event, i) => {
+                  const days = getDaysUntil(event.date);
+                  return (
+                    <div key={i} className="flex items-center gap-4 p-3 bg-orange-50 rounded-lg border border-orange-100">
+                      <div className={`text-center px-3 py-1 rounded-lg font-bold text-sm flex-shrink-0 min-w-[48px] ${days === 0 ? 'bg-red-500 text-white' : days <= 2 ? 'bg-orange-500 text-white' : 'bg-blue-100 text-blue-700'}`}>
+                        {days === 0 ? t('stats.today', 'Today') : `+${days}d`}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-gray-800 truncate">{safeStr(event.companyName)}</div>
+                        <div className="text-sm text-gray-600 truncate">{safeStr(event.type || event.task)}</div>
+                      </div>
+                      <div className="text-sm text-gray-400 flex-shrink-0">{formatDate(event.date)}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 font-sans" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -478,13 +673,14 @@ export default function JobTrackerApp() {
             { key: 'board', icon: <Layout size={16} /> },
             { key: 'list', icon: <List size={16} /> },
             { key: 'timeline', icon: <Calendar size={16} /> },
+            { key: 'stats', icon: <BarChart2 size={16} /> },
           ].map(({ key, icon }) => (
             <button
               key={key}
               onClick={() => setActiveTab(key)}
               className={`px-4 py-2 rounded-t-lg font-medium flex items-center gap-2 transition-colors ${activeTab === key ? 'bg-gray-50 text-indigo-800' : 'bg-white/10 text-blue-100 hover:bg-white/20'}`}
             >
-              {icon} {t(`tabs.${key}`)}
+              {icon} {t(`tabs.${key}`, key)}
             </button>
           ))}
         </div>
@@ -492,10 +688,10 @@ export default function JobTrackerApp() {
 
       {activeTab === 'board' && renderBoard()}
       {activeTab === 'timeline' && renderTimeline()}
+      {activeTab === 'stats' && renderStats()}
 
       {activeTab === 'list' && (
         <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar */}
           <div className={`w-full md:w-1/3 lg:w-1/4 flex-shrink-0 bg-white ${isRTL ? 'border-l' : 'border-r'} border-gray-200 flex-col ${selectedId || isEditing ? 'hidden md:flex' : 'flex'}`}>
             <div className="p-4 border-b border-gray-100 bg-gray-50 space-y-3">
               <div className="relative">
@@ -559,9 +755,7 @@ export default function JobTrackerApp() {
             </div>
           </div>
 
-          {/* Detail / Edit panel */}
           <div className={`flex-1 flex-col bg-slate-50 overflow-y-auto relative custom-scrollbar ${!selectedId && !isEditing ? 'hidden md:flex' : 'flex'}`}>
-
             {(selectedId || isEditing) && (
               <div className="md:hidden sticky top-0 bg-white/90 backdrop-blur-sm p-3 border-b border-gray-200 z-10">
                 <button onClick={() => { setSelectedId(null); setIsEditing(false); }} className="flex items-center gap-2 text-indigo-600 font-bold">
@@ -652,6 +846,45 @@ export default function JobTrackerApp() {
                     ))}
                   </div>
 
+                  {['rejected', 'ghosted'].includes(formData.status) && (
+                    <div className="mb-8 bg-red-50 p-5 rounded-xl border border-red-100">
+                      <h3 className="font-bold text-red-800 mb-4 flex items-center gap-2">
+                        <AlertTriangle size={18} /> {t('form.rejectionTitle', 'Rejection Details')}
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <label className="block text-sm font-bold text-gray-700 mb-1">{t('form.rejectionDate', 'Rejection Date')}</label>
+                          <input
+                            type="date"
+                            value={safeStr(formData.rejection?.date)}
+                            onChange={e => setFormData({...formData, rejection: {...(formData.rejection || {}), date: e.target.value}})}
+                            className="w-full p-2.5 border border-red-200 rounded-lg focus:ring-2 focus:ring-red-400 bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-bold text-gray-700 mb-1">{t('form.rejectionMethod', 'How Were You Notified')}</label>
+                          <select
+                            value={safeStr(formData.rejection?.method)}
+                            onChange={e => setFormData({...formData, rejection: {...(formData.rejection || {}), method: e.target.value}})}
+                            className="w-full p-2.5 border border-red-200 rounded-lg focus:ring-2 focus:ring-red-400 bg-white"
+                          >
+                            <option value="">{t('form.rejectionMethodSelect', 'Select...')}</option>
+                            {REJECTION_METHOD_KEYS.map(key => <option key={key} value={key}>{t(`rejectionMethod.${key}`, key)}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-1">{t('form.rejectionNotes', 'Notes / Feedback')}</label>
+                        <textarea
+                          value={safeStr(formData.rejection?.notes)}
+                          onChange={e => setFormData({...formData, rejection: {...(formData.rejection || {}), notes: e.target.value}})}
+                          className="w-full p-2.5 border border-red-200 rounded-lg focus:ring-2 focus:ring-red-400 h-20 resize-none"
+                          placeholder={t('form.rejectionNotesPlaceholder', 'What was the feedback?')}
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   <div>
                     <h3 className="font-bold text-gray-800 mb-2">{t('form.notes')}</h3>
                     <textarea value={safeStr(formData.generalNotes)} onChange={e => setFormData({...formData, generalNotes: e.target.value})} className="w-full p-3 border border-gray-300 rounded-lg h-24 focus:ring-2 focus:ring-indigo-500" placeholder={t('form.notesPlaceholder')}></textarea>
@@ -666,6 +899,8 @@ export default function JobTrackerApp() {
                   const statusInfo = STATUSES.find(s => s.id === company.status);
                   const priorityInfo = PRIORITIES.find(p => p.id === company.priority);
                   const bgColorClass = getAvatarColor(company.name).replace('-500', '-50');
+                  const journeySteps = getJourneySteps(company);
+                  const isRejected = ['rejected', 'ghosted'].includes(company.status);
                   return (
                     <div>
                       <div className={`p-8 border-b border-gray-200 ${bgColorClass}`}>
@@ -692,6 +927,26 @@ export default function JobTrackerApp() {
                                   </span>
                                 )}
                               </div>
+                              {journeySteps.length > 0 && (
+                                <div className="mt-3 flex flex-wrap items-center gap-1">
+                                  {journeySteps.map((step, i) => (
+                                    <React.Fragment key={i}>
+                                      <span className={`text-xs px-2 py-0.5 rounded font-bold ${isRejected ? 'bg-red-100 text-red-600' : 'bg-indigo-100 text-indigo-600'}`}>
+                                        {t(`interviewType.${step}`, step)}
+                                      </span>
+                                      {i < journeySteps.length - 1 && <span className="text-gray-400 text-xs">›</span>}
+                                    </React.Fragment>
+                                  ))}
+                                  {isRejected && (
+                                    <>
+                                      <span className="text-gray-400 text-xs">›</span>
+                                      <span className="text-xs px-2 py-0.5 rounded font-bold bg-red-200 text-red-700">
+                                        {t(`status.${company.status}`)}
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </div>
                           <div className="flex gap-2">
@@ -736,6 +991,32 @@ export default function JobTrackerApp() {
                               )}
                             </div>
                           )}
+
+                          {isRejected && company.rejection && (company.rejection.date || company.rejection.method || company.rejection.notes) && (
+                            <div className="bg-red-50 p-5 rounded-xl shadow-sm border border-red-100">
+                              <h3 className="font-bold text-red-800 mb-3 flex items-center gap-2">
+                                <AlertTriangle size={18} /> {t('detail.rejectionTitle', 'Rejection Details')}
+                              </h3>
+                              {company.rejection.date && (
+                                <div className="mb-2 text-sm text-gray-700">
+                                  <span className="font-bold text-gray-500">{t('form.rejectionDate', 'Date')}: </span>
+                                  {formatDate(company.rejection.date)}
+                                </div>
+                              )}
+                              {company.rejection.method && (
+                                <div className="mb-2 text-sm text-gray-700">
+                                  <span className="font-bold text-gray-500">{t('form.rejectionMethod', 'How')}: </span>
+                                  {t(`rejectionMethod.${company.rejection.method}`, company.rejection.method)}
+                                </div>
+                              )}
+                              {company.rejection.notes && (
+                                <div className="mt-3 text-sm text-gray-700 bg-white p-3 rounded-lg border border-red-100 whitespace-pre-wrap">
+                                  {safeStr(company.rejection.notes)}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
                           {company.generalNotes && (
                             <div className="bg-yellow-50 p-5 rounded-xl shadow-sm border border-yellow-100">
                               <h3 className="font-bold text-yellow-800 mb-2 flex items-center gap-2">
