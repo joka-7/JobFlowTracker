@@ -126,7 +126,8 @@ export default function JobTrackerApp() {
   };
 
   const toggleLanguage = () => {
-    const next = i18n.language === 'en' ? 'he' : 'en';
+    const cycle = { en: 'he', he: 'fr', fr: 'en' };
+    const next = cycle[i18n.language] || 'en';
     i18n.changeLanguage(next);
     localStorage.setItem('appLanguage', next);
   };
@@ -653,7 +654,7 @@ export default function JobTrackerApp() {
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-blue-100 transition-colors"
             >
               <Languages size={16} />
-              {i18n.language === 'en' ? 'עב' : 'EN'}
+              {{ en: 'עב', he: 'FR', fr: 'EN' }[i18n.language] || 'עב'}
             </button>
 
             <div className="flex bg-white/10 rounded-lg p-1">
