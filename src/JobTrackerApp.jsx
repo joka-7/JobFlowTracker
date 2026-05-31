@@ -455,20 +455,44 @@ export default function JobTrackerApp() {
       {companies.length === 0 && (
         <div className="w-full flex flex-col items-center justify-center p-8">
           <div className="bg-white p-10 rounded-2xl shadow-xl border border-gray-200 text-center max-w-lg w-full">
-            <div className="bg-blue-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Download size={40} className="text-blue-600" />
+            <div className="bg-indigo-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Activity size={40} className="text-indigo-600" />
             </div>
-            <h2 className="text-2xl font-black text-gray-800 mb-4">{t('board.emptyTitle')}</h2>
-            <p className="text-gray-600 mb-8">{t('board.emptyDesc')}</p>
+            <h2 className="text-2xl font-black text-gray-800 mb-2">{t('board.emptyTitle')}</h2>
+            <p className="text-gray-500 mb-8 text-sm">{t('board.emptyDesc')}</p>
+
+            {!user && (
+              <button
+                onClick={handleSignIn}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-base py-3.5 px-6 rounded-xl shadow-lg transition-transform hover:scale-105 active:scale-95 flex items-center justify-center gap-3 mb-3"
+              >
+                <Cloud size={20} /> {t('board.signInButton')}
+              </button>
+            )}
+
+            <button
+              onClick={openNewForm}
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-bold text-base py-3.5 px-6 rounded-xl shadow transition-transform hover:scale-105 active:scale-95 flex items-center justify-center gap-3 mb-3"
+            >
+              <Plus size={20} /> {t('board.addFirstButton')}
+            </button>
+
             <button
               onClick={triggerFileInput}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg py-4 px-6 rounded-xl shadow-lg transition-transform hover:scale-105 active:scale-95 flex items-center justify-center gap-3"
+              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm py-3 px-6 rounded-xl flex items-center justify-center gap-2"
             >
-              <Upload size={24} /> {t('board.loadButton')}
+              <Upload size={16} /> {t('board.loadButton')}
             </button>
-            <div className={`mt-6 text-sm text-gray-500 bg-gray-50 p-4 rounded-lg flex items-start gap-3 ${isRTL ? 'text-right' : 'text-left'}`}>
-              <AlertTriangle size={20} className="text-amber-500 flex-shrink-0" />
-              <p><strong>{t('board.noteLabel')}</strong> {t('board.noteText')}</p>
+
+            <div className={`mt-6 grid grid-cols-2 gap-3 text-left text-xs text-gray-500`}>
+              <div className="bg-indigo-50 p-3 rounded-lg">
+                <div className="font-bold text-indigo-700 mb-1 flex items-center gap-1"><Cloud size={12} /> {t('board.modeCloudTitle')}</div>
+                <p>{t('board.modeCloudDesc')}</p>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <div className="font-bold text-gray-700 mb-1 flex items-center gap-1"><Download size={12} /> {t('board.modeLocalTitle')}</div>
+                <p>{t('board.modeLocalDesc')}</p>
+              </div>
             </div>
           </div>
         </div>

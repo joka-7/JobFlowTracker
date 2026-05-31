@@ -48,11 +48,15 @@
     "timeline": "Timeline"
   },
   "board": {
-    "emptyTitle": "System Ready for Your Data",
-    "emptyDesc": "To get started, select your JSON backup file from your device. The protection mechanism will ensure the file loads without crashes.",
-    "loadButton": "Load Data from Backup File (JSON)",
-    "noteLabel": "Note:",
-    "noteText": "When you're done for the day, don't forget to click the download icon in the top bar to save an updated copy on your computer."
+    "emptyTitle": "Welcome to Job Search Tracker",
+    "emptyDesc": "Track your applications, interviews, and progress all in one place.",
+    "signInButton": "Sign in with Google — sync everywhere",
+    "addFirstButton": "Add your first company",
+    "loadButton": "Restore from JSON backup",
+    "modeCloudTitle": "Cloud sync",
+    "modeCloudDesc": "Sign in with Google to auto-save and access your data from any device.",
+    "modeLocalTitle": "Offline / JSON",
+    "modeLocalDesc": "Work locally and download a JSON backup whenever you want."
   },
   "timeline": {
     "title": "Activity History",
