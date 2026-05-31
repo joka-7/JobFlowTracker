@@ -49,11 +49,15 @@
     "stats": "Statistiques"
   },
   "board": {
-    "emptyTitle": "Système prêt pour vos données",
-    "emptyDesc": "Pour commencer, sélectionnez votre fichier de sauvegarde JSON depuis votre appareil.",
-    "loadButton": "Charger les données (JSON)",
-    "noteLabel": "Note :",
-    "noteText": "En fin de journée, pensez à télécharger une copie mise à jour sur votre ordinateur."
+    "emptyTitle": "Bienvenue dans Job Search Tracker",
+    "emptyDesc": "Suivez vos candidatures, entretiens et progression au même endroit.",
+    "signInButton": "Se connecter avec Google — sync partout",
+    "addFirstButton": "Ajouter votre première entreprise",
+    "loadButton": "Restaurer depuis une sauvegarde JSON",
+    "modeCloudTitle": "Sync cloud",
+    "modeCloudDesc": "Connectez-vous avec Google pour sauvegarder automatiquement et accéder depuis n'importe quel appareil.",
+    "modeLocalTitle": "Hors ligne / JSON",
+    "modeLocalDesc": "Travaillez localement et téléchargez une sauvegarde JSON quand vous voulez."
   },
   "timeline": {
     "title": "Historique des activités",
