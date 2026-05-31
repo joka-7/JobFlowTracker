@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Search, Plus, MapPin, Globe, Calendar,
@@ -111,6 +111,13 @@ const getDaysUntil = (dateString) => {
   return Math.ceil((date - today) / (1000 * 60 * 60 * 24));
 };
 
+const initialFormState = {
+  name: '', role: '', location: '', status: 'applied', priority: 'medium',
+  website: '', linkedinCompany: '', linkedinHR: '', description: '', products: '',
+  interviews: [], homeworks: [], contacts: [], generalNotes: '',
+  rejection: { date: '', method: '', notes: '' },
+};
+
 export default function JobTrackerApp() {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'he';
@@ -153,12 +160,6 @@ export default function JobTrackerApp() {
   const saveTimer = useRef(null);
   const dragCompanyId = useRef(null);
 
-  const initialFormState = {
-    name: '', role: '', location: '', status: 'applied', priority: 'medium',
-    website: '', linkedinCompany: '', linkedinHR: '', description: '', products: '',
-    interviews: [], homeworks: [], contacts: [], generalNotes: '',
-    rejection: { date: '', method: '', notes: '' },
-  };
   const [formData, setFormData] = useState(initialFormState);
 
   useEffect(() => {
@@ -203,6 +204,13 @@ export default function JobTrackerApp() {
     return () => clearTimeout(saveTimer.current);
   }, [companies, user]);
 
+  const openNewForm = useCallback(() => {
+    setFormData(initialFormState);
+    setSelectedId(null);
+    setIsEditing(true);
+    setActiveTab('list');
+  }, []);
+
   useEffect(() => {
     const handler = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
@@ -211,7 +219,7 @@ export default function JobTrackerApp() {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, []);
+  }, [openNewForm]);
 
   const handleSignIn = async () => {
     try {
@@ -354,13 +362,6 @@ export default function JobTrackerApp() {
     e.target.value = null;
   };
 
-  const openNewForm = () => {
-    setFormData(initialFormState);
-    setSelectedId(null);
-    setIsEditing(true);
-    setActiveTab('list');
-  };
-
   const selectCompany = (company) => {
     setSelectedId(company.id);
     setFormData({ ...initialFormState, ...company, rejection: company.rejection || { date: '', method: '', notes: '' } });
@@ -373,7 +374,7 @@ export default function JobTrackerApp() {
     dragCompanyId.current = companyId;
     e.currentTarget.style.opacity = '0.5';
   };
-  const handleDragEnd = (e) => { e.currentTarget.style.opacity = '1'; };
+  const handleDragEnd = (e) => { e.currentTarget.style.opacity = '1'; dragCompanyId.current = null; };
   const handleDragOver = (e) => { e.preventDefault(); };
   const handleDrop = (e, statusId) => {
     e.preventDefault();
@@ -569,7 +570,7 @@ export default function JobTrackerApp() {
                 {upcomingEvents.map((event, i) => {
                   const days = getDaysUntil(event.date);
                   return (
-                    <div key={i} className="flex items-center gap-4 p-3 bg-orange-50 rounded-lg border border-orange-100">
+                    <div key={`${event.companyName}-${event.date}`} className="flex items-center gap-4 p-3 bg-orange-50 rounded-lg border border-orange-100">
                       <div className={`text-center px-3 py-1 rounded-lg font-bold text-sm flex-shrink-0 min-w-[48px] ${days === 0 ? 'bg-red-500 text-white' : days <= 2 ? 'bg-orange-500 text-white' : 'bg-blue-100 text-blue-700'}`}>
                         {days === 0 ? t('stats.today', 'Today') : `+${days}d`}
                       </div>
