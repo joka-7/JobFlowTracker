@@ -291,6 +291,97 @@
       "questions_to_ask": "Questions à poser"
     }
   },
+  "tasks": {
+    "modeSelection": {
+      "title": "Gestionnaire de tâches",
+      "desc": "Gérez vos tâches avec plusieurs étapes et suivez la progression"
+    },
+    "header": {
+      "title": "Gestionnaire de tâches",
+      "savedInBrowser": "Enregistré",
+      "saving": "Enregistrement...",
+      "addTask": "Ajouter une tâche"
+    },
+    "status": {
+      "active": "Actif",
+      "on_hold": "En attente",
+      "completed": "Terminé",
+      "cancelled": "Annulé"
+    },
+    "stepStatus": {
+      "todo": "À faire",
+      "in_progress": "En cours",
+      "done": "Terminé",
+      "blocked": "Bloqué"
+    },
+    "board": {
+      "emptyTitle": "Bienvenue dans le gestionnaire de tâches",
+      "emptyDesc": "Organisez vos tâches avec plusieurs étapes et suivez la progression.",
+      "addFirstButton": "Ajouter votre première tâche",
+      "signInButton": "Se connecter avec Google — synchroniser partout",
+      "loadButton": "Restaurer depuis une sauvegarde JSON"
+    },
+    "list": {
+      "searchPlaceholder": "Rechercher des tâches...",
+      "allStatuses": "Tous les statuts",
+      "noResults": "Aucun résultat.",
+      "backToList": "Retour à la liste",
+      "loadMore": "Charger plus",
+      "remaining": "restants",
+      "selectTask": "Sélectionnez une tâche dans la liste",
+      "noTasks": "Aucune tâche pour l'instant."
+    },
+    "form": {
+      "editTitle": "Modifier la tâche",
+      "addTitle": "Nouvelle tâche",
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "taskName": "Nom de la tâche *",
+      "taskNamePlaceholder": "Que faut-il faire ?",
+      "description": "Description",
+      "descriptionPlaceholder": "Objectif, contexte ou informations de fond...",
+      "status": "Statut",
+      "priority": "Priorité",
+      "dueDate": "Date d'échéance",
+      "steps": "Étapes",
+      "addStep": "Ajouter une étape",
+      "addStepPlaceholder": "Décrire l'étape...",
+      "stepNotesPlaceholder": "Notes ou détails de l'étape...",
+      "noSteps": "Aucune étape ajoutée.",
+      "notes": "Notes",
+      "notesPlaceholder": "Notes supplémentaires...",
+      "requiredName": "Le nom de la tâche est obligatoire"
+    },
+    "detail": {
+      "editDetails": "Modifier les détails",
+      "deleteTask": "Supprimer la tâche",
+      "noSteps": "Aucune étape. Cliquez sur \"Modifier\" pour en ajouter.",
+      "progress": "Progression",
+      "nextStep": "Prochaine étape",
+      "notes": "Notes",
+      "dueDate": "Échéance"
+    },
+    "stats": {
+      "title": "Statistiques",
+      "total": "Tâches",
+      "active": "Actives",
+      "completed": "Terminées",
+      "totalSteps": "Étapes totales",
+      "doneSteps": "Étapes terminées",
+      "byStatus": "Par statut"
+    },
+    "toast": {
+      "saved": "Tâche enregistrée !",
+      "deleted": "Tâche supprimée.",
+      "exported": "Fichier de sauvegarde téléchargé !",
+      "imported": "Fichier chargé avec succès !"
+    },
+    "alert": {
+      "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cette tâche ?",
+      "noData": "Aucune donnée de tâche trouvée dans le fichier.",
+      "importError": "Erreur lors de l'importation. Assurez-vous que c'est un fichier JSON valide."
+    }
+  },
   "recruiter": {
     "modeSelection": {
       "title": "Comment utiliserez-vous JobFlowTracker ?",
