@@ -16,7 +16,7 @@ function MarkdownText({ text }) {
   );
 }
 
-export default function RejectionAnalysis({ company, t, onClose, onOpenSettings }) {
+export default function RejectionAnalysis({ company, language, t, onClose, onOpenSettings }) {
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -36,7 +36,7 @@ export default function RejectionAnalysis({ company, t, onClose, onOpenSettings 
     setError('');
     setText('');
     try {
-      await analyzeRejection(company, setText);
+      await analyzeRejection(company, language || 'en', setText);
     } catch (e) {
       setError(e.message || 'Error generating analysis');
     }

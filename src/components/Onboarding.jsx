@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Layout, List, Activity, BarChart2, Lightbulb, ChevronRight, ChevronLeft, Upload, Plus, Languages } from 'lucide-react';
+import { X, Layout, List, Activity, BarChart2, Lightbulb, ChevronRight, ChevronLeft, Upload, Plus } from 'lucide-react';
 
 const STEPS = [
   {
@@ -209,17 +209,20 @@ export default function Onboarding({ t, i18n, isRTL, onClose, openNewForm, trigg
               ))}
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 bg-white/15 rounded-lg px-2 py-1">
-                <Languages size={14} className="text-blue-100" />
-                <select
-                  value={i18n.language}
-                  onChange={e => handleLangChange(e.target.value)}
-                  className="bg-transparent text-white text-xs font-bold border-none outline-none cursor-pointer"
-                >
-                  <option value="en" className="text-gray-800">EN</option>
-                  <option value="he" className="text-gray-800">עב</option>
-                  <option value="fr" className="text-gray-800">FR</option>
-                </select>
+              <div className="flex items-center gap-1 bg-white/20 rounded-lg p-0.5">
+                {[['en','EN'],['he','עב'],['fr','FR']].map(([code, label]) => (
+                  <button
+                    key={code}
+                    onClick={() => handleLangChange(code)}
+                    className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all ${
+                      i18n.language === code
+                        ? 'bg-white text-blue-700 shadow-sm'
+                        : 'text-white/80 hover:text-white hover:bg-white/20'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
               <button onClick={handleClose} className="text-white/70 hover:text-white transition-colors">
                 <X size={20} />

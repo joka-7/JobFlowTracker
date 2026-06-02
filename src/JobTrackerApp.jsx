@@ -1154,6 +1154,7 @@ export default function JobTrackerApp() {
       {rejectionCompany && (
         <RejectionAnalysis
           company={rejectionCompany}
+          language={i18n.language}
           t={t}
           onClose={() => setRejectionCompany(null)}
           onOpenSettings={() => { setRejectionCompany(null); setShowAISettings(true); }}
