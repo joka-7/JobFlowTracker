@@ -1,0 +1,9 @@
+title = "JobFlowTracker"
+
+# Firebase web client config in src/firebase.js is intentionally public.
+# Access control is enforced by Firestore security rules, not by hiding the apiKey.
+[[allowlists]]
+description = "Firebase web SDK config (public client credentials)"
+paths = [
+  '''(?:^|/)src/firebase\.js$''',
+]

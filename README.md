@@ -352,6 +352,42 @@ npm run test:all  # Both suites
 
 ---
 
+## Secret scanning (Gitleaks)
+
+CI runs [Gitleaks](https://github.com/gitleaks/gitleaks) on every push and pull request (see `.github/workflows/security.yml`). To run the same scan locally before you push:
+
+### Install Gitleaks
+
+Gitleaks is a standalone binary — it is **not** installed by `npm install`.
+
+**Linux (x64):**
+
+```bash
+mkdir -p ~/.local/bin
+GITLEAKS_VERSION=v8.30.1
+curl -sL "https://github.com/gitleaks/gitleaks/releases/download/${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION#v}_linux_x64.tar.gz" \
+  | tar -xz -C ~/.local/bin gitleaks
+chmod +x ~/.local/bin/gitleaks
+export PATH="$HOME/.local/bin:$PATH"
+gitleaks version
+```
+
+**macOS (Apple Silicon):** use `gitleaks_${GITLEAKS_VERSION#v}_darwin_arm64.tar.gz` instead of `linux_x64`.
+
+**macOS (Intel) / Windows:** see [Gitleaks releases](https://github.com/gitleaks/gitleaks/releases) for the matching archive.
+
+### Run a scan
+
+From the repository root:
+
+```bash
+gitleaks detect --source .
+```
+
+The repo includes [`.gitleaks.toml`](.gitleaks.toml), which allowlists `src/firebase.js`. Firebase web config is meant to be public; Firestore rules protect user data. Do not add real API keys or service account JSON to the repository.
+
+---
+
 ## Data Schema
 
 Entities share the same document shape; meaning of `name` / `role` depends on mode.
