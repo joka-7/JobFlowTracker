@@ -6,7 +6,7 @@ import {
   ArrowLeft, ArrowRight, Download, Upload, Filter, Layout, List, Activity, AlertTriangle,
   Cloud, CloudOff, Languages, BarChart2, Settings
 } from 'lucide-react';
-import { signInWithGoogle, signOut, onAuthChange, loadUserData, saveUserData } from './firebase';
+import { signInWithGoogle, signOut, onAuthChange, loadAllCompanies, updateCompany, deleteFirestoreCompany, batchSaveCompanies, publishShare, loadSharedData } from './firebase';
 import { initAI } from './services/aiAssistant';
 import Onboarding from './components/Onboarding';
 import AIAssistant from './components/AIAssistant';
@@ -159,18 +159,20 @@ export default function JobTrackerApp() {
   const [isEditing, setIsEditing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [visibleCount, setVisibleCount] = useState(25);
   const [activeTab, setActiveTab] = useState('board');
   const [toastMessage, setToastMessage] = useState('');
 
   const [user, setUser] = useState(null);
   const [syncing, setSyncing] = useState(false);
-  const saveTimer = useRef(null);
   const dragCompanyId = useRef(null);
 
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showAISettings, setShowAISettings] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [rejectionCompany, setRejectionCompany] = useState(null);
+  const [shareMode, setShareMode] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
 
   useEffect(() => {
     const provider = localStorage.getItem('aiProvider') || 'gemini';
@@ -180,6 +182,16 @@ export default function JobTrackerApp() {
     initAI(provider, apiKey, model, ollamaUrl);
     if (!localStorage.getItem('hasCompletedOnboarding')) {
       setShowOnboarding(true);
+    }
+
+    // Check for shared view URL: ?share=<uid>
+    const params = new URLSearchParams(window.location.search);
+    const shareUid = params.get('share');
+    if (shareUid) {
+      setShareMode(true);
+      loadSharedData(shareUid).then(data => {
+        if (data?.companies?.length) setCompanies(data.companies);
+      }).catch(console.error);
     }
   }, []);
 
@@ -208,7 +220,7 @@ export default function JobTrackerApp() {
       if (firebaseUser) {
         setSyncing(true);
         try {
-          const data = await loadUserData(firebaseUser.uid);
+          const data = await loadAllCompanies(firebaseUser.uid);
           if (data && data.length > 0) {
             setCompanies(data);
             showToast(t('toast.driveConnectedWithData'));
@@ -221,17 +233,6 @@ export default function JobTrackerApp() {
     });
     return unsub;
   }, []);
-
-  useEffect(() => {
-    if (!user || companies.length === 0) return;
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(async () => {
-      setSyncing(true);
-      try { await saveUserData(user.uid, companies); } catch (e) { console.error(e); }
-      setSyncing(false);
-    }, 3000);
-    return () => clearTimeout(saveTimer.current);
-  }, [companies, user]);
 
   const openNewForm = useCallback(() => {
     setFormData(initialFormState);
@@ -273,6 +274,10 @@ export default function JobTrackerApp() {
       return matchSearch && matchStatus;
     });
   }, [companies, searchQuery, statusFilter]);
+
+  useEffect(() => {
+    setVisibleCount(25);
+  }, [searchQuery, statusFilter]);
 
   const timelineEvents = useMemo(() => {
     let events = [];
@@ -325,10 +330,12 @@ export default function JobTrackerApp() {
     };
     if (dataToSave.id) {
       setCompanies(companies.map(c => String(c.id) === String(dataToSave.id) ? dataToSave : c));
+      if (user) updateCompany(user.uid, dataToSave).catch(console.error);
     } else {
       const newCompany = { ...dataToSave, id: Date.now().toString() };
       setCompanies([newCompany, ...companies]);
       setSelectedId(newCompany.id);
+      if (user) updateCompany(user.uid, newCompany).catch(console.error);
     }
     setIsEditing(false);
     showToast(t('toast.saved'));
@@ -340,8 +347,32 @@ export default function JobTrackerApp() {
       setSelectedId(null);
       setIsEditing(false);
       showToast(t('toast.deleted'));
+      if (user) deleteFirestoreCompany(user.uid, id).catch(console.error);
     }
   };
+
+  const handleSaveToCompany = useCallback((companyId, text) => {
+    const target = companies.find(c => String(c.id) === String(companyId));
+    if (!target) return;
+    const updated = {
+      ...target,
+      generalNotes: target.generalNotes ? `${target.generalNotes}\n\n---\n${text}` : text,
+    };
+    setCompanies(prev => prev.map(c => String(c.id) === String(companyId) ? updated : c));
+    if (user) updateCompany(user.uid, updated).catch(console.error);
+  }, [companies, user]);
+
+  const handleRejectionNoteSave = useCallback((text) => {
+    if (!rejectionCompany) return;
+    const target = companies.find(c => c.id === rejectionCompany.id);
+    if (!target) return;
+    const updated = {
+      ...target,
+      generalNotes: target.generalNotes ? `${target.generalNotes}\n\n---\n${text}` : text,
+    };
+    setCompanies(prev => prev.map(c => c.id === rejectionCompany.id ? updated : c));
+    if (user) updateCompany(user.uid, updated).catch(console.error);
+  }, [companies, user, rejectionCompany]);
 
   const handleExport = () => {
     const dataStr = JSON.stringify(companies, null, 2);
@@ -379,6 +410,7 @@ export default function JobTrackerApp() {
             }));
             setCompanies(sanitizedData);
             showToast(t('toast.imported'));
+            if (user) batchSaveCompanies(user.uid, sanitizedData).catch(console.error);
           } else {
             alert(t('alert.noCompanyData'));
           }
@@ -409,9 +441,11 @@ export default function JobTrackerApp() {
     e.preventDefault();
     const id = dragCompanyId.current;
     if (!id) return;
+    const company = companies.find(c => String(c.id) === String(id));
     setCompanies(prev => prev.map(c => String(c.id) === String(id) ? { ...c, status: statusId } : c));
     dragCompanyId.current = null;
     showToast(t('toast.saved'));
+    if (user && company) updateCompany(user.uid, { ...company, status: statusId }).catch(console.error);
   };
 
   const timelineBorder = isRTL ? 'border-r-2 pr-6' : 'border-l-2 pl-6';
@@ -777,9 +811,11 @@ export default function JobTrackerApp() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button onClick={openNewForm} className="flex items-center gap-2 bg-white text-indigo-700 hover:bg-blue-50 px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-sm">
-              <Plus size={18} /> {t('header.addCompany')}
-            </button>
+            {!shareMode && (
+              <button onClick={openNewForm} className="flex items-center gap-2 bg-white text-indigo-700 hover:bg-blue-50 px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-sm">
+                <Plus size={18} /> {t('header.addCompany')}
+              </button>
+            )}
 
             {user ? (
               <button
@@ -828,6 +864,23 @@ export default function JobTrackerApp() {
               >
                 📚
               </button>
+              {user && !shareMode && (
+                <button
+                  onClick={async () => {
+                    try {
+                      await publishShare(user.uid, companies);
+                      const url = `${window.location.origin}${window.location.pathname}?share=${user.uid}`;
+                      await navigator.clipboard.writeText(url);
+                      setShareCopied(true);
+                      setTimeout(() => setShareCopied(false), 3000);
+                    } catch (e) { console.error(e); }
+                  }}
+                  title={t('header.shareTooltip', 'Share read-only link')}
+                  className="p-2 hover:bg-white/20 rounded text-white transition-colors"
+                >
+                  {shareCopied ? '✓' : '🔗'}
+                </button>
+              )}
               <button
                 onClick={() => setShowAISettings(true)}
                 title={t('header.aiSettings', 'AI Settings')}
@@ -856,6 +909,14 @@ export default function JobTrackerApp() {
           ))}
         </div>
       </header>
+
+      {shareMode && (
+        <div className="bg-amber-50 border-b border-amber-200 px-6 py-2 flex items-center gap-2 text-amber-800 text-sm">
+          <span>👁️</span>
+          <span className="font-medium">{t('header.viewOnly', 'View only')} —</span>
+          <span>{t('header.viewOnlyDesc', 'You are viewing a shared read-only snapshot.')}</span>
+        </div>
+      )}
 
       {activeTab === 'board' && renderBoard()}
       {activeTab === 'timeline' && renderTimeline()}
@@ -892,36 +953,46 @@ export default function JobTrackerApp() {
               {filteredCompanies.length === 0 ? (
                 <div className="p-6 text-center text-gray-500 text-sm">{t('list.noResults')}</div>
               ) : (
-                filteredCompanies.map(company => {
-                  const statusInfo = STATUSES.find(s => s.id === company.status);
-                  const priorityInfo = PRIORITIES.find(p => p.id === company.priority);
-                  const isSelected = selectedId === company.id;
-                  return (
-                    <div
-                      key={company.id}
-                      onClick={() => selectCompany(company)}
-                      className={`p-3 rounded-xl cursor-pointer transition-all ${isSelected ? 'bg-indigo-50 border-indigo-200 shadow-sm border ring-1 ring-indigo-500' : 'hover:bg-gray-50 border border-transparent'}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 ${getAvatarColor(company.name)}`}>
-                          {getInitials(company.name)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-start">
-                            <h3 className="font-bold text-gray-900 truncate">{safeStr(company.name)}</h3>
-                            {priorityInfo && <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${priorityInfo.color}`}></div>}
+                <>
+                  {filteredCompanies.slice(0, visibleCount).map(company => {
+                    const statusInfo = STATUSES.find(s => s.id === company.status);
+                    const priorityInfo = PRIORITIES.find(p => p.id === company.priority);
+                    const isSelected = selectedId === company.id;
+                    return (
+                      <div
+                        key={company.id}
+                        onClick={() => selectCompany(company)}
+                        className={`p-3 rounded-xl cursor-pointer transition-all ${isSelected ? 'bg-indigo-50 border-indigo-200 shadow-sm border ring-1 ring-indigo-500' : 'hover:bg-gray-50 border border-transparent'}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 ${getAvatarColor(company.name)}`}>
+                            {getInitials(company.name)}
                           </div>
-                          <p className="text-sm text-gray-600 truncate">{safeStr(company.role)}</p>
-                          <div className="mt-1.5">
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium border ${statusInfo?.color || 'bg-gray-100 border-gray-200'}`}>
-                              {statusInfo ? t(`status.${statusInfo.id}`) : t('status.unknown')}
-                            </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-start">
+                              <h3 className="font-bold text-gray-900 truncate">{safeStr(company.name)}</h3>
+                              {priorityInfo && <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${priorityInfo.color}`}></div>}
+                            </div>
+                            <p className="text-sm text-gray-600 truncate">{safeStr(company.role)}</p>
+                            <div className="mt-1.5">
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium border ${statusInfo?.color || 'bg-gray-100 border-gray-200'}`}>
+                                {statusInfo ? t(`status.${statusInfo.id}`) : t('status.unknown')}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })
+                    );
+                  })}
+                  {visibleCount < filteredCompanies.length && (
+                    <button
+                      onClick={() => setVisibleCount(n => n + 25)}
+                      className="w-full py-2 text-sm text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-xl transition-colors font-medium"
+                    >
+                      {t('list.loadMore', 'Load more')} ({filteredCompanies.length - visibleCount} {t('list.remaining', 'remaining')})
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -1300,11 +1371,7 @@ export default function JobTrackerApp() {
           t={t}
           onClose={() => setRejectionCompany(null)}
           onOpenSettings={() => { setRejectionCompany(null); setShowAISettings(true); }}
-          onSave={(text) => setCompanies(prev => prev.map(c =>
-            c.id === rejectionCompany.id
-              ? { ...c, generalNotes: c.generalNotes ? `${c.generalNotes}\n\n---\n${text}` : text }
-              : c
-          ))}
+          onSave={handleRejectionNoteSave}
         />
       )}
 
@@ -1314,13 +1381,7 @@ export default function JobTrackerApp() {
         language={i18n.language}
         t={t}
         onOpenSettings={() => setShowAISettings(true)}
-        onSaveToCompany={selectedId ? (companyId, text) => {
-          setCompanies(prev => prev.map(c =>
-            c.id === selectedId
-              ? { ...c, generalNotes: c.generalNotes ? `${c.generalNotes}\n\n---\n${text}` : text }
-              : c
-          ));
-        } : null}
+        onSaveToCompany={selectedId ? handleSaveToCompany : null}
       />
     </div>
   );
