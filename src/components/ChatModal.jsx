@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Send, Loader2, Save, MessageSquare } from 'lucide-react';
 import { streamChat, isAIReady } from '../services/aiAssistant';
 
@@ -17,6 +17,14 @@ function MarkdownText({ text }) {
 
 function Message({ msg, onSave, t }) {
   const isUser = msg.role === 'user';
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = () => {
+    onSave(msg.content);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3 group`}>
       <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed relative ${
@@ -32,10 +40,13 @@ function Message({ msg, onSave, t }) {
         )}
         {!isUser && !msg.streaming && onSave && (
           <button
-            onClick={() => onSave(msg.content)}
-            className="absolute -bottom-6 right-0 text-[11px] text-gray-400 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 whitespace-nowrap"
+            onClick={handleSave}
+            className={`absolute -bottom-6 right-0 text-[11px] opacity-0 group-hover:opacity-100 transition-all flex items-center gap-1 whitespace-nowrap ${
+              saved ? 'text-green-600' : 'text-gray-400 hover:text-indigo-600'
+            }`}
           >
-            <Save size={11} /> {t('chat.saveToNotes', 'Save to notes')}
+            <Save size={11} />
+            {saved ? t('chat.saved', 'Saved ✓') : t('chat.saveToNotes', 'Save to notes')}
           </button>
         )}
       </div>
@@ -80,9 +91,12 @@ export default function ChatModal({ company, language, t, onClose, onOpenSetting
     const assistantMsg = { role: 'assistant', content: '', streaming: true };
     setMessages(prev => [...prev, assistantMsg]);
 
+    // strip UI-only fields before sending to API
+    const apiMessages = newMessages.map(({ role, content }) => ({ role, content }));
+
     try {
       await streamChat(
-        newMessages,
+        apiMessages,
         systemPrompt,
         (partial) => {
           setMessages(prev => {

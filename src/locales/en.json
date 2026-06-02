@@ -218,7 +218,8 @@
     "context": "Context",
     "privacy": "Avoid writing personal names",
     "placeholder": "Type a message... (Enter to send)",
-    "saveToNotes": "Save to notes"
+    "saveToNotes": "Save to notes",
+    "saved": "Saved ✓"
   },
   "settings": {
     "title": "AI Settings",
