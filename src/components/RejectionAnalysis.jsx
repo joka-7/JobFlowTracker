@@ -72,9 +72,17 @@ export default function RejectionAnalysis({ company, t, onClose, onOpenSettings 
           ) : error ? (
             <div className="space-y-3">
               <p className="text-red-600 text-sm">{error}</p>
-              <button onClick={run} className="text-sm text-indigo-600 hover:underline">
-                {t('rejection.retry', 'Try again')}
-              </button>
+              <div className="flex gap-3">
+                <button onClick={run} className="text-sm text-indigo-600 hover:underline">
+                  {t('rejection.retry', 'Try again')}
+                </button>
+                <button
+                  onClick={() => { onClose(); onOpenSettings(); }}
+                  className="text-sm text-purple-600 hover:underline"
+                >
+                  ⚙️ {t('ai.changeSettings', 'Change AI settings')}
+                </button>
+              </div>
             </div>
           ) : (
             <div>

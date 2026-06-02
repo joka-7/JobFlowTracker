@@ -29,7 +29,7 @@ function StreamingText({ text, loading }) {
 }
 
 // ---- Debrief screen ----
-function DebriefScreen({ t, language, company, onBack }) {
+function DebriefScreen({ t, language, company, onBack, onOpenSettings }) {
   const [notes, setNotes] = useState('');
   const [context, setContext] = useState(
     company ? `${company.name}${company.role ? ` — ${company.role}` : ''}` : ''
@@ -106,10 +106,19 @@ function DebriefScreen({ t, language, company, onBack }) {
 
         {(streamText || error) && (
           <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-            {error
-              ? <p className="text-red-600 text-sm">{error}</p>
-              : <StreamingText text={streamText} loading={loading} />
-            }
+            {error ? (
+              <div className="space-y-2">
+                <p className="text-red-600 text-sm">{error}</p>
+                <button
+                  onClick={() => { onBack(); onOpenSettings && onOpenSettings(); }}
+                  className="text-xs text-purple-600 underline hover:text-purple-800"
+                >
+                  ⚙️ Change AI settings
+                </button>
+              </div>
+            ) : (
+              <StreamingText text={streamText} loading={loading} />
+            )}
           </div>
         )}
       </div>
@@ -172,6 +181,7 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
               language={language}
               company={company}
               onBack={() => setScreen('menu')}
+              onOpenSettings={onOpenSettings}
             />
           ) : (
             <div className="p-4 space-y-2 overflow-y-auto">
@@ -225,12 +235,21 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
                 {t('ai.patternsButton', 'Analyze my job hunt patterns')}
               </button>
 
-              {(streamText || (loading && activeMode && activeMode !== 'debrief')) && (
+              {(streamText || error || (loading && activeMode && activeMode !== 'debrief')) && (
                 <div className="mt-1 p-3 bg-gray-50 rounded-lg border border-gray-100 max-h-52 overflow-y-auto">
-                  {error
-                    ? <p className="text-red-600 text-sm">{error}</p>
-                    : <StreamingText text={streamText} loading={loading} />
-                  }
+                  {error ? (
+                    <div className="space-y-2">
+                      <p className="text-red-600 text-sm">{error}</p>
+                      <button
+                        onClick={onOpenSettings}
+                        className="text-xs text-purple-600 underline hover:text-purple-800"
+                      >
+                        ⚙️ {t('ai.changeSettings', 'Change AI settings')}
+                      </button>
+                    </div>
+                  ) : (
+                    <StreamingText text={streamText} loading={loading} />
+                  )}
                 </div>
               )}
             </div>
