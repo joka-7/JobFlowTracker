@@ -51,6 +51,12 @@ Or run everything:
 npm run test:all && npm run lint && npm run build
 ```
 
+Optionally scan for secrets before pushing (see [README — Secret scanning](README.md#secret-scanning-gitleaks)):
+
+```bash
+gitleaks detect --source .
+```
+
 5. Push to your fork and open a pull request against `main`.
 
 ## Pull request guidelines
