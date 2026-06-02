@@ -6,8 +6,12 @@ import {
   ArrowLeft, ArrowRight, Download, Upload, Filter, Layout, List, Activity, AlertTriangle,
   Cloud, CloudOff, Languages, BarChart2, Settings
 } from 'lucide-react';
-import { signInWithGoogle, signOut, onAuthChange, loadAllCompanies, updateCompany, deleteFirestoreCompany, batchSaveCompanies, publishShare, loadSharedData } from './firebase';
+import { signInWithGoogle, signOut, onAuthChange, loadAllItems, updateItem, deleteItem, batchSaveItems, loadUserProfile, saveUserProfile, publishShare, loadSharedData } from './firebase';
 import { initAI } from './services/aiAssistant';
+import {
+  getStatuses, getTerminalStatuses, getRejectedStatuses, getFunnelOrder,
+  getStorageKey, INTERVIEW_TYPE_KEYS,
+} from './statuses';
 import Onboarding from './components/Onboarding';
 import AIAssistant from './components/AIAssistant';
 import APIKeySettings from './components/APIKeySettings';
@@ -34,35 +38,10 @@ const safeStr = (val) => {
   return String(val);
 };
 
-const STATUSES = [
-  { id: 'applied', color: 'bg-blue-100 text-blue-800 border-blue-200' },
-  { id: 'hr_call', color: 'bg-purple-100 text-purple-800 border-purple-200' },
-  { id: 'tech_interview', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  { id: 'manager_interview', color: 'bg-orange-100 text-orange-800 border-orange-200' },
-  { id: 'home_assignment', color: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
-  { id: 'references', color: 'bg-teal-100 text-teal-800 border-teal-200' },
-  { id: 'offer', color: 'bg-green-100 text-green-800 border-green-200' },
-  { id: 'frozen', color: 'bg-gray-100 text-gray-800 border-gray-200' },
-  { id: 'rejected', color: 'bg-red-100 text-red-800 border-red-200' },
-  { id: 'ghosted', color: 'bg-slate-100 text-slate-600 border-slate-200' },
-  { id: 'withdrawn', color: 'bg-stone-100 text-stone-700 border-stone-300' },
-];
-
 const PRIORITIES = [
   { id: 'high', color: 'bg-red-500' },
   { id: 'medium', color: 'bg-orange-500' },
   { id: 'low', color: 'bg-blue-500' },
-];
-
-const INTERVIEW_TYPE_KEYS = [
-  'Intro Call / HR',
-  'Technical Interview',
-  'Manager Interview',
-  'Home Assignment / Task',
-  'VP / CEO Interview',
-  'References Check',
-  'Salary Offer',
-  'Other',
 ];
 
 const REJECTION_METHOD_KEYS = [
@@ -119,16 +98,26 @@ const getDaysUntil = (dateString) => {
   return Math.ceil((date - today) / (1000 * 60 * 60 * 24));
 };
 
-const initialFormState = {
+const makeInitialFormState = (isRecruiter) => ({
   name: '', role: '', location: '', status: 'applied', priority: 'medium',
   website: '', linkedinCompany: '', linkedinHR: '', description: '', products: '',
+  linkedinCandidate: '', currentRole: '', expectedSalary: '', source: '',
   interviews: [], homeworks: [], contacts: [], generalNotes: '',
   rejection: { date: '', method: '', notes: '' },
-};
+  ...(isRecruiter ? {} : {}),
+});
 
-export default function JobTrackerApp() {
+export default function JobTrackerApp({ mode = 'jobseeker' }) {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'he';
+  const isRecruiter = mode === 'recruiter';
+  const STATUSES = getStatuses(mode);
+  const rejectedStatuses = getRejectedStatuses(mode);
+  const terminalStatuses = getTerminalStatuses(mode);
+
+  const tMode = (key, fallback) => t(isRecruiter ? `recruiter.${key}` : key, fallback);
+  const tStatus = (id) => t(isRecruiter ? `recruiter.status.${id}` : `status.${id}`);
+  const tInterviewType = (key) => t(isRecruiter ? `recruiter.interviewType.${key}` : `interviewType.${key}`, key);
 
   const formatDate = (dateString) => {
     const strDate = safeStr(dateString);
@@ -144,13 +133,10 @@ export default function JobTrackerApp() {
 
   const [companies, setCompanies] = useState(() => {
     try {
-      const keysToTry = ['jobTrackerAppV2Data', 'jobTrackerV3Data', 'jobTrackerData'];
-      for (const key of keysToTry) {
-        const saved = window.localStorage.getItem(key);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
+      const saved = window.localStorage.getItem(getStorageKey(mode));
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
       }
       return [];
     } catch { return []; }
@@ -182,11 +168,10 @@ export default function JobTrackerApp() {
     const model = localStorage.getItem('aiModel') || '';
     const ollamaUrl = localStorage.getItem('ollamaUrl') || 'http://localhost:11434';
     initAI(provider, apiKey, model, ollamaUrl);
-    if (!localStorage.getItem('hasCompletedOnboarding')) {
+    if (!localStorage.getItem('hasCompletedOnboarding') && !isRecruiter) {
       setShowOnboarding(true);
     }
 
-    // Check for shared view URL: ?share=<uid>
     const params = new URLSearchParams(window.location.search);
     const shareUid = params.get('share');
     if (shareUid) {
@@ -195,26 +180,21 @@ export default function JobTrackerApp() {
         if (data?.companies?.length) setCompanies(data.companies);
       }).catch(console.error);
     }
-  }, []);
+  }, [isRecruiter]);
 
-  const initialFormState = {
-    name: '', role: '', location: '', status: 'applied', priority: 'medium',
-    website: '', linkedinCompany: '', linkedinHR: '', description: '', products: '',
-    interviews: [], homeworks: [], contacts: [], generalNotes: '',
-    rejection: { date: '', method: '', notes: '' },
-  };
+  const initialFormState = makeInitialFormState(isRecruiter);
   const [formData, setFormData] = useState(initialFormState);
 
   useEffect(() => {
     try {
       if (companies.length > 0) {
         setIsSaved(false);
-        window.localStorage.setItem('jobTrackerAppV2Data', JSON.stringify(companies));
+        window.localStorage.setItem(getStorageKey(mode), JSON.stringify(companies));
         const timer = setTimeout(() => setIsSaved(true), 800);
         return () => clearTimeout(timer);
       }
     } catch (e) { console.warn('LocalStorage error:', e); }
-  }, [companies]);
+  }, [companies, mode]);
 
   useEffect(() => {
     const unsub = onAuthChange(async (firebaseUser) => {
@@ -222,26 +202,31 @@ export default function JobTrackerApp() {
       if (firebaseUser) {
         setSyncing(true);
         try {
-          const data = await loadAllCompanies(firebaseUser.uid);
+          const profile = await loadUserProfile(firebaseUser.uid);
+          if (profile.appMode && profile.appMode !== mode) {
+            localStorage.setItem('appMode', profile.appMode);
+          }
+          await saveUserProfile(firebaseUser.uid, { appMode: mode });
+          const data = await loadAllItems(firebaseUser.uid, mode);
           if (data && data.length > 0) {
             setCompanies(data);
-            showToast(t('toast.driveConnectedWithData'));
+            showToast(tMode('toast.driveConnectedWithData'));
           } else {
-            showToast(t('toast.driveConnectedEmpty'));
+            showToast(tMode('toast.driveConnectedEmpty'));
           }
         } catch (e) { console.error(e); }
         setSyncing(false);
       }
     });
     return unsub;
-  }, []);
+  }, [mode]);
 
   const openNewForm = useCallback(() => {
-    setFormData(initialFormState);
+    setFormData(makeInitialFormState(isRecruiter));
     setSelectedId(null);
     setIsEditing(true);
     setActiveTab('list');
-  }, []);
+  }, [isRecruiter]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -257,13 +242,13 @@ export default function JobTrackerApp() {
     try {
       await signInWithGoogle();
     } catch {
-      showToast(t('toast.driveFailed'));
+      showToast(tMode('toast.driveFailed'));
     }
   };
 
   const handleSignOut = () => {
     signOut();
-    showToast(t('toast.driveDisconnected'));
+    showToast(tMode('toast.driveDisconnected'));
   };
 
   const filteredCompanies = useMemo(() => {
@@ -304,12 +289,12 @@ export default function JobTrackerApp() {
     const total = companies.length;
     const byStatus = {};
     STATUSES.forEach(s => { byStatus[s.id] = companies.filter(c => c.status === s.id).length; });
-    const active = companies.filter(c => !['rejected', 'ghosted', 'withdrawn', 'offer'].includes(c.status)).length;
+    const active = companies.filter(c => !terminalStatuses.includes(c.status)).length;
     const responded = companies.filter(c => c.status !== 'applied').length;
     const responseRate = total > 0 ? Math.round((responded / total) * 100) : 0;
     const interviewCount = companies.reduce((acc, c) => acc + (Array.isArray(c.interviews) ? c.interviews.length : 0), 0);
     return { total, byStatus, active, responseRate, interviewCount };
-  }, [companies]);
+  }, [companies, STATUSES, terminalStatuses]);
 
   const upcomingEvents = useMemo(() => {
     return timelineEvents
@@ -323,33 +308,33 @@ export default function JobTrackerApp() {
   };
 
   const handleSave = () => {
-    if (!formData.name) { alert(t('form.requiredName')); return; }
+    if (!formData.name) { alert(tMode('form.requiredName')); return; }
     const dataToSave = {
       ...formData,
-      rejection: ['rejected', 'ghosted'].includes(formData.status)
+      rejection: rejectedStatuses.includes(formData.status)
         ? (formData.rejection || { date: '', method: '', notes: '' })
         : { date: '', method: '', notes: '' },
     };
     if (dataToSave.id) {
       setCompanies(companies.map(c => String(c.id) === String(dataToSave.id) ? dataToSave : c));
-      if (user) updateCompany(user.uid, dataToSave).catch(console.error);
+      if (user) updateItem(user.uid, mode, dataToSave).catch(console.error);
     } else {
       const newCompany = { ...dataToSave, id: Date.now().toString() };
       setCompanies([newCompany, ...companies]);
       setSelectedId(newCompany.id);
-      if (user) updateCompany(user.uid, newCompany).catch(console.error);
+      if (user) updateItem(user.uid, mode, newCompany).catch(console.error);
     }
     setIsEditing(false);
-    showToast(t('toast.saved'));
+    showToast(tMode('toast.saved'));
   };
 
   const handleDelete = (id) => {
-    if (window.confirm(t('alert.deleteConfirm'))) {
+    if (window.confirm(tMode('alert.deleteConfirm'))) {
       setCompanies(prev => prev.filter(c => String(c.id) !== String(id)));
       setSelectedId(null);
       setIsEditing(false);
-      showToast(t('toast.deleted'));
-      if (user) deleteFirestoreCompany(user.uid, id).catch(console.error);
+      showToast(tMode('toast.deleted'));
+      if (user) deleteItem(user.uid, mode, id).catch(console.error);
     }
   };
 
@@ -361,8 +346,8 @@ export default function JobTrackerApp() {
       generalNotes: target.generalNotes ? `${target.generalNotes}\n\n---\n${text}` : text,
     };
     setCompanies(prev => prev.map(c => String(c.id) === String(companyId) ? updated : c));
-    if (user) updateCompany(user.uid, updated).catch(console.error);
-  }, [companies, user]);
+    if (user) updateItem(user.uid, mode, updated).catch(console.error);
+  }, [companies, user, mode]);
 
   const handleRejectionNoteSave = useCallback((text) => {
     if (!rejectionCompany) return;
@@ -373,8 +358,8 @@ export default function JobTrackerApp() {
       generalNotes: target.generalNotes ? `${target.generalNotes}\n\n---\n${text}` : text,
     };
     setCompanies(prev => prev.map(c => c.id === rejectionCompany.id ? updated : c));
-    if (user) updateCompany(user.uid, updated).catch(console.error);
-  }, [companies, user, rejectionCompany]);
+    if (user) updateItem(user.uid, mode, updated).catch(console.error);
+  }, [companies, user, rejectionCompany, mode]);
 
   const handleStartSimulation = useCallback((categoryKey) => {
     const cat = TEMPLATES[categoryKey];
@@ -417,10 +402,10 @@ Rules:
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
-    link.download = `job-tracker-backup-${new Date().toISOString().split('T')[0]}.json`;
+    link.download = `${isRecruiter ? 'recruiter-tracker' : 'job-tracker'}-backup-${new Date().toISOString().split('T')[0]}.json`;
     link.href = url;
     link.click();
-    showToast(t('toast.exported'));
+    showToast(tMode('toast.exported'));
   };
 
   const handleImport = (e) => {
@@ -440,20 +425,20 @@ Rules:
           if (importedArray.length > 0) {
             const sanitizedData = importedArray.map((c, idx) => ({
               ...c,
-              name: safeStr(c.name || c.company || t('alert.unnamedCompany')),
+              name: safeStr(c.name || c.company || tMode('alert.unnamedCompany')),
               role: safeStr(c.role || c.position || ''),
               interviews: Array.isArray(c.interviews) ? c.interviews.map(inv => ({ ...inv, type: safeStr(inv.type || inv.round || '') })) : [],
               rejection: c.rejection || { date: '', method: '', notes: '' },
               id: c.id ? String(c.id) : Date.now().toString() + idx,
             }));
             setCompanies(sanitizedData);
-            showToast(t('toast.imported'));
-            if (user) batchSaveCompanies(user.uid, sanitizedData).catch(console.error);
+            showToast(tMode('toast.imported'));
+            if (user) batchSaveItems(user.uid, mode, sanitizedData).catch(console.error);
           } else {
-            alert(t('alert.noCompanyData'));
+            alert(tMode('alert.noCompanyData'));
           }
         } catch {
-          alert(t('alert.importError'));
+          alert(tMode('alert.importError'));
         }
       };
       reader.readAsText(file);
@@ -482,8 +467,8 @@ Rules:
     const company = companies.find(c => String(c.id) === String(id));
     setCompanies(prev => prev.map(c => String(c.id) === String(id) ? { ...c, status: statusId } : c));
     dragCompanyId.current = null;
-    showToast(t('toast.saved'));
-    if (user && company) updateCompany(user.uid, { ...company, status: statusId }).catch(console.error);
+    showToast(tMode('toast.saved'));
+    if (user && company) updateItem(user.uid, mode, { ...company, status: statusId }).catch(console.error);
   };
 
   const timelineBorder = isRTL ? 'border-r-2 pr-6' : 'border-l-2 pl-6';
@@ -503,12 +488,12 @@ Rules:
             onDrop={e => handleDrop(e, statusObj.id)}
           >
             <div className={`rounded-t-xl px-4 py-3 font-bold border-b-4 shadow-sm ${statusObj.color}`}>
-              {t(`status.${statusObj.id}`)} ({statusCompanies.length})
+              {tStatus(statusObj.id)} ({statusCompanies.length})
             </div>
             <div className="bg-gray-100 rounded-b-xl p-3 flex-1 overflow-y-auto space-y-3 custom-scrollbar">
               {statusCompanies.map(company => {
                 const journeySteps = getJourneySteps(company);
-                const isRejected = ['rejected', 'ghosted'].includes(company.status);
+                const isRejected = rejectedStatuses.includes(company.status);
                 return (
                   <div
                     key={company.id}
@@ -539,7 +524,7 @@ Rules:
                           <>
                             <span className="text-gray-300 text-[10px]">›</span>
                             <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-red-100 text-red-600">
-                              {t(`status.${company.status}`)}
+                              {tStatus(company.status)}
                             </span>
                           </>
                         )}
@@ -559,15 +544,15 @@ Rules:
             <div className="bg-indigo-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
               <Activity size={40} className="text-indigo-600" />
             </div>
-            <h2 className="text-2xl font-black text-gray-800 mb-2">{t('board.emptyTitle')}</h2>
-            <p className="text-gray-500 mb-8 text-sm">{t('board.emptyDesc')}</p>
+            <h2 className="text-2xl font-black text-gray-800 mb-2">{tMode('board.emptyTitle')}</h2>
+            <p className="text-gray-500 mb-8 text-sm">{tMode('board.emptyDesc')}</p>
 
             {!user && (
               <button
                 onClick={handleSignIn}
                 className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-base py-3.5 px-6 rounded-xl shadow-lg transition-transform hover:scale-105 active:scale-95 flex items-center justify-center gap-3 mb-3"
               >
-                <Cloud size={20} /> {t('board.signInButton')}
+                <Cloud size={20} /> {tMode('board.signInButton')}
               </button>
             )}
 
@@ -575,31 +560,33 @@ Rules:
               onClick={openNewForm}
               className="w-full bg-green-600 hover:bg-green-700 text-white font-bold text-base py-3.5 px-6 rounded-xl shadow transition-transform hover:scale-105 active:scale-95 flex items-center justify-center gap-3 mb-3"
             >
-              <Plus size={20} /> {t('board.addFirstButton', 'Add your first company')}
+              <Plus size={20} /> {tMode('board.addFirstButton', 'Add your first entry')}
             </button>
 
             <button
               onClick={triggerFileInput}
               className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm py-3 px-6 rounded-xl flex items-center justify-center gap-2 mb-3"
             >
-              <Upload size={16} /> {t('board.loadButton')}
+              <Upload size={16} /> {tMode('board.loadButton')}
             </button>
 
+            {!isRecruiter && (
             <button
               onClick={() => setShowOnboarding(true)}
               className="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm py-2.5 px-6 rounded-xl border border-indigo-200 flex items-center justify-center gap-2 mb-4"
             >
-              💡 {t('board.viewTutorial', 'View Tutorial')}
+              💡 {tMode('board.viewTutorial', 'View Tutorial')}
             </button>
+            )}
 
             <div className="grid grid-cols-2 gap-3 text-left text-xs text-gray-500">
               <div className="bg-indigo-50 p-3 rounded-lg">
-                <div className="font-bold text-indigo-700 mb-1 flex items-center gap-1"><Cloud size={12} /> {t('board.modeCloudTitle')}</div>
-                <p>{t('board.modeCloudDesc')}</p>
+                <div className="font-bold text-indigo-700 mb-1 flex items-center gap-1"><Cloud size={12} /> {tMode('board.modeCloudTitle')}</div>
+                <p>{tMode('board.modeCloudDesc')}</p>
               </div>
               <div className="bg-gray-50 p-3 rounded-lg">
-                <div className="font-bold text-gray-700 mb-1 flex items-center gap-1"><Download size={12} /> {t('board.modeLocalTitle')}</div>
-                <p>{t('board.modeLocalDesc')}</p>
+                <div className="font-bold text-gray-700 mb-1 flex items-center gap-1"><Download size={12} /> {tMode('board.modeLocalTitle')}</div>
+                <p>{tMode('board.modeLocalDesc')}</p>
               </div>
             </div>
           </div>
@@ -651,23 +638,31 @@ Rules:
 
   const renderStats = () => {
     const statCards = [
-      { label: t('stats.total', 'Total Applications'), value: stats.total, color: 'text-blue-600' },
-      { label: t('stats.active', 'Active'), value: stats.active, color: 'text-indigo-600' },
-      { label: t('stats.responseRate', 'Response Rate'), value: `${stats.responseRate}%`, color: 'text-green-600' },
-      { label: t('stats.interviews', 'Interviews'), value: stats.interviewCount, color: 'text-purple-600' },
+      { label: tMode('stats.total', 'Total Applications'), value: stats.total, color: 'text-blue-600' },
+      { label: tMode('stats.active', 'Active'), value: stats.active, color: 'text-indigo-600' },
+      { label: tMode('stats.responseRate', 'Response Rate'), value: `${stats.responseRate}%`, color: 'text-green-600' },
+      { label: tMode('stats.interviews', 'Interviews'), value: stats.interviewCount, color: 'text-purple-600' },
     ];
     const maxCount = Math.max(...STATUSES.map(s => stats.byStatus[s.id] || 0), 1);
 
-    // Application Journey funnel
-    const JOURNEY_STAGES = [
-      { id: 'applied',           label: 'Applied',   color: 'bg-blue-100 text-blue-800 border-blue-300' },
-      { id: 'hr_call',           label: 'HR Call',   color: 'bg-purple-100 text-purple-800 border-purple-300' },
-      { id: 'tech_interview',    label: 'Technical', color: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
-      { id: 'manager_interview', label: 'Manager',   color: 'bg-orange-100 text-orange-800 border-orange-300' },
-      { id: 'offer',             label: 'Offer',     color: 'bg-green-100 text-green-800 border-green-300' },
-    ];
-    const FUNNEL_ORDER = ['applied', 'hr_call', 'tech_interview', 'manager_interview', 'offer'];
-    const INTERVIEW_TYPE_TO_STAGE = {
+    const funnelOrder = getFunnelOrder(mode);
+    const JOURNEY_STAGES = funnelOrder.map(id => {
+      const statusDef = STATUSES.find(s => s.id === id);
+      return {
+        id,
+        label: tStatus(id),
+        color: statusDef ? statusDef.color.replace('border-', 'border-').replace('200', '300') : 'bg-gray-100 text-gray-800 border-gray-300',
+      };
+    });
+    const FUNNEL_ORDER = funnelOrder;
+    const INTERVIEW_TYPE_TO_STAGE = isRecruiter ? {
+      'Intro Call / HR': 'screening',
+      'Technical Interview': 'technical',
+      'Manager Interview': 'final_interview',
+      'VP / CEO Interview': 'final_interview',
+      'Salary Offer': 'offer_extended',
+      'References Check': 'offer_extended',
+    } : {
       'Intro Call / HR': 'hr_call',
       'Technical Interview': 'tech_interview',
       'Manager Interview': 'manager_interview',
@@ -711,13 +706,13 @@ Rules:
       <div className="flex-1 overflow-y-auto p-6 bg-slate-50 min-h-0 custom-scrollbar">
         <div className="max-w-4xl mx-auto space-y-8">
           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <BarChart2 className="text-indigo-600" /> {t('stats.title', 'Statistics')}
+            <BarChart2 className="text-indigo-600" /> {tMode('stats.title', 'Statistics')}
           </h2>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {statCards.map(card => (
               <div key={card.label} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 text-center">
-                {card.label === t('stats.responseRate', 'Response Rate') ? (
+                {card.label === tMode('stats.responseRate', 'Response Rate') ? (
                   <Tooltip text={t('tooltips.responseRate')} position="top">
                     <div className={`text-3xl font-black mb-1 ${card.color}`}>{card.value}</div>
                   </Tooltip>
@@ -732,17 +727,17 @@ Rules:
           {/* Application Journey card */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div className="flex items-center justify-between mb-1">
-              <h3 className="font-bold text-gray-800">🔽 {t('stats.journey', 'Hiring Funnel')}</h3>
+              <h3 className="font-bold text-gray-800">🔽 {tMode('stats.journey', 'Hiring Funnel')}</h3>
               {avgDays !== null && (
                 <span className="text-xs text-gray-500 bg-gray-50 border border-gray-100 px-2 py-1 rounded-lg">
-                  {t('stats.avgDays', 'Avg. days from first to last interview')}: <span className="font-bold text-gray-700">{avgDays}d</span>
+                  {tMode('stats.avgDays', 'Avg. days from first to last interview')}: <span className="font-bold text-gray-700">{avgDays}d</span>
                 </span>
               )}
             </div>
-            <p className="text-xs text-gray-400 mb-5">{t('stats.journeySubtitle', 'How many of your applications reached each stage — shows where most drop off')}</p>
+            <p className="text-xs text-gray-400 mb-5">{tMode('stats.journeySubtitle', 'How many applications reached each stage')}</p>
             {!hasJourneyData ? (
               <div className="text-center text-gray-400 py-6 bg-gray-50 rounded-lg border border-dashed border-gray-200 text-sm">
-                {t('stats.noData', 'Add more companies to see patterns')}
+                {tMode('stats.noData', 'Add more to see patterns')}
               </div>
             ) : (
               <div className="flex flex-wrap items-center gap-1">
@@ -773,11 +768,11 @@ Rules:
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h3 className="font-bold text-gray-800 mb-5">{t('stats.byStatus', 'By Status')}</h3>
+            <h3 className="font-bold text-gray-800 mb-5">{tMode('stats.byStatus', 'By Status')}</h3>
             <div className="space-y-3">
               {STATUSES.filter(s => (stats.byStatus[s.id] || 0) > 0).map(s => (
                 <div key={s.id} className="flex items-center gap-3">
-                  <div className="w-32 text-sm text-gray-600 flex-shrink-0 truncate">{t(`status.${s.id}`)}</div>
+                  <div className="w-32 text-sm text-gray-600 flex-shrink-0 truncate">{tStatus(s.id)}</div>
                   <div className="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all ${s.color.split(' ')[0]}`}
@@ -794,7 +789,7 @@ Rules:
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
                 <Calendar size={18} className="text-orange-500" />
-                {t('stats.upcoming', 'Upcoming — Next 14 Days')}
+                {tMode('stats.upcoming', 'Upcoming — Next 14 Days')}
               </h3>
               <div className="space-y-3">
                 {upcomingEvents.map((event, i) => {
@@ -802,7 +797,7 @@ Rules:
                   return (
                     <div key={`${event.companyName}-${event.date}`} className="flex items-center gap-4 p-3 bg-orange-50 rounded-lg border border-orange-100">
                       <div className={`text-center px-3 py-1 rounded-lg font-bold text-sm flex-shrink-0 min-w-[48px] ${days === 0 ? 'bg-red-500 text-white' : days <= 2 ? 'bg-orange-500 text-white' : 'bg-blue-100 text-blue-700'}`}>
-                        {days === 0 ? t('stats.today', 'Today') : `+${days}d`}
+                        {days === 0 ? tMode('stats.today', 'Today') : `+${days}d`}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="font-bold text-gray-800 truncate">{safeStr(event.companyName)}</div>
@@ -836,22 +831,22 @@ Rules:
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
-                {t('header.title')}
+                {tMode('header.title')}
                 {companies.length > 0 && (
                   <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 transition-all ${isSaved ? 'bg-green-500/20 text-green-100' : 'bg-yellow-500/50 text-yellow-50'}`}>
                     {isSaved ? <CheckCircle size={12} /> : <Clock size={12} />}
-                    {isSaved ? t('header.savedInBrowser') : t('header.saving')}
+                    {isSaved ? tMode('header.savedInBrowser') : tMode('header.saving')}
                   </span>
                 )}
               </h1>
-              <p className="text-blue-200 text-sm">{t('header.subtitle')}</p>
+              <p className="text-blue-200 text-sm">{tMode('header.subtitle')}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             {!shareMode && (
               <button onClick={openNewForm} className="flex items-center gap-2 bg-white text-indigo-700 hover:bg-blue-50 px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-sm">
-                <Plus size={18} /> {t('header.addCompany')}
+                <Plus size={18} /> {tMode('header.addCompany')}
               </button>
             )}
 
@@ -973,7 +968,7 @@ Rules:
                 <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-2.5 text-gray-400`} size={18} />
                 <input
                   type="text"
-                  placeholder={t('list.searchPlaceholder')}
+                  placeholder={tMode('list.searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className={`w-full ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm`}
@@ -986,15 +981,15 @@ Rules:
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className={`w-full ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white text-sm`}
                 >
-                  <option value="all">{t('list.allStatuses')}</option>
-                  {STATUSES.map(s => <option key={s.id} value={s.id}>{t(`status.${s.id}`)}</option>)}
+                  <option value="all">{tMode('list.allStatuses')}</option>
+                  {STATUSES.map(s => <option key={s.id} value={s.id}>{tStatus(s.id)}</option>)}
                 </select>
               </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
               {filteredCompanies.length === 0 ? (
-                <div className="p-6 text-center text-gray-500 text-sm">{t('list.noResults')}</div>
+                <div className="p-6 text-center text-gray-500 text-sm">{tMode('list.noResults')}</div>
               ) : (
                 <>
                   {filteredCompanies.slice(0, visibleCount).map(company => {
@@ -1019,7 +1014,7 @@ Rules:
                             <p className="text-sm text-gray-600 truncate">{safeStr(company.role)}</p>
                             <div className="mt-1.5">
                               <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium border ${statusInfo?.color || 'bg-gray-100 border-gray-200'}`}>
-                                {statusInfo ? t(`status.${statusInfo.id}`) : t('status.unknown')}
+                                {statusInfo ? tStatus(statusInfo.id) : tStatus('unknown')}
                               </span>
                             </div>
                           </div>
@@ -1032,7 +1027,7 @@ Rules:
                       onClick={() => setVisibleCount(n => n + 25)}
                       className="w-full py-2 text-sm text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-xl transition-colors font-medium"
                     >
-                      {t('list.loadMore', 'Load more')} ({filteredCompanies.length - visibleCount} {t('list.remaining', 'remaining')})
+                      {tMode('list.loadMore', 'Load more')} ({filteredCompanies.length - visibleCount} {tMode('list.remaining', 'remaining')})
                     </button>
                   )}
                 </>
@@ -1044,7 +1039,7 @@ Rules:
             {(selectedId || isEditing) && (
               <div className="md:hidden sticky top-0 bg-white/90 backdrop-blur-sm p-3 border-b border-gray-200 z-10">
                 <button onClick={() => { setSelectedId(null); setIsEditing(false); }} className="flex items-center gap-2 text-indigo-600 font-bold">
-                  <BackArrow size={18} /> {t('list.backToList')}
+                  <BackArrow size={18} /> {tMode('list.backToList')}
                 </button>
               </div>
             )}
@@ -1054,31 +1049,31 @@ Rules:
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
                   <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
                     <h2 className="text-2xl font-bold text-gray-800">
-                      {formData.id ? t('form.editTitle') : t('form.addTitle')}
+                      {formData.id ? tMode('form.editTitle') : tMode('form.addTitle')}
                     </h2>
                     <div className="flex gap-2">
-                      <button onClick={() => formData.id ? setIsEditing(false) : setSelectedId(null)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition">{t('form.cancel')}</button>
-                      <button onClick={handleSave} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-sm transition">{t('form.save')}</button>
+                      <button onClick={() => formData.id ? setIsEditing(false) : setSelectedId(null)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition">{tMode('form.cancel')}</button>
+                      <button onClick={handleSave} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-sm transition">{tMode('form.save')}</button>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-1">{t('form.companyName')}</label>
+                      <label className="block text-sm font-bold text-gray-700 mb-1">{tMode('form.companyName')}</label>
                       <input type="text" value={safeStr(formData.name)} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" />
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-1">{t('form.role')}</label>
+                      <label className="block text-sm font-bold text-gray-700 mb-1">{tMode('form.role')}</label>
                       <input type="text" value={safeStr(formData.role)} onChange={e => setFormData({...formData, role: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" />
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-1">{t('form.processStatus')}</label>
+                      <label className="block text-sm font-bold text-gray-700 mb-1">{tMode('form.processStatus')}</label>
                       <select value={formData.status || 'applied'} onChange={e => setFormData({...formData, status: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white">
-                        {STATUSES.map(s => <option key={s.id} value={s.id}>{t(`status.${s.id}`)}</option>)}
+                        {STATUSES.map(s => <option key={s.id} value={s.id}>{tStatus(s.id)}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-1">{t('form.priority')}</label>
+                      <label className="block text-sm font-bold text-gray-700 mb-1">{tMode('form.priority')}</label>
                       <Tooltip text={t('tooltips.priority')} position="top">
                         <select value={formData.priority || 'medium'} onChange={e => setFormData({...formData, priority: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white">
                           {PRIORITIES.map(p => <option key={p.id} value={p.id}>{t(`priority.${p.id}`)}</option>)}
@@ -1088,23 +1083,35 @@ Rules:
                   </div>
 
                   <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 mb-8">
-                    <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Globe size={18} /> {t('form.linksSection')}</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                      <input type="text" placeholder={t('form.websitePlaceholder')} value={safeStr(formData.website)} onChange={e => setFormData({...formData, website: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md" />
-                      <input type="text" placeholder={t('form.linkedinPlaceholder')} value={safeStr(formData.linkedinCompany)} onChange={e => setFormData({...formData, linkedinCompany: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md" />
-                      <input type="text" placeholder={t('form.locationPlaceholder')} value={safeStr(formData.location)} onChange={e => setFormData({...formData, location: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md" />
-                    </div>
-                    <textarea placeholder={t('form.descriptionPlaceholder')} value={safeStr(formData.description)} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md h-20 resize-none"></textarea>
+                    <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Globe size={18} /> {tMode('form.linksSection')}</h3>
+                    {isRecruiter ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <input type="text" placeholder={tMode('form.linkedinCandidatePlaceholder')} value={safeStr(formData.linkedinCandidate)} onChange={e => setFormData({...formData, linkedinCandidate: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md" />
+                        <input type="text" placeholder={tMode('form.locationPlaceholder')} value={safeStr(formData.location)} onChange={e => setFormData({...formData, location: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md" />
+                        <input type="text" placeholder={tMode('form.currentRolePlaceholder')} value={safeStr(formData.currentRole)} onChange={e => setFormData({...formData, currentRole: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md" />
+                        <input type="text" placeholder={tMode('form.expectedSalaryPlaceholder')} value={safeStr(formData.expectedSalary)} onChange={e => setFormData({...formData, expectedSalary: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md" />
+                        <input type="text" placeholder={tMode('form.sourcePlaceholder')} value={safeStr(formData.source)} onChange={e => setFormData({...formData, source: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md md:col-span-2" />
+                      </div>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                          <input type="text" placeholder={tMode('form.websitePlaceholder')} value={safeStr(formData.website)} onChange={e => setFormData({...formData, website: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md" />
+                          <input type="text" placeholder={tMode('form.linkedinPlaceholder')} value={safeStr(formData.linkedinCompany)} onChange={e => setFormData({...formData, linkedinCompany: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md" />
+                          <input type="text" placeholder={tMode('form.locationPlaceholder')} value={safeStr(formData.location)} onChange={e => setFormData({...formData, location: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md" />
+                        </div>
+                        <textarea placeholder={tMode('form.descriptionPlaceholder')} value={safeStr(formData.description)} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md h-20 resize-none"></textarea>
+                      </>
+                    )}
                   </div>
 
                   <div className="mb-8">
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="font-bold text-gray-800 flex items-center gap-2"><User size={18} /> {t('form.interviews')}</h3>
+                      <h3 className="font-bold text-gray-800 flex items-center gap-2"><User size={18} /> {tMode('form.interviews')}</h3>
                       <button
                         onClick={() => setFormData({...formData, interviews: [...(formData.interviews || []), { type: 'Intro Call / HR', date: '', interviewer: '', summary: '' }]})}
                         className="text-sm text-indigo-600 font-bold flex items-center gap-1 hover:text-indigo-800"
                       >
-                        <Plus size={16} /> {t('form.addInterview')}
+                        <Plus size={16} /> {tMode('form.addInterview')}
                       </button>
                     </div>
                     {(formData.interviews || []).map((interview, index) => (
@@ -1122,27 +1129,27 @@ Rules:
                               onChange={e => { const a = [...formData.interviews]; a[index].type = e.target.value; setFormData({...formData, interviews: a}); }}
                               className="w-full p-2 text-sm border rounded bg-white"
                             >
-                              <option value="" disabled>{t('form.selectInterviewType')}</option>
-                              {INTERVIEW_TYPE_KEYS.map(key => <option key={key} value={key}>{t(`interviewType.${key}`, key)}</option>)}
+                              <option value="" disabled>{tMode('form.selectInterviewType')}</option>
+                              {INTERVIEW_TYPE_KEYS.map(key => <option key={key} value={key}>{tInterviewType(key)}</option>)}
                               {interview.type && !INTERVIEW_TYPE_KEYS.includes(interview.type) && <option value={safeStr(interview.type)}>{safeStr(interview.type)}</option>}
                             </select>
                           </Tooltip>
                           <input type="date" value={safeStr(interview.date)} onChange={e => { const a = [...formData.interviews]; a[index].date = e.target.value; setFormData({...formData, interviews: a}); }} className="w-full p-2 text-sm border rounded" />
-                          <input type="text" placeholder={t('form.interviewerPlaceholder')} value={safeStr(interview.interviewer)} onChange={e => { const a = [...formData.interviews]; a[index].interviewer = e.target.value; setFormData({...formData, interviews: a}); }} className="w-full p-2 text-sm border rounded" />
+                          <input type="text" placeholder={tMode('form.interviewerPlaceholder')} value={safeStr(interview.interviewer)} onChange={e => { const a = [...formData.interviews]; a[index].interviewer = e.target.value; setFormData({...formData, interviews: a}); }} className="w-full p-2 text-sm border rounded" />
                         </div>
-                        <textarea placeholder={t('form.summaryPlaceholder')} value={safeStr(interview.summary)} onChange={e => { const a = [...formData.interviews]; a[index].summary = e.target.value; setFormData({...formData, interviews: a}); }} className="w-full p-2 text-sm border rounded h-16"></textarea>
+                        <textarea placeholder={tMode('form.summaryPlaceholder')} value={safeStr(interview.summary)} onChange={e => { const a = [...formData.interviews]; a[index].summary = e.target.value; setFormData({...formData, interviews: a}); }} className="w-full p-2 text-sm border rounded h-16"></textarea>
                       </div>
                     ))}
                   </div>
 
-                  {['rejected', 'ghosted'].includes(formData.status) && (
+                  {rejectedStatuses.includes(formData.status) && (
                     <div className="mb-8 bg-red-50 p-5 rounded-xl border border-red-100">
                       <h3 className="font-bold text-red-800 mb-4 flex items-center gap-2">
-                        <AlertTriangle size={18} /> {t('form.rejectionTitle', 'Rejection Details')}
+                        <AlertTriangle size={18} /> {tMode('form.rejectionTitle', 'Rejection Details')}
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
-                          <label className="block text-sm font-bold text-gray-700 mb-1">{t('form.rejectionDate', 'Rejection Date')}</label>
+                          <label className="block text-sm font-bold text-gray-700 mb-1">{tMode('form.rejectionDate', 'Rejection Date')}</label>
                           <input
                             type="date"
                             value={safeStr(formData.rejection?.date)}
@@ -1151,34 +1158,34 @@ Rules:
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-bold text-gray-700 mb-1">{t('form.rejectionMethod', 'How Were You Notified')}</label>
+                          <label className="block text-sm font-bold text-gray-700 mb-1">{tMode('form.rejectionMethod', 'How Were You Notified')}</label>
                           <Tooltip text={t('tooltips.rejectionMethod')} position="top">
                             <select
                               value={safeStr(formData.rejection?.method)}
                               onChange={e => setFormData({...formData, rejection: {...(formData.rejection || {}), method: e.target.value}})}
                               className="w-full p-2.5 border border-red-200 rounded-lg focus:ring-2 focus:ring-red-400 bg-white"
                             >
-                              <option value="">{t('form.rejectionMethodSelect', 'Select...')}</option>
+                              <option value="">{tMode('form.rejectionMethodSelect', 'Select...')}</option>
                               {REJECTION_METHOD_KEYS.map(key => <option key={key} value={key}>{t(`rejectionMethod.${key}`, key)}</option>)}
                             </select>
                           </Tooltip>
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-1">{t('form.rejectionNotes', 'Notes / Feedback')}</label>
+                        <label className="block text-sm font-bold text-gray-700 mb-1">{tMode('form.rejectionNotes', 'Notes / Feedback')}</label>
                         <textarea
                           value={safeStr(formData.rejection?.notes)}
                           onChange={e => setFormData({...formData, rejection: {...(formData.rejection || {}), notes: e.target.value}})}
                           className="w-full p-2.5 border border-red-200 rounded-lg focus:ring-2 focus:ring-red-400 h-20 resize-none"
-                          placeholder={t('form.rejectionNotesPlaceholder', 'What was the feedback?')}
+                          placeholder={tMode('form.rejectionNotesPlaceholder', 'What was the feedback?')}
                         />
                       </div>
                     </div>
                   )}
 
                   <div>
-                    <h3 className="font-bold text-gray-800 mb-2">{t('form.notes')}</h3>
-                    <textarea value={safeStr(formData.generalNotes)} onChange={e => setFormData({...formData, generalNotes: e.target.value})} className="w-full p-3 border border-gray-300 rounded-lg h-24 focus:ring-2 focus:ring-indigo-500" placeholder={t('form.notesPlaceholder')}></textarea>
+                    <h3 className="font-bold text-gray-800 mb-2">{tMode('form.notes')}</h3>
+                    <textarea value={safeStr(formData.generalNotes)} onChange={e => setFormData({...formData, generalNotes: e.target.value})} className="w-full p-3 border border-gray-300 rounded-lg h-24 focus:ring-2 focus:ring-indigo-500" placeholder={tMode('form.notesPlaceholder')}></textarea>
                   </div>
                 </div>
               </div>
@@ -1191,7 +1198,7 @@ Rules:
                   const priorityInfo = PRIORITIES.find(p => p.id === company.priority);
                   const bgColorClass = getAvatarColor(company.name).replace('-500', '-50');
                   const journeySteps = getJourneySteps(company);
-                  const isRejected = ['rejected', 'ghosted'].includes(company.status);
+                  const isRejected = rejectedStatuses.includes(company.status);
                   return (
                     <div>
                       <div className={`p-8 border-b border-gray-200 ${bgColorClass}`}>
@@ -1205,11 +1212,11 @@ Rules:
                               <p className="text-lg text-gray-700">{safeStr(company.role)}</p>
                               <div className="mt-3 flex flex-wrap gap-2">
                                 <span className={`px-3 py-1 rounded-full text-sm font-bold border ${statusInfo?.color || 'bg-gray-100 border-gray-200'}`}>
-                                  {statusInfo ? t(`status.${statusInfo.id}`) : t('status.unknown')}
+                                  {statusInfo ? tStatus(statusInfo.id) : tStatus('unknown')}
                                 </span>
                                 {priorityInfo && (
                                   <span className={`px-3 py-1 rounded-full text-sm font-bold text-white ${priorityInfo.color}`}>
-                                    {t(`priority.${priorityInfo.id}`)} {t('detail.priorityLabel')}
+                                    {t(`priority.${priorityInfo.id}`)} {tMode('detail.priorityLabel')}
                                   </span>
                                 )}
                                 {company.location && (
@@ -1223,7 +1230,7 @@ Rules:
                                   {journeySteps.map((step, i) => (
                                     <React.Fragment key={i}>
                                       <span className={`text-xs px-2 py-0.5 rounded font-bold ${isRejected ? 'bg-red-100 text-red-600' : 'bg-indigo-100 text-indigo-600'}`}>
-                                        {t(`interviewType.${step}`, step)}
+                                        {tInterviewType(step)}
                                       </span>
                                       {i < journeySteps.length - 1 && <span className="text-gray-400 text-xs">›</span>}
                                     </React.Fragment>
@@ -1232,7 +1239,7 @@ Rules:
                                     <>
                                       <span className="text-gray-400 text-xs">›</span>
                                       <span className="text-xs px-2 py-0.5 rounded font-bold bg-red-200 text-red-700">
-                                        {t(`status.${company.status}`)}
+                                        {tStatus(company.status)}
                                       </span>
                                     </>
                                   )}
@@ -1242,22 +1249,27 @@ Rules:
                           </div>
                           <div className="flex gap-2">
                             <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition shadow-sm font-medium">
-                              <Edit2 size={16} /> {t('detail.editDetails')}
+                              <Edit2 size={16} /> {tMode('detail.editDetails')}
                             </button>
-                            <button onClick={() => handleDelete(company.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg border border-transparent hover:border-red-100 transition" title={t('detail.deleteCompany')}>
+                            <button onClick={() => handleDelete(company.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg border border-transparent hover:border-red-100 transition" title={tMode('detail.deleteCompany')}>
                               <Trash2 size={20} />
                             </button>
                           </div>
                         </div>
                         <div className="mt-6 flex flex-wrap gap-4">
-                          {company.website && typeof company.website === 'string' && (
+                          {!isRecruiter && company.website && typeof company.website === 'string' && (
                             <a href={company.website.startsWith('http') ? company.website : `https://${company.website}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
-                              <Globe size={14} /> {t('detail.companyWebsite')}
+                              <Globe size={14} /> {tMode('detail.companyWebsite')}
                             </a>
                           )}
-                          {company.linkedinCompany && typeof company.linkedinCompany === 'string' && (
+                          {!isRecruiter && company.linkedinCompany && typeof company.linkedinCompany === 'string' && (
                             <a href={company.linkedinCompany.startsWith('http') ? company.linkedinCompany : `https://${company.linkedinCompany}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
-                              <Linkedin size={14} /> {t('detail.companyLinkedin')}
+                              <Linkedin size={14} /> {tMode('detail.companyLinkedin')}
+                            </a>
+                          )}
+                          {isRecruiter && company.linkedinCandidate && typeof company.linkedinCandidate === 'string' && (
+                            <a href={company.linkedinCandidate.startsWith('http') ? company.linkedinCandidate : `https://${company.linkedinCandidate}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
+                              <Linkedin size={14} /> {tMode('detail.candidateLinkedin')}
                             </a>
                           )}
                         </div>
@@ -1265,19 +1277,43 @@ Rules:
 
                       <div className="p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="space-y-6">
-                          {(company.description || company.products) && (
+                          {!isRecruiter && (company.description || company.products) && (
                             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-                              <h3 className="font-bold text-gray-800 mb-3 text-lg border-b pb-2">{t('detail.aboutTitle')}</h3>
+                              <h3 className="font-bold text-gray-800 mb-3 text-lg border-b pb-2">{tMode('detail.aboutTitle')}</h3>
                               {company.description && (
                                 <div className="mb-4">
-                                  <h4 className="text-sm font-bold text-gray-500 mb-1">{t('detail.whatTheyDo')}</h4>
+                                  <h4 className="text-sm font-bold text-gray-500 mb-1">{tMode('detail.whatTheyDo')}</h4>
                                   <p className="text-gray-700 text-sm leading-relaxed">{safeStr(company.description)}</p>
                                 </div>
                               )}
                               {company.products && (
                                 <div>
-                                  <h4 className="text-sm font-bold text-gray-500 mb-1">{t('detail.products')}</h4>
+                                  <h4 className="text-sm font-bold text-gray-500 mb-1">{tMode('detail.products')}</h4>
                                   <p className="text-gray-700 text-sm leading-relaxed">{safeStr(company.products)}</p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {isRecruiter && (company.currentRole || company.expectedSalary || company.source) && (
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                              <h3 className="font-bold text-gray-800 mb-3 text-lg border-b pb-2">{tMode('detail.candidateInfo')}</h3>
+                              {company.currentRole && (
+                                <div className="mb-3">
+                                  <h4 className="text-sm font-bold text-gray-500 mb-1">{tMode('form.currentRolePlaceholder')}</h4>
+                                  <p className="text-gray-700 text-sm">{safeStr(company.currentRole)}</p>
+                                </div>
+                              )}
+                              {company.expectedSalary && (
+                                <div className="mb-3">
+                                  <h4 className="text-sm font-bold text-gray-500 mb-1">{tMode('form.expectedSalaryPlaceholder')}</h4>
+                                  <p className="text-gray-700 text-sm">{safeStr(company.expectedSalary)}</p>
+                                </div>
+                              )}
+                              {company.source && (
+                                <div>
+                                  <h4 className="text-sm font-bold text-gray-500 mb-1">{tMode('form.sourcePlaceholder')}</h4>
+                                  <p className="text-gray-700 text-sm">{safeStr(company.source)}</p>
                                 </div>
                               )}
                             </div>
@@ -1287,14 +1323,16 @@ Rules:
                             <div className="bg-red-50 p-5 rounded-xl shadow-sm border border-red-100">
                               <div className="flex items-center justify-between mb-3">
                                 <h3 className="font-bold text-red-800 flex items-center gap-2">
-                                  <AlertTriangle size={18} /> {t('detail.rejectionTitle', 'Rejection Details')}
+                                  <AlertTriangle size={18} /> {tMode('detail.rejectionTitle', 'Rejection Details')}
                                 </h3>
+                                {!isRecruiter && (
                                 <button
                                   onClick={() => setRejectionCompany(company)}
                                   className="text-xs px-3 py-1.5 bg-white border border-red-200 text-red-700 rounded-lg hover:bg-red-50 font-medium transition-colors flex items-center gap-1"
                                 >
-                                  ✨ {t('detail.analyzeRejection', 'Analyze with AI')}
+                                  ✨ {tMode('detail.analyzeRejection', 'Analyze with AI')}
                                 </button>
+                                )}
                               </div>
                               {company.rejection.date && (
                                 <div className="mb-2 text-sm text-gray-700">
@@ -1319,7 +1357,7 @@ Rules:
                           {company.generalNotes && (
                             <div className="bg-yellow-50 p-5 rounded-xl shadow-sm border border-yellow-100">
                               <h3 className="font-bold text-yellow-800 mb-2 flex items-center gap-2">
-                                <CheckCircle size={18} /> {t('detail.personalNotes')}
+                                <CheckCircle size={18} /> {tMode('detail.personalNotes')}
                               </h3>
                               <p className="text-gray-700 text-sm whitespace-pre-wrap">{safeStr(company.generalNotes)}</p>
                             </div>
@@ -1329,7 +1367,7 @@ Rules:
                         <div className="lg:col-span-2 space-y-6">
                           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                             <h3 className="font-bold text-gray-800 mb-6 text-xl border-b pb-3 flex items-center gap-2">
-                              <User size={20} className="text-indigo-600" /> {t('detail.processHistory')}
+                              <User size={20} className="text-indigo-600" /> {tMode('detail.processHistory')}
                             </h3>
                             {company.interviews && Array.isArray(company.interviews) && company.interviews.length > 0 ? (
                               <div className={`relative ${timelineBorder} border-indigo-100 space-y-6`}>
@@ -1339,7 +1377,7 @@ Rules:
                                     <div className="bg-slate-50 p-4 rounded-lg border border-gray-100">
                                       <div className="flex justify-between items-start mb-2">
                                         <h4 className="font-bold text-gray-900">
-                                          {interview.type ? t(`interviewType.${interview.type}`, interview.type) : t('detail.processStage')}
+                                          {interview.type ? tInterviewType(interview.type) : tMode('detail.processStage')}
                                         </h4>
                                         <span className="text-xs font-bold text-indigo-600 bg-indigo-100 px-2 py-1 rounded flex items-center gap-1">
                                           <Calendar size={12} /> {formatDate(interview.date)}
@@ -1359,7 +1397,7 @@ Rules:
                               </div>
                             ) : (
                               <div className="text-center py-8 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                                {t('detail.noInterviews')}
+                                {tMode('detail.noInterviews')}
                               </div>
                             )}
                           </div>
@@ -1372,8 +1410,8 @@ Rules:
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-gray-400 bg-slate-50 hidden md:flex">
                 <Layout size={64} className="mb-4 text-gray-300" />
-                <p className="text-xl font-bold mb-2 text-gray-500">{t('detail.selectCompany')}</p>
-                <p className="text-sm mt-2">{t('detail.selectCompanyHint')}</p>
+                <p className="text-xl font-bold mb-2 text-gray-500">{tMode('detail.selectCompany')}</p>
+                <p className="text-sm mt-2">{tMode('detail.selectCompanyHint')}</p>
               </div>
             )}
           </div>
@@ -1422,6 +1460,7 @@ Rules:
         />
       )}
 
+      {!isRecruiter && (
       <AIAssistant
         company={selectedId ? formData : null}
         companies={companies}
@@ -1430,6 +1469,7 @@ Rules:
         onOpenSettings={() => setShowAISettings(true)}
         onSaveToCompany={selectedId ? handleSaveToCompany : null}
       />
+      )}
 
       {simulationData && (
         <ChatModal

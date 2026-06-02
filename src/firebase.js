@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
+import { getCollectionName } from './statuses';
 
 const firebaseConfig = {
   apiKey: "VITE_FIREBASE_API_KEY_REMOVED_FROM_HISTORY",
@@ -29,55 +30,88 @@ export function onAuthChange(callback) {
   return onAuthStateChanged(auth, callback);
 }
 
-// Load companies from subcollection; auto-migrates legacy root-doc format
-export async function loadAllCompanies(uid) {
-  const colRef = collection(db, 'users', uid, 'companies');
+export async function loadUserProfile(uid) {
+  const snap = await getDoc(doc(db, 'users', uid));
+  return snap.exists() ? snap.data() : {};
+}
+
+export async function saveUserProfile(uid, data) {
+  await setDoc(doc(db, 'users', uid), data, { merge: true });
+}
+
+function collectionRef(uid, mode) {
+  return collection(db, 'users', uid, getCollectionName(mode));
+}
+
+export async function loadAllItems(uid, mode = 'jobseeker') {
+  const colRef = collectionRef(uid, mode);
   const snap = await getDocs(colRef);
 
   if (!snap.empty) {
     return snap.docs.map(d => d.data());
   }
 
-  // Legacy: single root document with companies array
+  if (mode !== 'jobseeker') return null;
+
   const rootRef = doc(db, 'users', uid);
   const rootSnap = await getDoc(rootRef);
   if (rootSnap.exists()) {
     const companies = rootSnap.data().companies || [];
     if (companies.length > 0) {
-      await batchSaveCompanies(uid, companies);
+      await batchSaveItems(uid, mode, companies);
       return companies;
     }
   }
   return null;
 }
 
-// Write a single company doc (add or update)
-export async function updateCompany(uid, company) {
-  const ref = doc(db, 'users', uid, 'companies', String(company.id));
-  await setDoc(ref, company);
+export async function updateItem(uid, mode, item) {
+  const ref = doc(db, 'users', uid, getCollectionName(mode), String(item.id));
+  await setDoc(ref, item);
 }
 
-// Delete a single company doc
-export async function deleteFirestoreCompany(uid, id) {
-  const ref = doc(db, 'users', uid, 'companies', String(id));
+export async function deleteItem(uid, mode, id) {
+  const ref = doc(db, 'users', uid, getCollectionName(mode), String(id));
   await deleteDoc(ref);
 }
 
-// Write all companies as individual subcollection docs (chunked to stay under batch limit)
-export async function batchSaveCompanies(uid, companies) {
-  if (!companies.length) return;
+export async function batchSaveItems(uid, mode, items) {
+  if (!items.length) return;
   const CHUNK = 490;
-  for (let i = 0; i < companies.length; i += CHUNK) {
+  for (let i = 0; i < items.length; i += CHUNK) {
     const batch = writeBatch(db);
-    companies.slice(i, i + CHUNK).forEach(company => {
-      const ref = doc(db, 'users', uid, 'companies', String(company.id));
-      batch.set(ref, company);
+    items.slice(i, i + CHUNK).forEach(item => {
+      const ref = doc(db, 'users', uid, getCollectionName(mode), String(item.id));
+      batch.set(ref, item);
     });
     await batch.commit();
   }
 }
 
-// Publish a read-only snapshot to the public shares collection
+export async function loadAllCompanies(uid) {
+  return loadAllItems(uid, 'jobseeker');
+}
+
+export async function updateCompany(uid, company) {
+  return updateItem(uid, 'jobseeker', company);
+}
+
+export async function deleteFirestoreCompany(uid, id) {
+  return deleteItem(uid, 'jobseeker', id);
+}
+
+export async function batchSaveCompanies(uid, companies) {
+  return batchSaveItems(uid, 'jobseeker', companies);
+}
+
+export async function loadUserData(uid) {
+  return loadAllCompanies(uid);
+}
+
+export async function saveUserData(uid, companies) {
+  return batchSaveCompanies(uid, companies);
+}
+
 export async function publishShare(uid, companies) {
   const ref = doc(db, 'shares', uid);
   await setDoc(ref, {
@@ -86,19 +120,9 @@ export async function publishShare(uid, companies) {
   });
 }
 
-// Load a publicly shared snapshot by UID
 export async function loadSharedData(uid) {
   const ref = doc(db, 'shares', uid);
   const snap = await getDoc(ref);
   if (snap.exists()) return snap.data();
   return null;
-}
-
-// Legacy helpers kept for any external references
-export async function loadUserData(uid) {
-  return loadAllCompanies(uid);
-}
-
-export async function saveUserData(uid, companies) {
-  return batchSaveCompanies(uid, companies);
 }
