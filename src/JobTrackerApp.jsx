@@ -322,6 +322,11 @@ export default function JobTrackerApp({ mode = 'jobseeker' }) {
       const newCompany = { ...dataToSave, id: Date.now().toString() };
       setCompanies([newCompany, ...companies]);
       setSelectedId(newCompany.id);
+      setFormData({
+        ...initialFormState,
+        ...newCompany,
+        rejection: newCompany.rejection || { date: '', method: '', notes: '' },
+      });
       if (user) updateItem(user.uid, mode, newCompany).catch(console.error);
     }
     setIsEditing(false);
