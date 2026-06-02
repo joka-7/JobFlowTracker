@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Sparkles, X, Loader2, AlertTriangle, ArrowLeft, FileText, MessageSquare, Save } from 'lucide-react';
 import { getInterviewPrep, analyzePatterns, debriefInterview, getSchedulingAdvice, isAIReady } from '../services/aiAssistant';
 import ChatModal from './ChatModal';
+import ResumeReview from './ResumeReview';
 
 function MarkdownText({ text }) {
   if (!text) return null;
@@ -154,6 +155,7 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
   const [isOpen, setIsOpen] = useState(false);
   const [screen, setScreen] = useState('menu'); // 'menu' | 'debrief'
   const [chatOpen, setChatOpen] = useState(false);
+  const [resumeOpen, setResumeOpen] = useState(false);
   const [activeMode, setActiveMode] = useState(null);
   const [streamText, setStreamText] = useState('');
   const [loading, setLoading] = useState(false);
@@ -270,6 +272,18 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
               </button>
 
               <button
+                onClick={() => { if (aiReady) { setIsOpen(false); setResumeOpen(true); } else onOpenSettings(); }}
+                disabled={noCompany || loading}
+                className={`w-full flex items-center gap-2 p-3 rounded-lg text-sm font-medium transition-colors text-left ${
+                  noCompany ? 'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-100' :
+                  'bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-700'
+                }`}
+              >
+                <span>📄</span>
+                <span>{noCompany ? t('ai.prepNoCompany', 'Select a company first') : t('ai.resumeButton', 'Tailor resume for this role')}</span>
+              </button>
+
+              <button
                 onClick={() => run('patterns')}
                 disabled={loading || !companies?.length}
                 className={`w-full flex items-center gap-2 p-3 rounded-lg text-sm font-medium transition-colors text-left ${
@@ -353,6 +367,17 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
           onClose={() => setChatOpen(false)}
           onOpenSettings={() => { setChatOpen(false); onOpenSettings(); }}
           onSaveToCompany={onSaveToCompany}
+        />
+      )}
+
+      {resumeOpen && company && (
+        <ResumeReview
+          company={company}
+          language={language}
+          t={t}
+          onClose={() => setResumeOpen(false)}
+          onOpenSettings={() => { setResumeOpen(false); onOpenSettings(); }}
+          onSave={onSaveToCompany ? (text) => onSaveToCompany(company.id, text) : null}
         />
       )}
     </div>

@@ -398,6 +398,29 @@ ${LANG[language] || LANG.en}`;
   return runStream(prompt, onChunk);
 }
 
+export async function getResumeAdvice(company, resumeText, language = 'en', onChunk) {
+  const prompt = `You are a job application coach helping tailor a resume for a specific role.
+
+Company: ${company.name}
+${company.role ? `Role: ${company.role}` : ''}
+${company.location ? `Location: ${company.location}` : ''}
+
+Resume content:
+---
+${resumeText.slice(0, 3000)}
+---
+
+Based on the resume above, suggest 3 specific experiences or achievements to highlight for this application. For each:
+- Start with a **bold title** naming the experience
+- One sentence on why it's relevant to this company/role
+- One concrete tip (e.g., quantify impact, lead with it in summary, reword for keywords)
+
+Be specific to the content provided. Keep tips actionable.
+
+${LANG[language] || LANG.en}`;
+  return runStream(prompt, onChunk);
+}
+
 export async function debriefInterview(notes, context, language = 'en', onChunk) {
   const prompt = `You are an expert interview coach. Analyze these post-interview notes written by the candidate:
 

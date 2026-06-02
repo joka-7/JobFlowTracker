@@ -41,7 +41,10 @@
     "connectDrive": "Connecter Drive",
     "driveOnTooltip": "Drive synchronisé — cliquer pour déconnecter",
     "connectDriveTooltip": "Connecter Google Drive pour synchroniser sur tous les appareils",
-    "aiSettings": "Paramètres IA"
+    "aiSettings": "Paramètres IA",
+    "shareTooltip": "Partager un lien en lecture seule",
+    "viewOnly": "Lecture seule",
+    "viewOnlyDesc": "Vous consultez un instantané partagé en lecture seule."
   },
   "tabs": {
     "board": "Tableau",
@@ -73,7 +76,9 @@
     "searchPlaceholder": "Rechercher une entreprise...",
     "allStatuses": "Tous les statuts",
     "noResults": "Aucun résultat trouvé.",
-    "backToList": "Retour à la liste"
+    "backToList": "Retour à la liste",
+    "loadMore": "Charger plus",
+    "remaining": "restants"
   },
   "form": {
     "editTitle": "Modifier les détails",
@@ -138,7 +143,11 @@
     "interviews": "Entretiens",
     "byStatus": "Par statut",
     "upcoming": "À venir — 14 prochains jours",
-    "today": "Aujourd'hui"
+    "today": "Aujourd'hui",
+    "journey": "Parcours de candidature",
+    "journeySubtitle": "Conversion de votre pipeline",
+    "avgDays": "Jours moyens par étape",
+    "noData": "Ajoutez plus d'entreprises pour voir les tendances"
   },
   "toast": {
     "saved": "Modifications enregistrées !",
@@ -207,7 +216,19 @@
     "analyzing": "Analyse en cours...",
     "patternsButton": "Analyser mes patterns de recherche",
     "chatButton": "Ouvrir le chat IA",
-    "changeSettings": "Modifier les paramètres IA"
+    "changeSettings": "Modifier les paramètres IA",
+    "scheduleButton": "Planning de préparation entretien",
+    "scheduleNoDate": "Ajoutez d'abord une date d'entretien",
+    "resumeButton": "Adapter le CV pour ce poste"
+  },
+  "resume": {
+    "title": "Adaptation du CV",
+    "privacy": "N'incluez pas votre nom, e-mail ou téléphone — ce texte est envoyé à l'IA.",
+    "pasteLabel": "Collez votre expérience professionnelle / contenu du CV",
+    "placeholder": "Collez votre expérience, compétences et réalisations ici...",
+    "chars": "caractères utilisés",
+    "analyzeButton": "Obtenir des suggestions",
+    "analyzing": "Analyse en cours..."
   },
   "chat": {
     "title": "Chat IA",

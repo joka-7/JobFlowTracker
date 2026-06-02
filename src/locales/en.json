@@ -41,7 +41,10 @@
     "connectDrive": "Connect Drive",
     "driveOnTooltip": "Drive syncing — click to disconnect",
     "connectDriveTooltip": "Connect Google Drive for cross-device sync",
-    "aiSettings": "AI Settings"
+    "aiSettings": "AI Settings",
+    "shareTooltip": "Share read-only link",
+    "viewOnly": "View only",
+    "viewOnlyDesc": "You are viewing a shared read-only snapshot."
   },
   "tabs": {
     "board": "Status Board",
@@ -73,7 +76,9 @@
     "searchPlaceholder": "Search company...",
     "allStatuses": "All Statuses",
     "noResults": "No results found.",
-    "backToList": "Back to List"
+    "backToList": "Back to List",
+    "loadMore": "Load more",
+    "remaining": "remaining"
   },
   "form": {
     "editTitle": "Edit Company Details",
@@ -220,7 +225,17 @@
     "chatButton": "Open AI chat",
     "changeSettings": "Change AI settings",
     "scheduleButton": "Interview prep schedule",
-    "scheduleNoDate": "Add an interview date first"
+    "scheduleNoDate": "Add an interview date first",
+    "resumeButton": "Tailor resume for this role"
+  },
+  "resume": {
+    "title": "Resume Tailoring",
+    "privacy": "Do not include your name, email, or phone — this text is sent to the AI.",
+    "pasteLabel": "Paste your work experience / resume content",
+    "placeholder": "Paste your work experience, skills, and achievements here...",
+    "chars": "characters used",
+    "analyzeButton": "Get tailoring suggestions",
+    "analyzing": "Analyzing..."
   },
   "chat": {
     "title": "AI Chat",
