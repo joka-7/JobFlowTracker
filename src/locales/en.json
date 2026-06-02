@@ -205,6 +205,7 @@
     "debriefContext": "Company / Role (optional)",
     "debriefNotes": "Paste your post-interview notes",
     "debriefPlaceholder": "Write anything — what questions were asked, how you answered, how you felt, what surprised you...",
+    "debriefPrivacy": "Avoid writing personal names — this text is sent to the AI.",
     "debriefRun": "Analyze my notes",
     "analyzing": "Analyzing...",
     "patternsButton": "Analyze my job hunt patterns"

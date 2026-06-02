@@ -215,10 +215,11 @@ async function runStream(prompt, onChunk) {
 const LANG = { en: 'Respond in English.', he: 'ענה בעברית.', fr: 'Réponds en français.' };
 
 export async function getInterviewPrep(company, interviewType, language = 'en', onChunk) {
+  const interviewCount = company.interviews?.length || 0;
   const prompt = `You are a job search coach helping someone prepare for a ${interviewType} interview at ${company.name}.
 ${company.role ? `Role: ${company.role}` : ''}
-${company.description ? `About the company: ${company.description}` : ''}
 ${company.location ? `Location: ${company.location}` : ''}
+${interviewCount > 0 ? `Previous interviews at this company: ${interviewCount}` : 'First interview at this company'}
 
 Give exactly 3 focused preparation tips. For each tip:
 - Start with a bold title (e.g., **Research Their Stack**)
@@ -231,15 +232,14 @@ ${LANG[language] || LANG.en}`;
 
 export async function analyzeRejection(company, language = 'en', onChunk) {
   const interviews = Array.isArray(company.interviews) ? company.interviews : [];
-  const last = interviews[interviews.length - 1];
   const r = company.rejection || {};
+  const interviewTypes = interviews.map(i => i.type).filter(Boolean);
   const prompt = `You are a supportive job search coach. Someone was rejected from ${company.name}${company.role ? ` for the ${company.role} role` : ''}.
 
 Rejection details:
 - Method: ${r.method || 'Unknown'}
-- Feedback: ${r.notes || 'No feedback provided'}
-${last ? `- Last interview: ${last.type} on ${last.date || 'unknown date'}` : ''}
-${last?.summary ? `- Interview notes: ${last.summary}` : ''}
+- Number of interviews completed: ${interviews.length}
+${interviewTypes.length ? `- Interview stages: ${interviewTypes.join(' → ')}` : ''}
 
 Give 3 constructive, empathetic improvement suggestions. Each should:
 - Start with a bold emoji + title (e.g., **💪 Strengthen Technical Skills**)

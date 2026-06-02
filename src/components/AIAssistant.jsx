@@ -87,6 +87,9 @@ function DebriefScreen({ t, language, company, onBack, onOpenSettings }) {
             placeholder={t('ai.debriefPlaceholder', 'Write anything — what questions were asked, how you answered, how you felt, what surprised you...')}
             className="w-full p-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-400 outline-none resize-none h-28"
           />
+          <p className="text-[11px] text-amber-600 mt-1">
+            ⚠️ {t('ai.debriefPrivacy', 'Avoid writing personal names — this text is sent to the AI.')}
+          </p>
         </div>
 
         <button
