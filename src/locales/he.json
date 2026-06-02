@@ -204,13 +204,16 @@
   },
   "settings": {
     "title": "הגדרות AI",
-    "keyActive": "מפתח API פעיל — תכונות AI מופעלות",
-    "apiKeyLabel": "מפתח API של Anthropic",
-    "keyNote": "המפתח שלך שמור רק בדפדפן זה ולא נשלח לשרתים שלנו.",
-    "getKey": "קבל מפתח API חינמי מ-Anthropic Console →",
+    "keyActive": "AI פעיל",
+    "providerLabel": "ספק AI",
+    "apiKeyLabel": "מפתח API",
+    "keyNote": "שמור רק בדפדפן זה.",
+    "modelLabel": "מודל",
+    "ollamaUrl": "כתובת Ollama",
+    "ollamaNote": "ודא ש-Ollama פועל מקומית עם CORS מאופשר.",
     "save": "שמור והפעל AI",
     "saved": "נשמר!",
-    "clearKey": "הסר מפתח API"
+    "clearKey": "הסר"
   },
   "rejection": {
     "analysisTitle": "ניתוח דחייה",

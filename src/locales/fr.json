@@ -197,13 +197,16 @@
   },
   "settings": {
     "title": "Paramètres IA",
-    "keyActive": "Clé API active — fonctionnalités IA activées",
-    "apiKeyLabel": "Clé API Anthropic",
-    "keyNote": "Votre clé est stockée uniquement dans ce navigateur et n'est jamais envoyée à nos serveurs.",
-    "getKey": "Obtenir une clé API gratuite sur Anthropic Console →",
+    "keyActive": "IA active",
+    "providerLabel": "Fournisseur IA",
+    "apiKeyLabel": "Clé API",
+    "keyNote": "Stockée uniquement dans ce navigateur.",
+    "modelLabel": "Modèle",
+    "ollamaUrl": "URL Ollama",
+    "ollamaNote": "Assurez-vous qu'Ollama fonctionne localement avec CORS activé.",
     "save": "Enregistrer et activer l'IA",
     "saved": "Enregistré !",
-    "clearKey": "Supprimer la clé API"
+    "clearKey": "Supprimer"
   },
   "rejection": {
     "analysisTitle": "Analyse du refus",
