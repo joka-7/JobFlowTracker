@@ -17,6 +17,34 @@ Mode is stored in `localStorage.appMode` and synced to your Firebase user profil
 
 ---
 
+## Screenshots
+
+### Mode selection
+
+![Mode selection](docs/screenshots/mode-selection.png)
+
+### Job Seeker mode
+
+| Kanban board | List & company detail |
+|---|---|
+| ![Job seeker board](docs/screenshots/jobseeker-board.png) | ![Company detail](docs/screenshots/jobseeker-company-detail.png) |
+
+| AI Assistant | Statistics |
+|---|---|
+| ![AI assistant](docs/screenshots/jobseeker-ai-assistant.png) | ![Statistics](docs/screenshots/jobseeker-stats.png) |
+
+### Recruiter mode
+
+| Kanban board | Candidate detail |
+|---|---|
+| ![Recruiter board](docs/screenshots/recruiter-board.png) | ![Candidate detail](docs/screenshots/recruiter-candidate-detail.png) |
+
+| AI Assistant | Statistics |
+|---|---|
+| ![AI assistant](docs/screenshots/recruiter-ai-assistant.png) | ![Statistics](docs/screenshots/recruiter-stats.png) |
+
+---
+
 ## Features
 
 ### Views & Navigation
