@@ -163,8 +163,11 @@ export default function JobTrackerApp() {
   const [rejectionCompany, setRejectionCompany] = useState(null);
 
   useEffect(() => {
-    const savedKey = localStorage.getItem('anthropicApiKey');
-    if (savedKey) initAI(savedKey);
+    const provider = localStorage.getItem('aiProvider') || 'gemini';
+    const apiKey = localStorage.getItem('aiApiKey') || localStorage.getItem('anthropicApiKey') || '';
+    const model = localStorage.getItem('aiModel') || '';
+    const ollamaUrl = localStorage.getItem('ollamaUrl') || 'http://localhost:11434';
+    initAI(provider, apiKey, model, ollamaUrl);
     if (!localStorage.getItem('hasCompletedOnboarding')) {
       setShowOnboarding(true);
     }

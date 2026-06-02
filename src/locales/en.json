@@ -204,13 +204,16 @@
   },
   "settings": {
     "title": "AI Settings",
-    "keyActive": "API key is active — AI features are enabled",
-    "apiKeyLabel": "Anthropic API Key",
-    "keyNote": "Your key is stored only in this browser and never sent to our servers.",
-    "getKey": "Get a free API key from Anthropic Console →",
+    "keyActive": "AI is active",
+    "providerLabel": "AI Provider",
+    "apiKeyLabel": "API Key",
+    "keyNote": "Stored only in this browser.",
+    "modelLabel": "Model",
+    "ollamaUrl": "Ollama URL",
+    "ollamaNote": "Make sure Ollama is running locally with CORS enabled.",
     "save": "Save & Enable AI",
     "saved": "Saved!",
-    "clearKey": "Remove API key"
+    "clearKey": "Remove"
   },
   "rejection": {
     "analysisTitle": "Rejection Analysis",
