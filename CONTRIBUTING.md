@@ -67,6 +67,16 @@ gitleaks detect --source .
 - UI changes: mention which mode you tested (job seeker / recruiter) and languages if relevant.
 - Ensure CI passes (tests, build, security workflows).
 
+### Reviews and merging (`main`)
+
+The **Protect Main Branch** ruleset requires:
+
+- A pull request (no direct pushes to `main`)
+- **One approving review** from someone other than the author
+- Green required checks: `test-and-build`, `Gitleaks`, `npm audit`, `Trivy`, `CodeQL`
+
+The repository owner can merge their own PRs after CI passes without a separate approval (ruleset bypass). **Contributors** should request review from a maintainer and wait for approval before merge.
+
 ## Code areas
 
 | Area | Location |
