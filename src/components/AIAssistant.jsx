@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, X, Loader2, AlertTriangle, ArrowLeft, FileText, MessageSquare } from 'lucide-react';
+import { Sparkles, X, Loader2, AlertTriangle, ArrowLeft, FileText, MessageSquare, Save } from 'lucide-react';
 import { getInterviewPrep, analyzePatterns, debriefInterview, isAIReady } from '../services/aiAssistant';
 import ChatModal from './ChatModal';
 
@@ -30,7 +30,7 @@ function StreamingText({ text, loading }) {
 }
 
 // ---- Debrief screen ----
-function DebriefScreen({ t, language, company, onBack, onOpenSettings }) {
+function DebriefScreen({ t, language, company, onBack, onOpenSettings, onSaveToCompany }) {
   const [notes, setNotes] = useState('');
   const [context, setContext] = useState(
     company ? `${company.name}${company.role ? ` — ${company.role}` : ''}` : ''
@@ -38,6 +38,15 @@ function DebriefScreen({ t, language, company, onBack, onOpenSettings }) {
   const [streamText, setStreamText] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [saved, setSaved] = useState(false);
+
+  const saveResult = () => {
+    if (onSaveToCompany && streamText) {
+      onSaveToCompany(company?.id, streamText);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    }
+  };
 
   const run = async () => {
     if (!notes.trim()) return;
@@ -109,19 +118,29 @@ function DebriefScreen({ t, language, company, onBack, onOpenSettings }) {
         </button>
 
         {(streamText || error) && (
-          <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-            {error ? (
-              <div className="space-y-2">
-                <p className="text-red-600 text-sm">{error}</p>
-                <button
-                  onClick={() => { onBack(); onOpenSettings && onOpenSettings(); }}
-                  className="text-xs text-purple-600 underline hover:text-purple-800"
-                >
-                  ⚙️ Change AI settings
-                </button>
-              </div>
-            ) : (
-              <StreamingText text={streamText} loading={loading} />
+          <div className="space-y-1.5">
+            <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+              {error ? (
+                <div className="space-y-2">
+                  <p className="text-red-600 text-sm">{error}</p>
+                  <button onClick={() => { onBack(); onOpenSettings?.(); }} className="text-xs text-purple-600 underline hover:text-purple-800">
+                    ⚙️ Change AI settings
+                  </button>
+                </div>
+              ) : (
+                <StreamingText text={streamText} loading={loading} />
+              )}
+            </div>
+            {streamText && !loading && !error && onSaveToCompany && (
+              <button
+                onClick={saveResult}
+                className={`w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  saved ? 'bg-green-100 text-green-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                }`}
+              >
+                <Save size={12} />
+                {saved ? t('chat.saved', 'Saved ✓') : t('chat.saveToNotes', 'Save to notes')}
+              </button>
             )}
           </div>
         )}
@@ -139,6 +158,15 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
   const [streamText, setStreamText] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [resultSaved, setResultSaved] = useState(false);
+
+  const saveResult = () => {
+    if (onSaveToCompany && streamText) {
+      onSaveToCompany(company?.id, streamText);
+      setResultSaved(true);
+      setTimeout(() => setResultSaved(false), 2000);
+    }
+  };
 
   const aiReady = isAIReady();
 
@@ -187,6 +215,7 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
               company={company}
               onBack={() => setScreen('menu')}
               onOpenSettings={onOpenSettings}
+              onSaveToCompany={onSaveToCompany}
             />
           ) : (
             <div className="p-4 space-y-2 overflow-y-auto">
@@ -249,19 +278,29 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
               </button>
 
               {(streamText || error || (loading && activeMode && activeMode !== 'debrief')) && (
-                <div className="mt-1 p-3 bg-gray-50 rounded-lg border border-gray-100 max-h-52 overflow-y-auto">
-                  {error ? (
-                    <div className="space-y-2">
-                      <p className="text-red-600 text-sm">{error}</p>
-                      <button
-                        onClick={onOpenSettings}
-                        className="text-xs text-purple-600 underline hover:text-purple-800"
-                      >
-                        ⚙️ {t('ai.changeSettings', 'Change AI settings')}
-                      </button>
-                    </div>
-                  ) : (
-                    <StreamingText text={streamText} loading={loading} />
+                <div className="mt-1 space-y-1.5">
+                  <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 max-h-52 overflow-y-auto">
+                    {error ? (
+                      <div className="space-y-2">
+                        <p className="text-red-600 text-sm">{error}</p>
+                        <button onClick={onOpenSettings} className="text-xs text-purple-600 underline hover:text-purple-800">
+                          ⚙️ {t('ai.changeSettings', 'Change AI settings')}
+                        </button>
+                      </div>
+                    ) : (
+                      <StreamingText text={streamText} loading={loading} />
+                    )}
+                  </div>
+                  {streamText && !loading && !error && onSaveToCompany && (
+                    <button
+                      onClick={saveResult}
+                      className={`w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                        resultSaved ? 'bg-green-100 text-green-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                      }`}
+                    >
+                      <Save size={12} />
+                      {resultSaved ? t('chat.saved', 'Saved ✓') : t('chat.saveToNotes', 'Save to notes')}
+                    </button>
                   )}
                 </div>
               )}

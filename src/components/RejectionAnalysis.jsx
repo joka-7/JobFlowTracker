@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Loader2, Heart } from 'lucide-react';
+import { X, Loader2, Heart, Save } from 'lucide-react';
 import { analyzeRejection, isAIReady } from '../services/aiAssistant';
 
 function MarkdownText({ text }) {
@@ -16,11 +16,12 @@ function MarkdownText({ text }) {
   );
 }
 
-export default function RejectionAnalysis({ company, language, t, onClose, onOpenSettings }) {
+export default function RejectionAnalysis({ company, language, t, onClose, onOpenSettings, onSave }) {
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [started, setStarted] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const aiReady = isAIReady();
 
@@ -104,7 +105,18 @@ export default function RejectionAnalysis({ company, language, t, onClose, onOpe
           )}
         </div>
 
-        <div className="px-6 pb-5 flex justify-end">
+        <div className="px-6 pb-5 flex justify-between items-center">
+          {text && !loading && onSave ? (
+            <button
+              onClick={() => { onSave(text); setSaved(true); setTimeout(() => setSaved(false), 2000); }}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                saved ? 'bg-green-100 text-green-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+              }`}
+            >
+              <Save size={14} />
+              {saved ? t('chat.saved', 'Saved ✓') : t('chat.saveToNotes', 'Save to notes')}
+            </button>
+          ) : <div />}
           <button
             onClick={onClose}
             className="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors text-sm"
