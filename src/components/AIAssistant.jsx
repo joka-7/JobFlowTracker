@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Sparkles, X, Loader2, AlertTriangle, ArrowLeft, FileText } from 'lucide-react';
+import { Sparkles, X, Loader2, AlertTriangle, ArrowLeft, FileText, MessageSquare } from 'lucide-react';
 import { getInterviewPrep, analyzePatterns, debriefInterview, isAIReady } from '../services/aiAssistant';
+import ChatModal from './ChatModal';
 
 function MarkdownText({ text }) {
   if (!text) return null;
@@ -130,9 +131,10 @@ function DebriefScreen({ t, language, company, onBack, onOpenSettings }) {
 }
 
 // ---- Main panel ----
-export default function AIAssistant({ company, companies, language, t, onOpenSettings }) {
+export default function AIAssistant({ company, companies, language, t, onOpenSettings, onSaveToCompany }) {
   const [isOpen, setIsOpen] = useState(false);
   const [screen, setScreen] = useState('menu'); // 'menu' | 'debrief'
+  const [chatOpen, setChatOpen] = useState(false);
   const [activeMode, setActiveMode] = useState(null);
   const [streamText, setStreamText] = useState('');
   const [loading, setLoading] = useState(false);
@@ -226,6 +228,14 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
               </button>
 
               <button
+                onClick={() => { setIsOpen(false); setChatOpen(true); }}
+                className="w-full flex items-center gap-2 p-3 rounded-lg text-sm font-medium transition-colors text-left bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700"
+              >
+                <MessageSquare size={15} />
+                {t('ai.chatButton', 'Open AI chat')}
+              </button>
+
+              <button
                 onClick={() => run('patterns')}
                 disabled={loading || !companies?.length}
                 className={`w-full flex items-center gap-2 p-3 rounded-lg text-sm font-medium transition-colors text-left ${
@@ -271,6 +281,17 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
       >
         {isOpen ? <X size={20} /> : <Sparkles size={20} />}
       </button>
+
+      {chatOpen && (
+        <ChatModal
+          company={company}
+          language={language}
+          t={t}
+          onClose={() => setChatOpen(false)}
+          onOpenSettings={() => { setChatOpen(false); onOpenSettings(); }}
+          onSaveToCompany={onSaveToCompany}
+        />
+      )}
     </div>
   );
 }

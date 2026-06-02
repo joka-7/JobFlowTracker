@@ -201,7 +201,17 @@
     "debriefPrivacy": "Évitez d'écrire des noms personnels — ce texte est envoyé à l'IA.",
     "debriefRun": "Analyser mes notes",
     "analyzing": "Analyse en cours...",
-    "patternsButton": "Analyser mes patterns de recherche"
+    "patternsButton": "Analyser mes patterns de recherche",
+    "chatButton": "Ouvrir le chat IA",
+    "changeSettings": "Modifier les paramètres IA"
+  },
+  "chat": {
+    "title": "Chat IA",
+    "empty": "Démarrez la conversation...",
+    "context": "Contexte",
+    "privacy": "Évitez d'écrire des noms personnels",
+    "placeholder": "Écrivez un message... (Entrée pour envoyer)",
+    "saveToNotes": "Sauvegarder dans les notes"
   },
   "settings": {
     "title": "Paramètres IA",
