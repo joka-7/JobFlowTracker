@@ -244,7 +244,9 @@
     "privacy": "הימנע מכתיבת שמות אישיים",
     "placeholder": "כתוב הודעה... (Enter לשליחה)",
     "saveToNotes": "שמור להערות",
-    "saved": "נשמר ✓"
+    "saved": "נשמר ✓",
+    "simulationTitle": "ראיון מדומה",
+    "simulationEmpty": "מתחיל את הראיון המדומה..."
   },
   "settings": {
     "title": "הגדרות AI",
@@ -279,6 +281,7 @@
     "copy": "העתק",
     "copied": "הועתק!",
     "footer": "השתמש בשאלות אלה לתרגול. תשובות התנהגותיות צריכות לעקוב אחר פורמט STAR.",
+    "practiceButton": "ראיון מדומה",
     "categories": {
       "hr": "משאבי אנוש / סינון",
       "technical": "טכני",

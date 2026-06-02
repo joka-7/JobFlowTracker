@@ -237,7 +237,9 @@
     "privacy": "Évitez d'écrire des noms personnels",
     "placeholder": "Écrivez un message... (Entrée pour envoyer)",
     "saveToNotes": "Sauvegarder dans les notes",
-    "saved": "Sauvegardé ✓"
+    "saved": "Sauvegardé ✓",
+    "simulationTitle": "Entretien simulé",
+    "simulationEmpty": "Démarrage de l'entretien simulé..."
   },
   "settings": {
     "title": "Paramètres IA",
@@ -279,6 +281,7 @@
     "copy": "Copier",
     "copied": "Copié !",
     "footer": "Utilisez ces questions pour vous entraîner. Les réponses comportementales doivent suivre le format STAR.",
+    "practiceButton": "Entretien simulé",
     "categories": {
       "hr": "RH / Présélection",
       "technical": "Technique",

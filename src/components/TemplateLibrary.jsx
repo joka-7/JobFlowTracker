@@ -37,7 +37,7 @@ function CopyButton({ text, label, copiedLabel }) {
   );
 }
 
-export default function TemplateLibrary({ t, onClose }) {
+export default function TemplateLibrary({ t, onClose, onStartSimulation }) {
   const categoryKeys = Object.keys(TEMPLATES);
   const [activeCategory, setActiveCategory] = useState(categoryKeys[0]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -105,16 +105,25 @@ export default function TemplateLibrary({ t, onClose }) {
                 const colors = COLOR_MAP[cat.color] || COLOR_MAP.indigo;
                 const isActive = activeCategory === key;
                 return (
-                  <button
-                    key={key}
-                    onClick={() => setActiveCategory(key)}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium border transition-all flex items-center gap-2 ${
-                      isActive ? colors.active : colors.pill + ' hover:opacity-80'
-                    }`}
-                  >
-                    <span>{cat.icon}</span>
-                    <span className="leading-tight">{t(`templates.categories.${key}`, cat.label)}</span>
-                  </button>
+                  <div key={key} className="space-y-0.5">
+                    <button
+                      onClick={() => setActiveCategory(key)}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium border transition-all flex items-center gap-2 ${
+                        isActive ? colors.active : colors.pill + ' hover:opacity-80'
+                      }`}
+                    >
+                      <span>{cat.icon}</span>
+                      <span className="leading-tight">{t(`templates.categories.${key}`, cat.label)}</span>
+                    </button>
+                    {isActive && onStartSimulation && (
+                      <button
+                        onClick={() => onStartSimulation(key)}
+                        className="w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-600 flex items-center gap-1.5"
+                      >
+                        🎭 {t('templates.practiceButton', 'Mock interview')}
+                      </button>
+                    )}
+                  </div>
                 );
               })}
             </aside>
@@ -146,10 +155,20 @@ export default function TemplateLibrary({ t, onClose }) {
               )
             ) : (
               <>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">
-                  {activeTemplate.icon} {t(`templates.categories.${activeCategory}`, activeTemplate.label)}
-                  <span className="ml-2 font-normal normal-case">({activeTemplate.questions.length})</span>
-                </p>
+                <div className="flex items-center justify-between mb-3 px-1">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    {activeTemplate.icon} {t(`templates.categories.${activeCategory}`, activeTemplate.label)}
+                    <span className="ml-2 font-normal normal-case">({activeTemplate.questions.length})</span>
+                  </p>
+                  {onStartSimulation && (
+                    <button
+                      onClick={() => onStartSimulation(activeCategory)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors"
+                    >
+                      🎭 {t('templates.practiceButton', 'Mock interview')}
+                    </button>
+                  )}
+                </div>
                 {activeTemplate.questions.map((question, i) => (
                   <div
                     key={i}
