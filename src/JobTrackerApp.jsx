@@ -1158,6 +1158,11 @@ export default function JobTrackerApp() {
           t={t}
           onClose={() => setRejectionCompany(null)}
           onOpenSettings={() => { setRejectionCompany(null); setShowAISettings(true); }}
+          onSave={(text) => setCompanies(prev => prev.map(c =>
+            c.id === rejectionCompany.id
+              ? { ...c, generalNotes: c.generalNotes ? `${c.generalNotes}\n\n---\n${text}` : text }
+              : c
+          ))}
         />
       )}
 
