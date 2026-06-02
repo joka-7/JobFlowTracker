@@ -5,7 +5,7 @@ export const PROVIDERS = {
     id: 'gemini',
     name: 'Google Gemini',
     free: true,
-    defaultModel: 'gemini-1.5-flash',
+    defaultModel: 'gemini-2.0-flash',
     placeholder: 'AIza...',
     infoUrl: 'https://aistudio.google.com/app/apikey',
     infoText: 'Get free key from Google AI Studio →',
