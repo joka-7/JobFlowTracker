@@ -2,15 +2,16 @@
 
 ## 1. Overview
 
-JobFlowTracker is a single-page application (SPA) for tracking a personal job search. Users add companies, log interviews, record rejections, and move applications through a pipeline. All views — Kanban board, list/edit, timeline, and statistics — read from a single in-memory array of company objects that is mirrored to localStorage and optionally synced to Firestore.
+JobFlowTracker is a single-page application (SPA) for tracking a personal job search **or a recruiter hiring pipeline**. Users choose their role once at first launch (`jobseeker` or `recruiter`). Both modes use the same kanban UI with mode-specific statuses, labels, and form fields. All views read from a single in-memory array mirrored to mode-scoped localStorage and optionally synced to Firestore.
 
 **Key design principles:**
 
 - **No custom backend.** There is no server-side API. All business logic runs in the browser. Firebase provides auth and a database; Vercel provides static hosting.
-- **Client-side AI.** AI requests are made directly from the browser to external provider APIs using the user's own API key, which is stored in localStorage. No key is ever sent to a server controlled by this project.
-- **User-isolated data.** Firestore security rules enforce that each authenticated user can only read and write their own subcollection (`/users/{uid}/companies`). A separate `/shares/{uid}` collection allows voluntary public read-only snapshots.
-- **Offline-first local cache.** Companies are always written to `localStorage` on every mutation so the app works without a network connection. Firestore is treated as a sync layer, not the source of truth for the current session.
-- **Granular writes.** Each mutation (add, edit, drag-drop status change, AI note save) calls `updateCompany(uid, company)` for the single affected document rather than overwriting the entire collection. Bulk writes use a chunked `writeBatch` to stay under Firestore's 500-operation limit.
+- **Dual mode, fixed at launch.** `App.jsx` gates on `localStorage.appMode`. Mode selection is shown once; legacy users with existing data default to `jobseeker`. See [RECRUITER_MODE.md](RECRUITER_MODE.md).
+- **Client-side AI (job seeker only).** AI requests run from the browser with the user's API key. Recruiter mode hides the AI Assistant in v1.
+- **User-isolated data.** Firestore rules allow each user read/write on `users/{userId}/**` (profile, `companies`, `candidates`).
+- **Offline-first local cache.** Data is written to mode-scoped localStorage keys on every mutation.
+- **Granular writes.** Each mutation calls `updateItem(uid, mode, item)` for the affected document.
 
 ---
 
@@ -37,7 +38,7 @@ JobFlowTracker is a single-page application (SPA) for tracking a personal job se
 │  │  Firebase module: firebase.js                       │     │
 │  │  i18n: react-i18next  (EN / HE / FR)               │     │
 │  │                                                     │     │
-│  │  localStorage: companies cache, AI config, lang     │     │
+│  │  localStorage: appMode, companies/candidates cache, AI config │
 │  └───────────────┬─────────────────────┬───────────────┘     │
 └──────────────────┼─────────────────────┼─────────────────────┘
                    │ HTTPS               │ HTTPS
@@ -75,8 +76,12 @@ JobFlowTracker is a single-page application (SPA) for tracking a personal job se
 
 | File | Type | Responsibility |
 |---|---|---|
-| `src/JobTrackerApp.jsx` | Main component | All UI tabs (board, list, timeline, stats), global state, event handlers, Firestore integration, drag-and-drop, keyboard shortcuts, share mode |
-| `src/firebase.js` | Module | Firebase initialization, Google Sign-In, Firestore CRUD, batch writes, share publish/load, legacy migration |
+| `src/App.jsx` | Root | Mode gate: `ModeSelection` or `JobTrackerApp` |
+| `src/statuses.js` | Config | `STATUSES_JOBSEEKER`, `STATUSES_RECRUITER`, storage keys, legacy migration |
+| `src/components/ModeSelection.jsx` | Full-screen | First-launch job seeker vs recruiter picker |
+| `src/JobTrackerApp.jsx` | Main component | Mode-aware UI, all tabs, Firestore integration |
+| `src/firebase.js` | Module | Auth, `loadAllItems(uid, mode)`, profile `appMode`, legacy migration |
+| `src/components/Onboarding.jsx` | Modal | 5-step wizard (job seeker only) |
 | `src/services/aiAssistant.js` | Module | Provider configuration (`PROVIDERS` object), `initAI`, `isAIReady`, all streaming functions per provider, six high-level AI task functions |
 | `src/components/AIAssistant.jsx` | Floating panel | Sparkles button, menu screen, debrief screen, launches ChatModal and ResumeReview; calls interview prep, pattern analysis, scheduling advice |
 | `src/components/APIKeySettings.jsx` | Modal | Provider selector with FREE badges, API key / Ollama URL input, model override, saves to localStorage, calls `initAI` |
@@ -101,17 +106,27 @@ JobFlowTracker is a single-page application (SPA) for tracking a personal job se
 
 ```
 User clicks "Connect Drive"
-  → signInWithGoogle()          (Firebase popup OAuth)
+  → signInWithGoogle()
   → onAuthStateChanged fires
-  → loadAllCompanies(uid)
-      → getDocs(/users/{uid}/companies)   [subcollection query]
-      → if empty: check /users/{uid} root doc  [legacy migration]
-          → if legacy data found: batchSaveCompanies(uid, companies)
-      → setCompanies(data)      [React state + localStorage]
-  → showToast("Drive connected")
+  → loadUserProfile(uid) → may confirm appMode
+  → saveUserProfile(uid, { appMode })
+  → loadAllItems(uid, mode)
+      → getDocs(/users/{uid}/companies OR /users/{uid}/candidates)
+      → jobseeker only: legacy root-doc migration if subcollection empty
+  → setCompanies(data)
 ```
 
-The `loadAllCompanies` function handles automatic one-time migration from the old single-document format (where all companies were stored as an array field on `/users/{uid}`) to the current subcollection layout. Once migrated, the root document is not deleted but is simply ignored on subsequent sign-ins because the subcollection will be non-empty.
+### 4.1b Mode Selection Flow
+
+```
+First visit (no appMode, no legacy data)
+  → ModeSelection screen
+  → user picks jobseeker | recruiter
+  → localStorage.appMode = choice
+  → JobTrackerApp renders with mode prop
+  → jobseeker: may show Onboarding wizard
+  → recruiter: skip onboarding, empty board
+```
 
 ### 4.2 Data Mutation Flow
 
@@ -121,9 +136,8 @@ Every mutation follows the same pattern: update React state, write to localStora
 User action (add / edit / drag-drop / AI note save)
   → setCompanies(newState)           [React re-render]
   → useEffect [companies] fires
-      → localStorage.setItem('jobTrackerAppV2Data', JSON.stringify(companies))
-      → setIsSaved(false) → timer 800ms → setIsSaved(true)
-  → if (user) updateCompany(uid, company)   [Firestore setDoc, fire-and-forget]
+      → localStorage.setItem('jobTrackerAppV2Data_{mode}', JSON.stringify(companies))
+  → if (user) updateItem(uid, mode, item)
 
 User action (delete)
   → setCompanies(prev.filter(...))

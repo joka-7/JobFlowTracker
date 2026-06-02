@@ -6,9 +6,10 @@ All state lives in `JobTrackerApp.jsx` using React `useState`. No external state
 
 | State variable | Type | Purpose |
 |---|---|---|
-| `companies` | `Company[]` | Master array of all company objects. Initialized from `localStorage` on mount. Source of truth for all views. |
-| `selectedId` | `string \| null` | ID of the company currently shown in the detail/edit panel. `null` means no selection. |
-| `isEditing` | `boolean` | Whether the edit form is active. Combined with `selectedId`: if `isEditing && !selectedId.id` then it is a new-company form. |
+| `mode` | prop on `JobTrackerApp` | `'jobseeker' \| 'recruiter'` — fixed for session, from `localStorage.appMode` |
+| `companies` | `Company[]` | Master array (companies or candidates). Loaded from `jobTrackerAppV2Data_{mode}`. |
+| `selectedId` | `string \| null` | ID of the entity shown in the detail/edit panel. |
+| `isEditing` | `boolean` | Whether the edit form is active. |
 | `formData` | `Company` | Working copy of the company being edited or viewed. Initialized from `initialFormState` or from the selected company. |
 | `searchQuery` | `string` | Live text in the list search field. Filters `filteredCompanies` via `useMemo`. |
 | `statusFilter` | `string` | Selected status dropdown value (`'all'` or a status ID). Filters `filteredCompanies` via `useMemo`. |
@@ -56,6 +57,10 @@ All fields are stored as-is in Firestore and in localStorage.
 | `linkedinHR` | `string` | No | HR contact LinkedIn URL. |
 | `description` | `string` | No | Free-text company description. |
 | `products` | `string` | No | Company products or services. |
+| `linkedinCandidate` | `string` | No | Recruiter: candidate LinkedIn URL. |
+| `currentRole` | `string` | No | Recruiter: candidate's current job title. |
+| `expectedSalary` | `string` | No | Recruiter: salary expectations. |
+| `source` | `string` | No | Recruiter: where the candidate came from. |
 | `interviews` | `Interview[]` | No | Array of interview records. Default: `[]`. |
 | `homeworks` | `Homework[]` | No | Array of home assignment records. Default: `[]`. |
 | `contacts` | `Contact[]` | No | Array of contact records. Default: `[]`. |
@@ -79,7 +84,15 @@ All fields are stored as-is in Firestore and in localStorage.
 | `method` | `string` | One of the 6 rejection method keys (see below). |
 | `notes` | `string` | Free-text notes or feedback received. |
 
-### Status IDs
+### Status IDs — Job seeker
+
+See `STATUSES_JOBSEEKER` in `src/statuses.js` (11 statuses).
+
+### Status IDs — Recruiter
+
+See `STATUSES_RECRUITER` in `src/statuses.js` (9 statuses). Documented in [RECRUITER_MODE.md](RECRUITER_MODE.md).
+
+### Status IDs (legacy table — job seeker)
 
 | ID | Display (EN) | Color (Tailwind) |
 |---|---|---|
@@ -110,24 +123,20 @@ All fields are stored as-is in Firestore and in localStorage.
 ### Collection Layout
 
 ```
-/users/{uid}                          — legacy root document (read-only after migration)
-/users/{uid}/companies/{companyId}    — one document per company; companyId == company.id
-/shares/{uid}                         — public snapshot document
+/users/{uid}                              — user profile (appMode, etc.)
+/users/{uid}/companies/{companyId}        — job seeker entities
+/users/{uid}/candidates/{candidateId}     — recruiter entities
 ```
 
 The `companyId` in the subcollection path is `String(company.id)`, which is a numeric timestamp string (e.g., `"1717600000000"`).
 
 ### Write Strategies
 
-| Operation | Function | Mechanism |
-|---|---|---|
-| Add company | `updateCompany(uid, company)` | `setDoc(ref, company)` — creates or overwrites single doc |
-| Edit company | `updateCompany(uid, company)` | `setDoc(ref, company)` — same call, overwrites |
-| Drag-drop status change | `updateCompany(uid, { ...company, status })` | Single doc update |
-| AI notes save | `updateCompany(uid, updatedCompany)` | Single doc update after appending text to `generalNotes` |
-| Delete company | `deleteFirestoreCompany(uid, id)` | `deleteDoc(ref)` |
-| JSON import | `batchSaveCompanies(uid, companies)` | Chunked `writeBatch` in groups of 490 (stays under Firestore 500-op limit) |
-| Publish share | `publishShare(uid, companies)` | `setDoc(/shares/{uid}, { companies, sharedAt })` |
+| Add / edit | `updateItem(uid, mode, item)` | `setDoc` on companies or candidates subcollection |
+| Delete | `deleteItem(uid, mode, id)` | `deleteDoc` |
+| JSON import | `batchSaveItems(uid, mode, items)` | Chunked `writeBatch` (490/batch) |
+| Load | `loadAllItems(uid, mode)` | Subcollection query; jobseeker legacy migration |
+| Profile | `loadUserProfile` / `saveUserProfile` | Root doc `users/{uid}` for `appMode` |
 
 ### Legacy Migration
 
@@ -454,4 +463,10 @@ No environment variables are required at build time. The Firebase project config
 
 ### Testing
 
-Tests live in `src/__tests__/`. Run with `npm test` (`vitest run`). Test environment is `jsdom` (configured in `vite.config.js`). `@testing-library/react` and `@testing-library/user-event` are used for component tests.
+| Suite | Command | Count | Scope |
+|-------|---------|-------|-------|
+| Unit + integration | `npm test` | 155 | `src/__tests__/` — jsdom, mocked Firebase |
+| E2E | `npm run test:e2e` | 12 | `e2e/` — Playwright, real browser, port 5199 |
+| All | `npm run test:all` | 167 | Both |
+
+Vitest excludes `e2e/` via `vite.config.js`. E2E starts Vite with `--strictPort 5199` to avoid port conflicts.
