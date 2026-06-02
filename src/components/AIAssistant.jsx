@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Sparkles, X, Loader2, AlertTriangle, ArrowLeft, FileText, MessageSquare, Save } from 'lucide-react';
-import { getInterviewPrep, analyzePatterns, debriefInterview, isAIReady } from '../services/aiAssistant';
+import { getInterviewPrep, analyzePatterns, debriefInterview, getSchedulingAdvice, isAIReady } from '../services/aiAssistant';
 import ChatModal from './ChatModal';
 
 function MarkdownText({ text }) {
@@ -186,6 +186,8 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
         await getInterviewPrep(company, interviewType, language, setStreamText);
       } else if (mode === 'patterns') {
         await analyzePatterns(companies, language, setStreamText);
+      } else if (mode === 'schedule' && company) {
+        await getSchedulingAdvice(company, language, setStreamText);
       }
     } catch (e) {
       setError(e.message || 'Error');
@@ -194,6 +196,9 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
   };
 
   const noCompany = !company;
+  const hasUpcomingInterview = !!(company?.interviews?.some(
+    i => i.date && new Date(i.date) > new Date()
+  ));
 
   return (
     <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
@@ -275,6 +280,25 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
               >
                 {loading && activeMode === 'patterns' ? <Loader2 size={16} className="animate-spin flex-shrink-0" /> : <span>🔍</span>}
                 {t('ai.patternsButton', 'Analyze my job hunt patterns')}
+              </button>
+
+              <button
+                onClick={() => run('schedule')}
+                disabled={!hasUpcomingInterview || loading}
+                title={!hasUpcomingInterview ? t('ai.scheduleNoDate', 'Add an interview date first') : undefined}
+                className={`w-full flex items-center gap-2 p-3 rounded-lg text-sm font-medium transition-colors text-left ${
+                  !hasUpcomingInterview ? 'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-100' :
+                  activeMode === 'schedule' && loading ? 'bg-orange-50 border border-orange-200 text-orange-700' :
+                  'bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-700'
+                }`}
+              >
+                {loading && activeMode === 'schedule' ? <Loader2 size={16} className="animate-spin flex-shrink-0" /> : <span>📅</span>}
+                <span>
+                  {!hasUpcomingInterview
+                    ? t('ai.scheduleNoDate', 'Add an interview date first')
+                    : t('ai.scheduleButton', 'Interview prep schedule')
+                  }
+                </span>
               </button>
 
               {(streamText || error || (loading && activeMode && activeMode !== 'debrief')) && (

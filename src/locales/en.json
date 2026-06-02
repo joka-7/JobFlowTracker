@@ -251,5 +251,20 @@
     "rejectionMethod": "How you were notified. Tracking this helps identify ghosting patterns.",
     "responseRate": "Companies that replied (any stage) ÷ total applications × 100",
     "priority": "High = active process or dream company. Use to filter and focus your energy."
+  },
+  "templates": {
+    "title": "Interview Template Library",
+    "search": "Search questions...",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "footer": "Use these to practice. Behavioral answers should follow the STAR format.",
+    "categories": {
+      "hr": "HR / Screening",
+      "technical": "Technical",
+      "behavioral": "Behavioral",
+      "manager": "Manager",
+      "culture": "Culture Fit",
+      "questions_to_ask": "Questions to Ask"
+    }
   }
 }
