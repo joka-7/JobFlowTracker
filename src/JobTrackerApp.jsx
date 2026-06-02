@@ -4,9 +4,14 @@ import {
   Search, Plus, MapPin, Globe, Calendar,
   User, CheckCircle, Clock, Trash2, Edit2,
   ArrowLeft, ArrowRight, Download, Upload, Filter, Layout, List, Activity, AlertTriangle,
-  Cloud, CloudOff, Languages, BarChart2
+  Cloud, CloudOff, Languages, BarChart2, Settings
 } from 'lucide-react';
 import { signInWithGoogle, signOut, onAuthChange, loadUserData, saveUserData } from './firebase';
+import { initAI } from './services/aiAssistant';
+import Onboarding from './components/Onboarding';
+import AIAssistant from './components/AIAssistant';
+import APIKeySettings from './components/APIKeySettings';
+import RejectionAnalysis from './components/RejectionAnalysis';
 
 const Linkedin = ({ size = 16, ...p }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
@@ -152,6 +157,18 @@ export default function JobTrackerApp() {
   const [syncing, setSyncing] = useState(false);
   const saveTimer = useRef(null);
   const dragCompanyId = useRef(null);
+
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showAISettings, setShowAISettings] = useState(false);
+  const [rejectionCompany, setRejectionCompany] = useState(null);
+
+  useEffect(() => {
+    const savedKey = localStorage.getItem('anthropicApiKey');
+    if (savedKey) initAI(savedKey);
+    if (!localStorage.getItem('hasCompletedOnboarding')) {
+      setShowOnboarding(true);
+    }
+  }, []);
 
   const initialFormState = {
     name: '', role: '', location: '', status: 'applied', priority: 'medium',
@@ -455,17 +472,31 @@ export default function JobTrackerApp() {
         <div className="w-full flex flex-col items-center justify-center p-8">
           <div className="bg-white p-10 rounded-2xl shadow-xl border border-gray-200 text-center max-w-lg w-full">
             <div className="bg-blue-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Download size={40} className="text-blue-600" />
+              <Activity size={40} className="text-blue-600" />
             </div>
-            <h2 className="text-2xl font-black text-gray-800 mb-4">{t('board.emptyTitle')}</h2>
+            <h2 className="text-2xl font-black text-gray-800 mb-3">{t('board.emptyTitle')}</h2>
             <p className="text-gray-600 mb-8">{t('board.emptyDesc')}</p>
-            <button
-              onClick={triggerFileInput}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg py-4 px-6 rounded-xl shadow-lg transition-transform hover:scale-105 active:scale-95 flex items-center justify-center gap-3"
-            >
-              <Upload size={24} /> {t('board.loadButton')}
-            </button>
-            <div className={`mt-6 text-sm text-gray-500 bg-gray-50 p-4 rounded-lg flex items-start gap-3 ${isRTL ? 'text-right' : 'text-left'}`}>
+            <div className="grid grid-cols-1 gap-3 mb-6">
+              <button
+                onClick={triggerFileInput}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl shadow transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3"
+              >
+                <Upload size={20} /> {t('board.loadButton')}
+              </button>
+              <button
+                onClick={openNewForm}
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl shadow transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3"
+              >
+                <Plus size={20} /> {t('board.addFirstCompany', 'Add First Company')}
+              </button>
+              <button
+                onClick={() => setShowOnboarding(true)}
+                className="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold py-3 px-6 rounded-xl border border-indigo-200 transition-all flex items-center justify-center gap-3"
+              >
+                💡 {t('board.viewTutorial', 'View Tutorial')}
+              </button>
+            </div>
+            <div className={`text-sm text-gray-500 bg-gray-50 p-4 rounded-lg flex items-start gap-3 ${isRTL ? 'text-right' : 'text-left'}`}>
               <AlertTriangle size={20} className="text-amber-500 flex-shrink-0" />
               <p><strong>{t('board.noteLabel')}</strong> {t('board.noteText')}</p>
             </div>
@@ -662,6 +693,13 @@ export default function JobTrackerApp() {
                 <Upload size={18} />
                 <input id="main-file-upload" type="file" accept=".json" onChange={handleImport} className="hidden" />
               </label>
+              <button
+                onClick={() => setShowAISettings(true)}
+                title={t('header.aiSettings', 'AI Settings')}
+                className="p-2 hover:bg-white/20 rounded text-white transition-colors"
+              >
+                <Settings size={18} />
+              </button>
             </div>
           </div>
         </div>
@@ -992,9 +1030,17 @@ export default function JobTrackerApp() {
 
                           {isRejected && company.rejection && (company.rejection.date || company.rejection.method || company.rejection.notes) && (
                             <div className="bg-red-50 p-5 rounded-xl shadow-sm border border-red-100">
-                              <h3 className="font-bold text-red-800 mb-3 flex items-center gap-2">
-                                <AlertTriangle size={18} /> {t('detail.rejectionTitle', 'Rejection Details')}
-                              </h3>
+                              <div className="flex items-center justify-between mb-3">
+                                <h3 className="font-bold text-red-800 flex items-center gap-2">
+                                  <AlertTriangle size={18} /> {t('detail.rejectionTitle', 'Rejection Details')}
+                                </h3>
+                                <button
+                                  onClick={() => setRejectionCompany(company)}
+                                  className="text-xs px-3 py-1.5 bg-white border border-red-200 text-red-700 rounded-lg hover:bg-red-50 font-medium transition-colors flex items-center gap-1"
+                                >
+                                  ✨ {t('detail.analyzeRejection', 'Analyze with AI')}
+                                </button>
+                              </div>
                               {company.rejection.date && (
                                 <div className="mb-2 text-sm text-gray-700">
                                   <span className="font-bold text-gray-500">{t('form.rejectionDate', 'Date')}: </span>
@@ -1085,6 +1131,38 @@ export default function JobTrackerApp() {
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
         .custom-scrollbar:hover::-webkit-scrollbar-thumb { background-color: #94a3b8; }
       `}} />
+
+      {showOnboarding && (
+        <Onboarding
+          t={t}
+          isRTL={isRTL}
+          onClose={() => setShowOnboarding(false)}
+          openNewForm={() => { setShowOnboarding(false); openNewForm(); }}
+          triggerFileInput={() => { setShowOnboarding(false); triggerFileInput(); }}
+          openAISettings={() => { setShowOnboarding(false); setShowAISettings(true); }}
+        />
+      )}
+
+      {showAISettings && (
+        <APIKeySettings t={t} onClose={() => setShowAISettings(false)} />
+      )}
+
+      {rejectionCompany && (
+        <RejectionAnalysis
+          company={rejectionCompany}
+          t={t}
+          onClose={() => setRejectionCompany(null)}
+          onOpenSettings={() => { setRejectionCompany(null); setShowAISettings(true); }}
+        />
+      )}
+
+      <AIAssistant
+        company={selectedId ? formData : null}
+        companies={companies}
+        language={i18n.language}
+        t={t}
+        onOpenSettings={() => setShowAISettings(true)}
+      />
     </div>
   );
 }

@@ -40,17 +40,21 @@
     "driveSyncing": "Syncing...",
     "connectDrive": "Connect Drive",
     "driveOnTooltip": "Drive syncing — click to disconnect",
-    "connectDriveTooltip": "Connect Google Drive for cross-device sync"
+    "connectDriveTooltip": "Connect Google Drive for cross-device sync",
+    "aiSettings": "AI Settings"
   },
   "tabs": {
     "board": "Status Board",
     "list": "List & Edit",
-    "timeline": "Timeline"
+    "timeline": "Timeline",
+    "stats": "Statistics"
   },
   "board": {
     "emptyTitle": "System Ready for Your Data",
-    "emptyDesc": "To get started, select your JSON backup file from your device. The protection mechanism will ensure the file loads without crashes.",
-    "loadButton": "Load Data from Backup File (JSON)",
+    "emptyDesc": "Get started by importing a backup, adding your first company, or taking a quick tour.",
+    "loadButton": "Load JSON Backup",
+    "addFirstCompany": "Add First Company",
+    "viewTutorial": "View Tutorial",
     "noteLabel": "Note:",
     "noteText": "When you're done for the day, don't forget to click the download icon in the top bar to save an updated copy on your computer."
   },
@@ -88,7 +92,21 @@
     "summaryPlaceholder": "Your summary, questions asked, impressions...",
     "notes": "Additional Notes",
     "notesPlaceholder": "Type your personal thoughts here...",
-    "requiredName": "Company name is required"
+    "requiredName": "Company name is required",
+    "rejectionTitle": "Rejection Details",
+    "rejectionDate": "Rejection Date",
+    "rejectionMethod": "How Were You Notified",
+    "rejectionMethodSelect": "Select...",
+    "rejectionNotes": "Notes / Feedback",
+    "rejectionNotesPlaceholder": "What was the feedback?"
+  },
+  "rejectionMethod": {
+    "Automatic Email": "Automatic Email",
+    "Personal Email": "Personal Email",
+    "Phone Call": "Phone Call",
+    "No Response": "No Response",
+    "During Interview": "During Interview",
+    "Other": "Other"
   },
   "detail": {
     "editDetails": "Edit Details",
@@ -104,7 +122,19 @@
     "noInterviews": "No interview information for this company. Click \"Edit Details\" to add.",
     "selectCompany": "Select a company from the list",
     "selectCompanyHint": "or use the JSON upload buttons above to load data",
-    "priorityLabel": "Priority"
+    "priorityLabel": "Priority",
+    "rejectionTitle": "Rejection Details",
+    "analyzeRejection": "Analyze with AI"
+  },
+  "stats": {
+    "title": "Statistics",
+    "total": "Applications",
+    "active": "Active",
+    "responseRate": "Response Rate",
+    "interviews": "Interviews",
+    "byStatus": "By Status",
+    "upcoming": "Upcoming — Next 14 Days",
+    "today": "Today"
   },
   "toast": {
     "saved": "Changes saved successfully!",
@@ -122,5 +152,72 @@
     "importError": "Error importing file. Make sure this is a valid JSON file you saved previously.",
     "unnamedCompany": "Unnamed Company",
     "noName": "No Name"
+  },
+  "onboarding": {
+    "welcomeTitle": "Welcome to JobFlowTracker!",
+    "welcomeSubtitle": "Your personal job search command center",
+    "welcomeDesc": "Track every company, interview, and rejection — all in one place. Your data stays private in your browser.",
+    "featureBoard": "Kanban board with drag & drop",
+    "featureList": "Detailed company profiles",
+    "featureTimeline": "Interview timeline",
+    "featureStats": "Stats & upcoming events",
+    "boardTitle": "Status Board",
+    "boardSubtitle": "Visualize your pipeline with drag & drop",
+    "boardDesc": "Each company appears as a card in its status column. Drag cards between columns to update their status instantly.",
+    "dragHint": "↑ Interview journey chips show your progress",
+    "boardTip": "Tip: Download a JSON backup daily from the top bar to never lose your data.",
+    "listTitle": "List & Edit",
+    "listSubtitle": "Manage companies and track interviews",
+    "listDesc": "The List tab is your editing hub. Click any company to view details, or add interviews and rejection notes.",
+    "importTitle": "Import existing data",
+    "importDesc": "Load a JSON backup you saved previously",
+    "load": "Load",
+    "addTitle": "Start fresh",
+    "addDesc": "Add your first company manually",
+    "add": "Add",
+    "aiTitle": "AI Assistant",
+    "aiSubtitle": "Get personalized prep tips powered by Claude",
+    "aiDesc": "The AI Assistant reads your company data and gives you personalized interview prep tips and rejection analysis — powered by Claude.",
+    "aiFeature1": "Interview prep: 3 targeted tips before each interview",
+    "aiFeature2": "Rejection analysis: learn what to improve",
+    "aiFeature3": "Pattern analysis: spot trends in your job hunt",
+    "aiKeyTitle": "Bring your own API key",
+    "aiKeyDesc": "You need a free Anthropic API key. Click the ⚙️ icon in the header to add it.",
+    "setKey": "Set Key",
+    "shortcutsTitle": "Keyboard Shortcuts",
+    "shortcutsSubtitle": "Work faster with shortcuts",
+    "shortcutsDesc": "Use keyboard shortcuts to navigate faster:",
+    "shortcutN": "Add a new company",
+    "shortcutEsc": "Close company detail / cancel edit",
+    "shortcutSave": "Auto-saved to browser every change",
+    "finalTip": "You're all set! Add rejection notes to every rejection — the AI can spot patterns to help you improve.",
+    "back": "Back",
+    "next": "Next",
+    "getStarted": "Let's go!"
+  },
+  "ai": {
+    "title": "AI Assistant",
+    "noKey": "Set API key to enable AI →",
+    "prepNoCompany": "Select a company first",
+    "prepButton": "Prep for interview",
+    "patternsButton": "Analyze my job hunt patterns"
+  },
+  "settings": {
+    "title": "AI Settings",
+    "keyActive": "API key is active — AI features are enabled",
+    "apiKeyLabel": "Anthropic API Key",
+    "keyNote": "Your key is stored only in this browser and never sent to our servers.",
+    "getKey": "Get a free API key from Anthropic Console →",
+    "save": "Save & Enable AI",
+    "saved": "Saved!",
+    "clearKey": "Remove API key"
+  },
+  "rejection": {
+    "analysisTitle": "Rejection Analysis",
+    "aiNeeded": "Enable AI to get personalized improvement suggestions.",
+    "setupAI": "Set up AI →",
+    "analyzing": "Analyzing your rejection...",
+    "retry": "Try again",
+    "close": "Close"
   }
 }
