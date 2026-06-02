@@ -198,6 +198,7 @@
     "debriefContext": "Entreprise / Poste (optionnel)",
     "debriefNotes": "Collez vos notes post-entretien",
     "debriefPlaceholder": "Écrivez tout — quelles questions ont été posées, comment vous avez répondu, comment vous vous êtes senti...",
+    "debriefPrivacy": "Évitez d'écrire des noms personnels — ce texte est envoyé à l'IA.",
     "debriefRun": "Analyser mes notes",
     "analyzing": "Analyse en cours...",
     "patternsButton": "Analyser mes patterns de recherche"
