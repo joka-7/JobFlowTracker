@@ -208,7 +208,17 @@
     "debriefPrivacy": "הימנע מכתיבת שמות אישיים — הטקסט הזה נשלח ל-AI.",
     "debriefRun": "נתח את ההערות שלי",
     "analyzing": "מנתח...",
-    "patternsButton": "נתח את דפוסי החיפוש שלי"
+    "patternsButton": "נתח את דפוסי החיפוש שלי",
+    "chatButton": "פתח צ'אט AI",
+    "changeSettings": "שנה הגדרות AI"
+  },
+  "chat": {
+    "title": "צ'אט AI",
+    "empty": "התחל את השיחה...",
+    "context": "הקשר",
+    "privacy": "הימנע מכתיבת שמות אישיים",
+    "placeholder": "כתוב הודעה... (Enter לשליחה)",
+    "saveToNotes": "שמור להערות"
   },
   "settings": {
     "title": "הגדרות AI",

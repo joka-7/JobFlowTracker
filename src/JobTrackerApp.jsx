@@ -1167,6 +1167,13 @@ export default function JobTrackerApp() {
         language={i18n.language}
         t={t}
         onOpenSettings={() => setShowAISettings(true)}
+        onSaveToCompany={selectedId ? (companyId, text) => {
+          setCompanies(prev => prev.map(c =>
+            c.id === selectedId
+              ? { ...c, generalNotes: c.generalNotes ? `${c.generalNotes}\n\n---\n${text}` : text }
+              : c
+          ));
+        } : null}
       />
     </div>
   );

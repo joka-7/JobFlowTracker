@@ -184,6 +184,93 @@ async function streamAnthropic(apiKey, model, prompt, onChunk) {
   return full;
 }
 
+// Multi-turn chat streaming
+export async function streamChat(messages, systemPrompt, onChunk) {
+  const { provider, apiKey, model, ollamaUrl } = config;
+
+  if (provider === 'gemini') {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
+    const contents = messages.map(m => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }],
+    }));
+    const body = { contents };
+    if (systemPrompt) body.systemInstruction = { parts: [{ text: systemPrompt }] };
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `HTTP ${res.status}`); }
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '', full = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split('\n'); buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        try { const t = JSON.parse(line.slice(6)).candidates?.[0]?.content?.parts?.[0]?.text; if (t) { full += t; onChunk(full); } } catch { /* skip */ }
+      }
+    }
+    return full;
+  }
+
+  if (provider === 'anthropic') {
+    const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+    const stream = await client.messages.stream({
+      model, max_tokens: 1024,
+      ...(systemPrompt ? { system: systemPrompt } : {}),
+      messages,
+    });
+    let full = '';
+    for await (const chunk of stream) {
+      if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+        full += chunk.delta.text; onChunk(full);
+      }
+    }
+    return full;
+  }
+
+  if (provider === 'ollama') {
+    const res = await fetch(`${ollamaUrl}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model,
+        messages: systemPrompt ? [{ role: 'system', content: systemPrompt }, ...messages] : messages,
+        stream: true,
+      }),
+    });
+    if (!res.ok) throw new Error(`Ollama error: HTTP ${res.status}`);
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '', full = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split('\n'); buf = lines.pop();
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        try { const t = JSON.parse(line).message?.content; if (t) { full += t; onChunk(full); } } catch { /* skip */ }
+      }
+    }
+    return full;
+  }
+
+  // OpenAI / Groq
+  const urls = { openai: 'https://api.openai.com/v1/chat/completions', groq: 'https://api.groq.com/openai/v1/chat/completions' };
+  return streamOpenAICompat(
+    urls[provider],
+    apiKey,
+    { model, messages: systemPrompt ? [{ role: 'system', content: systemPrompt }, ...messages] : messages },
+    onChunk,
+  );
+}
+
 async function runStream(prompt, onChunk) {
   const { provider, apiKey, model, ollamaUrl } = config;
   switch (provider) {
