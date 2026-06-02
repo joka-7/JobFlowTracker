@@ -244,13 +244,29 @@ OLLAMA_ORIGINS=* ollama serve
 
 ---
 
-## Firebase Setup
+## Firebase & your data
+
+**Using the [live app](https://job-flow-tracker-ten.vercel.app)?** You do not need a Firebase account or any backend setup.
+
+1. Open the app and sign in with Google (**Connect Drive** in the header).
+2. Your companies or candidates are stored in the app’s shared Firebase project, under your personal user ID (`users/{your-uid}/...`).
+3. Firestore security rules ensure you can only read and write **your own** data — other users cannot see yours.
+
+The only optional setup is **AI** (see [AI Setup](#ai-setup) above) if you want interview prep, rejection analysis, etc.
+
+---
+
+## Backend setup (maintainers & self-hosters only)
+
+Skip this section if you are only using the hosted app. It applies when you **clone the repo and deploy your own instance** with a separate Firebase project.
+
+The repo already includes a Firebase web config in `src/firebase.js` for the production deployment. To run your own copy:
 
 1. Create a project at https://console.firebase.google.com
 2. Enable **Authentication** → Google Sign-In provider
 3. Enable **Firestore Database** (start in production mode)
 4. Add a Web app to the project → copy the config object
-5. Replace the config in `src/firebase.js` with your own values
+5. Replace the config in `src/firebase.js` with your project’s values
 6. Go to **Authentication → Settings → Authorized domains** and add your deployment domain (e.g., your Vercel URL)
 
 **Firestore security rules** — paste from [`firestore.rules`](firestore.rules) into Firebase Console → Firestore → Rules → **Publish**:
@@ -270,6 +286,12 @@ service cloud.firestore {
 ```
 
 This allows each signed-in user to read/write their profile, `companies`, and `candidates` subcollections.
+
+Deploy rules via CLI:
+
+```bash
+firebase deploy --only firestore:rules
+```
 
 ---
 
