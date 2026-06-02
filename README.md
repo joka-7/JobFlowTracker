@@ -4,6 +4,8 @@ Personal job search **and recruiter pipeline** tracker with AI assistance (job s
 
 **Live app:** https://job-flow-tracker-ten.vercel.app
 
+**Contributing:** [CONTRIBUTING.md](CONTRIBUTING.md) · **Issues:** [github.com/joka-7/JobFlowTracker/issues](https://github.com/joka-7/JobFlowTracker/issues) · **License:** [MIT](LICENSE)
+
 ---
 
 ## Two modes (chosen once at first launch)
@@ -309,11 +311,15 @@ service cloud.firestore {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
+    match /shares/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
   }
 }
 ```
 
-This allows each signed-in user to read/write their profile, `companies`, and `candidates` subcollections.
+This allows each signed-in user to read/write their profile, `companies`, and `candidates` subcollections. Read-only share snapshots (`/shares/{uid}`) are world-readable when published; only the owner can write them.
 
 Deploy rules via CLI:
 
@@ -392,3 +398,13 @@ Entities share the same document shape; meaning of `name` / `role` depends on mo
 **Recruiter status values:** `applied`, `screening`, `phone_screen`, `technical`, `final_interview`, `offer_extended`, `offer_accepted`, `rejected`, `withdrawn`
 
 See [docs/RECRUITER_MODE.md](docs/RECRUITER_MODE.md) for recruiter field details.
+
+---
+
+## Contributing
+
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for setup, tests, and pull request guidelines.
+
+- **Bug reports & features:** [Open an issue](https://github.com/joka-7/JobFlowTracker/issues/new/choose)
+- **Pull requests:** Fork → branch → tests → PR to `main` (CI runs automatically)
+- **Security:** [SECURITY.md](SECURITY.md)
