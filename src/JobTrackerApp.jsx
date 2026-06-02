@@ -12,6 +12,7 @@ import Onboarding from './components/Onboarding';
 import AIAssistant from './components/AIAssistant';
 import APIKeySettings from './components/APIKeySettings';
 import RejectionAnalysis from './components/RejectionAnalysis';
+import TemplateLibrary from './components/TemplateLibrary';
 import Tooltip from './components/Tooltip';
 
 const Linkedin = ({ size = 16, ...p }) => (
@@ -168,6 +169,7 @@ export default function JobTrackerApp() {
 
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showAISettings, setShowAISettings] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
   const [rejectionCompany, setRejectionCompany] = useState(null);
 
   useEffect(() => {
@@ -594,7 +596,13 @@ export default function JobTrackerApp() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {statCards.map(card => (
               <div key={card.label} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 text-center">
-                <div className={`text-3xl font-black mb-1 ${card.color}`}>{card.value}</div>
+                {card.label === t('stats.responseRate', 'Response Rate') ? (
+                  <Tooltip text={t('tooltips.responseRate')} position="top">
+                    <div className={`text-3xl font-black mb-1 ${card.color}`}>{card.value}</div>
+                  </Tooltip>
+                ) : (
+                  <div className={`text-3xl font-black mb-1 ${card.color}`}>{card.value}</div>
+                )}
                 <div className="text-sm text-gray-500">{card.label}</div>
               </div>
             ))}
@@ -721,6 +729,13 @@ export default function JobTrackerApp() {
                 <Upload size={18} />
                 <input id="main-file-upload" type="file" accept=".json" onChange={handleImport} className="hidden" />
               </label>
+              <button
+                onClick={() => setShowTemplates(true)}
+                title={t('templates.title', 'Interview Templates')}
+                className="p-2 hover:bg-white/20 rounded text-white transition-colors"
+              >
+                📚
+              </button>
               <button
                 onClick={() => setShowAISettings(true)}
                 title={t('header.aiSettings', 'AI Settings')}
@@ -1180,6 +1195,10 @@ export default function JobTrackerApp() {
 
       {showAISettings && (
         <APIKeySettings t={t} onClose={() => setShowAISettings(false)} />
+      )}
+
+      {showTemplates && (
+        <TemplateLibrary t={t} onClose={() => setShowTemplates(false)} />
       )}
 
       {rejectionCompany && (
