@@ -905,16 +905,19 @@ Rules:
               {user && !shareMode && (
                 <button
                   onClick={async () => {
+                    const url = `${window.location.origin}${window.location.pathname}?share=${user.uid}`;
+                    publishShare(user.uid, companies).catch(console.error);
                     try {
-                      await publishShare(user.uid, companies);
-                      const url = `${window.location.origin}${window.location.pathname}?share=${user.uid}`;
                       await navigator.clipboard.writeText(url);
-                      setShareCopied(true);
-                      setTimeout(() => setShareCopied(false), 3000);
-                    } catch (e) { console.error(e); }
+                      showToast(t('toast.shareCopied', 'Share link copied!'));
+                    } catch {
+                      window.prompt(t('header.shareTooltip', 'Share read-only link') + ':', url);
+                    }
+                    setShareCopied(true);
+                    setTimeout(() => setShareCopied(false), 3000);
                   }}
                   title={t('header.shareTooltip', 'Share read-only link')}
-                  className="p-2 hover:bg-white/20 rounded text-white transition-colors"
+                  className={`p-2 rounded text-white transition-colors ${shareCopied ? 'bg-green-500/40' : 'hover:bg-white/20'}`}
                 >
                   {shareCopied ? '✓' : '🔗'}
                 </button>
@@ -1432,7 +1435,6 @@ Rules:
           language={i18n.language}
           systemPromptOverride={simulationData.systemPrompt}
           simulationTitle={simulationData.title}
-          autoStart={true}
           onClose={() => setSimulationData(null)}
           onOpenSettings={() => { setSimulationData(null); setShowAISettings(true); }}
         />

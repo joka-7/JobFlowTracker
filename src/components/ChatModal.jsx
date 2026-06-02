@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, Loader2, Save, MessageSquare } from 'lucide-react';
 import { streamChat, isAIReady } from '../services/aiAssistant';
 
@@ -61,7 +61,6 @@ export default function ChatModal({
   company, language, t, onClose, onOpenSettings, onSaveToCompany,
   systemPromptOverride, // simulation: overrides default system prompt
   simulationTitle,      // simulation: header subtitle
-  autoStart,            // simulation: fires hidden trigger on mount so AI speaks first
 }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -69,7 +68,6 @@ export default function ChatModal({
   const [error, setError] = useState('');
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
-  const autoStarted = useRef(false);
 
   const aiReady = isAIReady();
 
@@ -131,15 +129,6 @@ export default function ChatModal({
     setLoading(false);
   };
 
-  // Auto-start: fire hidden trigger so AI opens the simulation
-  useEffect(() => {
-    if (autoStart && aiReady && !autoStarted.current) {
-      autoStarted.current = true;
-      const timer = setTimeout(() => send(SIM_TRIGGER), 150);
-      return () => clearTimeout(timer);
-    }
-  }, [aiReady]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const handleSave = (content) => {
     if (onSaveToCompany && company) {
       onSaveToCompany(company.id, content);
@@ -174,9 +163,25 @@ export default function ChatModal({
               }
               <p className="text-sm">
                 {simulationTitle
-                  ? t('chat.simulationEmpty', 'Starting your mock interview...')
+                  ? t('chat.simulationReady', 'Ready to start — press Begin when you are.')
                   : t('chat.empty', 'Start the conversation...')}
               </p>
+              {simulationTitle && aiReady && (
+                <button
+                  onClick={() => send(SIM_TRIGGER)}
+                  className="mt-4 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow transition-colors"
+                >
+                  ▶ {t('chat.begin', 'Begin')}
+                </button>
+              )}
+              {simulationTitle && !aiReady && (
+                <button
+                  onClick={onOpenSettings}
+                  className="mt-4 px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold rounded-xl shadow transition-colors"
+                >
+                  ⚙️ {t('ai.noKey', 'Set API key to enable AI →')}
+                </button>
+              )}
               {!simulationTitle && company && (
                 <p className="text-xs mt-1 text-gray-300">
                   {t('chat.context', 'Context')}: {company.name}
