@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Layout, List, Activity, BarChart2, Keyboard, Lightbulb, ChevronRight, ChevronLeft, Upload, Plus } from 'lucide-react';
+import { X, Layout, List, Activity, BarChart2, Lightbulb, ChevronRight, ChevronLeft, Upload, Plus, Languages } from 'lucide-react';
 
 const STEPS = [
   {
@@ -172,7 +172,7 @@ const stepContent = {
   ),
 };
 
-export default function Onboarding({ t, isRTL, onClose, openNewForm, triggerFileInput, openAISettings }) {
+export default function Onboarding({ t, i18n, isRTL, onClose, openNewForm, triggerFileInput, openAISettings }) {
   const [step, setStep] = useState(0);
 
   const isFirst = step === 0;
@@ -183,6 +183,11 @@ export default function Onboarding({ t, isRTL, onClose, openNewForm, triggerFile
   const handleClose = () => {
     localStorage.setItem('hasCompletedOnboarding', '1');
     onClose();
+  };
+
+  const handleLangChange = (lang) => {
+    i18n.changeLanguage(lang);
+    localStorage.setItem('appLanguage', lang);
   };
 
   const current = STEPS[step];
@@ -203,9 +208,23 @@ export default function Onboarding({ t, isRTL, onClose, openNewForm, triggerFile
                 />
               ))}
             </div>
-            <button onClick={handleClose} className="text-white/70 hover:text-white transition-colors">
-              <X size={20} />
-            </button>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 bg-white/15 rounded-lg px-2 py-1">
+                <Languages size={14} className="text-blue-100" />
+                <select
+                  value={i18n.language}
+                  onChange={e => handleLangChange(e.target.value)}
+                  className="bg-transparent text-white text-xs font-bold border-none outline-none cursor-pointer"
+                >
+                  <option value="en" className="text-gray-800">EN</option>
+                  <option value="he" className="text-gray-800">עב</option>
+                  <option value="fr" className="text-gray-800">FR</option>
+                </select>
+              </div>
+              <button onClick={handleClose} className="text-white/70 hover:text-white transition-colors">
+                <X size={20} />
+              </button>
+            </div>
           </div>
           <div className="text-4xl mb-3">{current.icon}</div>
           <h2 className="text-2xl font-bold">{t(`onboarding.${current.titleKey}Title`, current.defaults.title)}</h2>

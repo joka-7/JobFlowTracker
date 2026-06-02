@@ -1138,6 +1138,7 @@ export default function JobTrackerApp() {
       {showOnboarding && (
         <Onboarding
           t={t}
+          i18n={i18n}
           isRTL={isRTL}
           onClose={() => setShowOnboarding(false)}
           openNewForm={() => { setShowOnboarding(false); openNewForm(); }}
