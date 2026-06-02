@@ -40,19 +40,23 @@
     "driveSyncing": "מסנכרן...",
     "connectDrive": "חבר Drive",
     "driveOnTooltip": "Drive מסנכרן — לחץ לניתוק",
-    "connectDriveTooltip": "חבר Google Drive לסנכרון בין מכשירים"
+    "connectDriveTooltip": "חבר Google Drive לסנכרון בין מכשירים",
+    "aiSettings": "הגדרות AI"
   },
   "tabs": {
     "board": "לוח סטטוסים",
     "list": "רשימה ועריכה",
-    "timeline": "ציר זמן"
+    "timeline": "ציר זמן",
+    "stats": "סטטיסטיקות"
   },
   "board": {
     "emptyTitle": "ברוך הבא למעקב חיפוש עבודה",
     "emptyDesc": "עקוב אחרי הגשות, ראיונות והתקדמות שלך — הכל במקום אחד.",
     "signInButton": "התחבר עם Google — סנכרון בכל מקום",
     "addFirstButton": "הוסף את החברה הראשונה שלך",
+    "addFirstCompany": "הוסף חברה ראשונה",
     "loadButton": "שחזר מגיבוי JSON",
+    "viewTutorial": "סיור מהיר",
     "modeCloudTitle": "סנכרון ענן",
     "modeCloudDesc": "התחבר עם Google לשמירה אוטומטית וגישה מכל מכשיר.",
     "modeLocalTitle": "אופליין / JSON",
@@ -92,7 +96,21 @@
     "summaryPlaceholder": "סיכום שלך, שאלות ששאלו, תחושות...",
     "notes": "הערות נוספות",
     "notesPlaceholder": "הקלד כאן מחשבות אישיות...",
-    "requiredName": "חובה להזין שם חברה"
+    "requiredName": "חובה להזין שם חברה",
+    "rejectionTitle": "פרטי דחייה",
+    "rejectionDate": "תאריך דחייה",
+    "rejectionMethod": "איך קיבלת הודעה",
+    "rejectionMethodSelect": "בחר...",
+    "rejectionNotes": "הערות / משוב",
+    "rejectionNotesPlaceholder": "מה היה המשוב?"
+  },
+  "rejectionMethod": {
+    "Automatic Email": "מייל אוטומטי",
+    "Personal Email": "מייל אישי",
+    "Phone Call": "שיחת טלפון",
+    "No Response": "אין תגובה",
+    "During Interview": "במהלך הראיון",
+    "Other": "אחר"
   },
   "detail": {
     "editDetails": "ערוך פרטים",
@@ -108,7 +126,19 @@
     "noInterviews": "אין מידע על ראיונות לחברה זו. לחץ על \"ערוך פרטים\" כדי להוסיף.",
     "selectCompany": "בחר חברה מהרשימה",
     "selectCompanyHint": "או השתמש בלחצני העלאת JSON למעלה כדי לטעון נתונים",
-    "priorityLabel": "עדיפות"
+    "priorityLabel": "עדיפות",
+    "rejectionTitle": "פרטי דחייה",
+    "analyzeRejection": "ניתוח עם AI"
+  },
+  "stats": {
+    "title": "סטטיסטיקות",
+    "total": "מועמדויות",
+    "active": "פעיל",
+    "responseRate": "אחוז מענה",
+    "interviews": "ראיונות",
+    "byStatus": "לפי סטטוס",
+    "upcoming": "קרובים — 14 הימים הבאים",
+    "today": "היום"
   },
   "toast": {
     "saved": "השינויים נשמרו בהצלחה!",
@@ -126,5 +156,94 @@
     "importError": "שגיאה בייבוא הקובץ. ודא שזהו קובץ JSON חוקי ששמרת מקודם.",
     "unnamedCompany": "חברה ללא שם",
     "noName": "ללא שם"
+  },
+  "onboarding": {
+    "welcomeTitle": "ברוך הבא ל-JobFlowTracker!",
+    "welcomeSubtitle": "מרכז הפיקוד האישי שלך לחיפוש עבודה",
+    "welcomeDesc": "עקוב אחר כל חברה, ראיון ודחייה — הכל במקום אחד. הנתונים שלך נשמרים בפרטיות בדפדפן.",
+    "featureBoard": "לוח קנבן עם גרירה ושחרור",
+    "featureList": "פרופילי חברות מפורטים",
+    "featureTimeline": "ציר זמן של ראיונות",
+    "featureStats": "סטטיסטיקות ואירועים קרובים",
+    "boardTitle": "לוח סטטוסים",
+    "boardSubtitle": "הצג את הצינור שלך עם גרירה ושחרור",
+    "boardDesc": "כל חברה מוצגת ככרטיס בעמודת הסטטוס שלה. גרור כרטיסים בין עמודות לעדכון סטטוס מיידי.",
+    "dragHint": "↑ שבבי מסע הראיונות מראים את ההתקדמות שלך",
+    "boardTip": "טיפ: הורד גיבוי JSON יומי מהסרגל העליון כדי לא לאבד נתונים.",
+    "listTitle": "רשימה ועריכה",
+    "listSubtitle": "נהל חברות ועקוב אחר ראיונות",
+    "listDesc": "לשונית הרשימה היא מרכז העריכה שלך. לחץ על חברה לצפייה בפרטים, או הוסף ראיונות והערות דחייה.",
+    "importTitle": "יבוא נתונים קיימים",
+    "importDesc": "טען גיבוי JSON ששמרת בעבר",
+    "load": "טען",
+    "addTitle": "התחל מהתחלה",
+    "addDesc": "הוסף את החברה הראשונה שלך ידנית",
+    "add": "הוסף",
+    "aiTitle": "עוזר AI",
+    "aiSubtitle": "קבל טיפים מותאמים אישית מבוססי Claude",
+    "aiDesc": "עוזר ה-AI קורא את נתוני החברה שלך ונותן טיפי הכנה מותאמים אישית לראיונות וניתוח דחיות — מבוסס Claude.",
+    "aiFeature1": "הכנה לראיון: 3 טיפים ממוקדים לפני כל ראיון",
+    "aiFeature2": "ניתוח דחייה: למד מה לשפר",
+    "aiFeature3": "ניתוח דפוסים: זהה מגמות בחיפוש העבודה",
+    "aiKeyTitle": "הבא מפתח API משלך",
+    "aiKeyDesc": "אתה צריך מפתח API חינמי מ-Anthropic. לחץ על סמל ⚙️ בכותרת להוספה.",
+    "setKey": "הגדר מפתח",
+    "shortcutsTitle": "קיצורי מקלדת",
+    "shortcutsSubtitle": "עבוד מהר יותר עם קיצורי מקלדת",
+    "shortcutsDesc": "השתמש בקיצורי מקלדת לניווט מהיר יותר:",
+    "shortcutN": "הוסף חברה חדשה",
+    "shortcutEsc": "סגור פרטי חברה / בטל עריכה",
+    "shortcutSave": "נשמר אוטומטית בדפדפן בכל שינוי",
+    "finalTip": "אתה מוכן! הוסף הערות דחייה לכל דחייה — ה-AI יכול לזהות דפוסים שיעזרו לך להשתפר.",
+    "back": "חזור",
+    "next": "הבא",
+    "getStarted": "בואו נתחיל!"
+  },
+  "ai": {
+    "title": "עוזר AI",
+    "noKey": "הגדר מפתח API להפעלת AI →",
+    "prepNoCompany": "בחר חברה קודם",
+    "prepButton": "הכנה לראיון",
+    "debriefButton": "נתח הערות ראיון",
+    "debriefTitle": "סיכום ראיון",
+    "debriefContext": "חברה / תפקיד (לא חובה)",
+    "debriefNotes": "הדבק כאן את ההערות שלך מאחרי הראיון",
+    "debriefPlaceholder": "כתוב הכל — אילו שאלות נשאלו, איך ענית, איך הרגשת, מה הפתיע אותך...",
+    "debriefPrivacy": "הימנע מכתיבת שמות אישיים — הטקסט הזה נשלח ל-AI.",
+    "debriefRun": "נתח את ההערות שלי",
+    "analyzing": "מנתח...",
+    "patternsButton": "נתח את דפוסי החיפוש שלי",
+    "chatButton": "פתח צ'אט AI",
+    "changeSettings": "שנה הגדרות AI"
+  },
+  "chat": {
+    "title": "צ'אט AI",
+    "empty": "התחל את השיחה...",
+    "context": "הקשר",
+    "privacy": "הימנע מכתיבת שמות אישיים",
+    "placeholder": "כתוב הודעה... (Enter לשליחה)",
+    "saveToNotes": "שמור להערות",
+    "saved": "נשמר ✓"
+  },
+  "settings": {
+    "title": "הגדרות AI",
+    "keyActive": "AI פעיל",
+    "providerLabel": "ספק AI",
+    "apiKeyLabel": "מפתח API",
+    "keyNote": "שמור רק בדפדפן זה.",
+    "modelLabel": "מודל",
+    "ollamaUrl": "כתובת Ollama",
+    "ollamaNote": "ודא ש-Ollama פועל מקומית עם CORS מאופשר.",
+    "save": "שמור והפעל AI",
+    "saved": "נשמר!",
+    "clearKey": "הסר"
+  },
+  "rejection": {
+    "analysisTitle": "ניתוח דחייה",
+    "aiNeeded": "הפעל AI לקבלת הצעות שיפור מותאמות אישית.",
+    "setupAI": "הגדר AI →",
+    "analyzing": "מנתח את הדחייה שלך...",
+    "retry": "נסה שוב",
+    "close": "סגור"
   }
 }
