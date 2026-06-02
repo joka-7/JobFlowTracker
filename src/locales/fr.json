@@ -251,5 +251,20 @@
     "rejectionMethod": "Comment vous avez été informé. Suivre ceci aide à identifier les patterns de ghosting.",
     "responseRate": "Entreprises ayant répondu (toute étape) ÷ total des candidatures × 100",
     "priority": "Haute = processus actif ou entreprise de rêve. Utilisez pour filtrer et concentrer votre énergie."
+  },
+  "templates": {
+    "title": "Bibliothèque de modèles d'entretien",
+    "search": "Rechercher des questions...",
+    "copy": "Copier",
+    "copied": "Copié !",
+    "footer": "Utilisez ces questions pour vous entraîner. Les réponses comportementales doivent suivre le format STAR.",
+    "categories": {
+      "hr": "RH / Présélection",
+      "technical": "Technique",
+      "behavioral": "Comportemental",
+      "manager": "Manager",
+      "culture": "Culture d'entreprise",
+      "questions_to_ask": "Questions à poser"
+    }
   }
 }
