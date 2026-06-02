@@ -211,7 +211,8 @@
     "context": "Contexte",
     "privacy": "Évitez d'écrire des noms personnels",
     "placeholder": "Écrivez un message... (Entrée pour envoyer)",
-    "saveToNotes": "Sauvegarder dans les notes"
+    "saveToNotes": "Sauvegarder dans les notes",
+    "saved": "Sauvegardé ✓"
   },
   "settings": {
     "title": "Paramètres IA",

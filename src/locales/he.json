@@ -218,7 +218,8 @@
     "context": "הקשר",
     "privacy": "הימנע מכתיבת שמות אישיים",
     "placeholder": "כתוב הודעה... (Enter לשליחה)",
-    "saveToNotes": "שמור להערות"
+    "saveToNotes": "שמור להערות",
+    "saved": "נשמר ✓"
   },
   "settings": {
     "title": "הגדרות AI",
