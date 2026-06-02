@@ -14,6 +14,7 @@ import APIKeySettings from './components/APIKeySettings';
 import RejectionAnalysis from './components/RejectionAnalysis';
 import TemplateLibrary from './components/TemplateLibrary';
 import Tooltip from './components/Tooltip';
+import { TEMPLATES } from './data/interviewTemplates';
 
 const Linkedin = ({ size = 16, ...p }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
@@ -170,6 +171,7 @@ export default function JobTrackerApp() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showAISettings, setShowAISettings] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [simulationData, setSimulationData] = useState(null); // { systemPrompt, title }
   const [rejectionCompany, setRejectionCompany] = useState(null);
   const [shareMode, setShareMode] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -373,6 +375,42 @@ export default function JobTrackerApp() {
     setCompanies(prev => prev.map(c => c.id === rejectionCompany.id ? updated : c));
     if (user) updateCompany(user.uid, updated).catch(console.error);
   }, [companies, user, rejectionCompany]);
+
+  const handleStartSimulation = useCallback((categoryKey) => {
+    const cat = TEMPLATES[categoryKey];
+    if (!cat) return;
+    const isQuestionsToAsk = categoryKey === 'questions_to_ask';
+    const questionList = cat.questions.map((q, i) => `${i + 1}. ${q}`).join('\n');
+    const systemPrompt = isQuestionsToAsk
+      ? `You are a friendly, experienced hiring manager. The user is practicing asking insightful questions during a job interview.
+
+They may ask you any of these questions (in any order or their own phrasing):
+${questionList}
+
+Rules:
+- Answer each question as a real hiring manager would (2-3 sentences, specific and honest)
+- After answering, give one brief tip on what made the question strong or how to phrase it better
+- Stay in character throughout
+- When the user says "begin", introduce yourself briefly and invite the first question`
+      : `You are a professional interviewer running a ${cat.label} mock interview practice session.
+
+Ask these questions one at a time:
+${questionList}
+
+Rules:
+- Ask ONE question at a time
+- After the user answers, give 2-3 sentences of feedback: start with what was good, then one specific improvement
+- Then ask the next question
+- After all questions, give a short overall assessment (3-4 sentences)
+- Keep a professional but encouraging tone
+- When the user says "begin", introduce the session in one sentence and ask question 1`;
+
+    setSimulationData({
+      systemPrompt,
+      title: `${cat.icon} ${cat.label}`,
+    });
+    setShowTemplates(false);
+  }, []);
 
   const handleExport = () => {
     const dataStr = JSON.stringify(companies, null, 2);
@@ -1361,7 +1399,11 @@ export default function JobTrackerApp() {
       )}
 
       {showTemplates && (
-        <TemplateLibrary t={t} onClose={() => setShowTemplates(false)} />
+        <TemplateLibrary
+          t={t}
+          onClose={() => setShowTemplates(false)}
+          onStartSimulation={handleStartSimulation}
+        />
       )}
 
       {rejectionCompany && (
@@ -1383,6 +1425,18 @@ export default function JobTrackerApp() {
         onOpenSettings={() => setShowAISettings(true)}
         onSaveToCompany={selectedId ? handleSaveToCompany : null}
       />
+
+      {simulationData && (
+        <ChatModal
+          t={t}
+          language={i18n.language}
+          systemPromptOverride={simulationData.systemPrompt}
+          simulationTitle={simulationData.title}
+          autoStart={true}
+          onClose={() => setSimulationData(null)}
+          onOpenSettings={() => { setSimulationData(null); setShowAISettings(true); }}
+        />
+      )}
     </div>
   );
 }

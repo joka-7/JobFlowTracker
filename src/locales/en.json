@@ -244,7 +244,9 @@
     "privacy": "Avoid writing personal names",
     "placeholder": "Type a message... (Enter to send)",
     "saveToNotes": "Save to notes",
-    "saved": "Saved ✓"
+    "saved": "Saved ✓",
+    "simulationTitle": "Mock Interview",
+    "simulationEmpty": "Starting your mock interview..."
   },
   "settings": {
     "title": "AI Settings",
@@ -279,6 +281,7 @@
     "copy": "Copy",
     "copied": "Copied!",
     "footer": "Use these to practice. Behavioral answers should follow the STAR format.",
+    "practiceButton": "Mock interview",
     "categories": {
       "hr": "HR / Screening",
       "technical": "Technical",
