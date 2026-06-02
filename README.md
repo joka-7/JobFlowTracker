@@ -37,14 +37,17 @@ A personal job application tracker with Google Sign-In, cross-device sync via Fi
 src/
 ├── JobTrackerApp.jsx   # Main app component (UI + state)
 ├── firebase.js         # Firebase auth + Firestore helpers
+├── driveSync.js        # Google Drive sync helpers
+├── logger.js           # Dev logging utility
 ├── i18n.js             # i18next configuration
-├── driveSync.js        # Google Drive sync (optional, needs verification)
 ├── main.jsx            # React entry point
 ├── App.jsx             # Root component
 ├── locales/
 │   ├── en.json         # English translations
-│   └── he.json         # Hebrew translations
+│   ├── he.json         # Hebrew translations
+│   └── fr.json         # French translations
 └── __tests__/
+    ├── journey.test.js # Interview journey helper tests
     ├── utils.test.js   # Utility function tests
     └── logic.test.js   # Business logic tests
 docs/

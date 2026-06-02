@@ -50,13 +50,17 @@
     "stats": "Statistics"
   },
   "board": {
-    "emptyTitle": "System Ready for Your Data",
-    "emptyDesc": "Get started by importing a backup, adding your first company, or taking a quick tour.",
-    "loadButton": "Load JSON Backup",
+    "emptyTitle": "Welcome to Job Search Tracker",
+    "emptyDesc": "Track your applications, interviews, and progress all in one place.",
+    "signInButton": "Sign in with Google — sync everywhere",
+    "addFirstButton": "Add your first company",
     "addFirstCompany": "Add First Company",
+    "loadButton": "Restore from JSON backup",
     "viewTutorial": "View Tutorial",
-    "noteLabel": "Note:",
-    "noteText": "When you're done for the day, don't forget to click the download icon in the top bar to save an updated copy on your computer."
+    "modeCloudTitle": "Cloud sync",
+    "modeCloudDesc": "Sign in with Google to auto-save and access your data from any device.",
+    "modeLocalTitle": "Offline / JSON",
+    "modeLocalDesc": "Work locally and download a JSON backup whenever you want."
   },
   "timeline": {
     "title": "Activity History",

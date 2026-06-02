@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Search, Plus, MapPin, Globe, Calendar,
@@ -116,6 +116,13 @@ const getDaysUntil = (dateString) => {
   return Math.ceil((date - today) / (1000 * 60 * 60 * 24));
 };
 
+const initialFormState = {
+  name: '', role: '', location: '', status: 'applied', priority: 'medium',
+  website: '', linkedinCompany: '', linkedinHR: '', description: '', products: '',
+  interviews: [], homeworks: [], contacts: [], generalNotes: '',
+  rejection: { date: '', method: '', notes: '' },
+};
+
 export default function JobTrackerApp() {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'he';
@@ -223,6 +230,13 @@ export default function JobTrackerApp() {
     return () => clearTimeout(saveTimer.current);
   }, [companies, user]);
 
+  const openNewForm = useCallback(() => {
+    setFormData(initialFormState);
+    setSelectedId(null);
+    setIsEditing(true);
+    setActiveTab('list');
+  }, []);
+
   useEffect(() => {
     const handler = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
@@ -231,7 +245,7 @@ export default function JobTrackerApp() {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, []);
+  }, [openNewForm]);
 
   const handleSignIn = async () => {
     try {
@@ -374,13 +388,6 @@ export default function JobTrackerApp() {
     e.target.value = null;
   };
 
-  const openNewForm = () => {
-    setFormData(initialFormState);
-    setSelectedId(null);
-    setIsEditing(true);
-    setActiveTab('list');
-  };
-
   const selectCompany = (company) => {
     setSelectedId(company.id);
     setFormData({ ...initialFormState, ...company, rejection: company.rejection || { date: '', method: '', notes: '' } });
@@ -393,7 +400,7 @@ export default function JobTrackerApp() {
     dragCompanyId.current = companyId;
     e.currentTarget.style.opacity = '0.5';
   };
-  const handleDragEnd = (e) => { e.currentTarget.style.opacity = '1'; };
+  const handleDragEnd = (e) => { e.currentTarget.style.opacity = '1'; dragCompanyId.current = null; };
   const handleDragOver = (e) => { e.preventDefault(); };
   const handleDrop = (e, statusId) => {
     e.preventDefault();
@@ -474,34 +481,51 @@ export default function JobTrackerApp() {
       {companies.length === 0 && (
         <div className="w-full flex flex-col items-center justify-center p-8">
           <div className="bg-white p-10 rounded-2xl shadow-xl border border-gray-200 text-center max-w-lg w-full">
-            <div className="bg-blue-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Activity size={40} className="text-blue-600" />
+            <div className="bg-indigo-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Activity size={40} className="text-indigo-600" />
             </div>
-            <h2 className="text-2xl font-black text-gray-800 mb-3">{t('board.emptyTitle')}</h2>
-            <p className="text-gray-600 mb-8">{t('board.emptyDesc')}</p>
-            <div className="grid grid-cols-1 gap-3 mb-6">
+            <h2 className="text-2xl font-black text-gray-800 mb-2">{t('board.emptyTitle')}</h2>
+            <p className="text-gray-500 mb-8 text-sm">{t('board.emptyDesc')}</p>
+
+            {!user && (
               <button
-                onClick={triggerFileInput}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl shadow transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3"
+                onClick={handleSignIn}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-base py-3.5 px-6 rounded-xl shadow-lg transition-transform hover:scale-105 active:scale-95 flex items-center justify-center gap-3 mb-3"
               >
-                <Upload size={20} /> {t('board.loadButton')}
+                <Cloud size={20} /> {t('board.signInButton')}
               </button>
-              <button
-                onClick={openNewForm}
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl shadow transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3"
-              >
-                <Plus size={20} /> {t('board.addFirstCompany', 'Add First Company')}
-              </button>
-              <button
-                onClick={() => setShowOnboarding(true)}
-                className="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold py-3 px-6 rounded-xl border border-indigo-200 transition-all flex items-center justify-center gap-3"
-              >
-                💡 {t('board.viewTutorial', 'View Tutorial')}
-              </button>
-            </div>
-            <div className={`text-sm text-gray-500 bg-gray-50 p-4 rounded-lg flex items-start gap-3 ${isRTL ? 'text-right' : 'text-left'}`}>
-              <AlertTriangle size={20} className="text-amber-500 flex-shrink-0" />
-              <p><strong>{t('board.noteLabel')}</strong> {t('board.noteText')}</p>
+            )}
+
+            <button
+              onClick={openNewForm}
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-bold text-base py-3.5 px-6 rounded-xl shadow transition-transform hover:scale-105 active:scale-95 flex items-center justify-center gap-3 mb-3"
+            >
+              <Plus size={20} /> {t('board.addFirstButton', 'Add your first company')}
+            </button>
+
+            <button
+              onClick={triggerFileInput}
+              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm py-3 px-6 rounded-xl flex items-center justify-center gap-2 mb-3"
+            >
+              <Upload size={16} /> {t('board.loadButton')}
+            </button>
+
+            <button
+              onClick={() => setShowOnboarding(true)}
+              className="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm py-2.5 px-6 rounded-xl border border-indigo-200 flex items-center justify-center gap-2 mb-4"
+            >
+              💡 {t('board.viewTutorial', 'View Tutorial')}
+            </button>
+
+            <div className="grid grid-cols-2 gap-3 text-left text-xs text-gray-500">
+              <div className="bg-indigo-50 p-3 rounded-lg">
+                <div className="font-bold text-indigo-700 mb-1 flex items-center gap-1"><Cloud size={12} /> {t('board.modeCloudTitle')}</div>
+                <p>{t('board.modeCloudDesc')}</p>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <div className="font-bold text-gray-700 mb-1 flex items-center gap-1"><Download size={12} /> {t('board.modeLocalTitle')}</div>
+                <p>{t('board.modeLocalDesc')}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -603,7 +627,7 @@ export default function JobTrackerApp() {
                 {upcomingEvents.map((event, i) => {
                   const days = getDaysUntil(event.date);
                   return (
-                    <div key={i} className="flex items-center gap-4 p-3 bg-orange-50 rounded-lg border border-orange-100">
+                    <div key={`${event.companyName}-${event.date}`} className="flex items-center gap-4 p-3 bg-orange-50 rounded-lg border border-orange-100">
                       <div className={`text-center px-3 py-1 rounded-lg font-bold text-sm flex-shrink-0 min-w-[48px] ${days === 0 ? 'bg-red-500 text-white' : days <= 2 ? 'bg-orange-500 text-white' : 'bg-blue-100 text-blue-700'}`}>
                         {days === 0 ? t('stats.today', 'Today') : `+${days}d`}
                       </div>
