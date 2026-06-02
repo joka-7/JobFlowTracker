@@ -40,7 +40,11 @@
     "driveSyncing": "Synchronisation...",
     "connectDrive": "Connecter Drive",
     "driveOnTooltip": "Drive synchronisé — cliquer pour déconnecter",
-    "connectDriveTooltip": "Connecter Google Drive pour synchroniser sur tous les appareils"
+    "connectDriveTooltip": "Connecter Google Drive pour synchroniser sur tous les appareils",
+    "aiSettings": "Paramètres IA",
+    "shareTooltip": "Partager un lien en lecture seule",
+    "viewOnly": "Lecture seule",
+    "viewOnlyDesc": "Vous consultez un instantané partagé en lecture seule."
   },
   "tabs": {
     "board": "Tableau",
@@ -49,11 +53,17 @@
     "stats": "Statistiques"
   },
   "board": {
-    "emptyTitle": "Système prêt pour vos données",
-    "emptyDesc": "Pour commencer, sélectionnez votre fichier de sauvegarde JSON depuis votre appareil.",
-    "loadButton": "Charger les données (JSON)",
-    "noteLabel": "Note :",
-    "noteText": "En fin de journée, pensez à télécharger une copie mise à jour sur votre ordinateur."
+    "emptyTitle": "Bienvenue dans Job Search Tracker",
+    "emptyDesc": "Suivez vos candidatures, entretiens et progression au même endroit.",
+    "signInButton": "Se connecter avec Google — sync partout",
+    "addFirstButton": "Ajouter votre première entreprise",
+    "addFirstCompany": "Ajouter une entreprise",
+    "loadButton": "Restaurer depuis une sauvegarde JSON",
+    "viewTutorial": "Visite guidée",
+    "modeCloudTitle": "Sync cloud",
+    "modeCloudDesc": "Connectez-vous avec Google pour sauvegarder automatiquement et accéder depuis n'importe quel appareil.",
+    "modeLocalTitle": "Hors ligne / JSON",
+    "modeLocalDesc": "Travaillez localement et téléchargez une sauvegarde JSON quand vous voulez."
   },
   "timeline": {
     "title": "Historique des activités",
@@ -66,7 +76,9 @@
     "searchPlaceholder": "Rechercher une entreprise...",
     "allStatuses": "Tous les statuts",
     "noResults": "Aucun résultat trouvé.",
-    "backToList": "Retour à la liste"
+    "backToList": "Retour à la liste",
+    "loadMore": "Charger plus",
+    "remaining": "restants"
   },
   "form": {
     "editTitle": "Modifier les détails",
@@ -120,7 +132,8 @@
     "selectCompany": "Sélectionnez une entreprise dans la liste",
     "selectCompanyHint": "ou utilisez les boutons JSON ci-dessus pour charger des données",
     "priorityLabel": "Priorité",
-    "rejectionTitle": "Détails du refus"
+    "rejectionTitle": "Détails du refus",
+    "analyzeRejection": "Analyser avec IA"
   },
   "stats": {
     "title": "Statistiques",
@@ -130,7 +143,11 @@
     "interviews": "Entretiens",
     "byStatus": "Par statut",
     "upcoming": "À venir — 14 prochains jours",
-    "today": "Aujourd'hui"
+    "today": "Aujourd'hui",
+    "journey": "Parcours de candidature",
+    "journeySubtitle": "Conversion de votre pipeline",
+    "avgDays": "Jours moyens par étape",
+    "noData": "Ajoutez plus d'entreprises pour voir les tendances"
   },
   "toast": {
     "saved": "Modifications enregistrées !",
@@ -142,11 +159,133 @@
     "driveFailed": "Échec de la connexion Drive.",
     "driveDisconnected": "Drive déconnecté."
   },
+  "onboarding": {
+    "welcomeTitle": "Bienvenue sur JobFlowTracker !",
+    "welcomeSubtitle": "Votre centre de commande de recherche d'emploi",
+    "welcomeDesc": "Suivez chaque entreprise, entretien et refus — tout en un seul endroit. Vos données restent privées dans votre navigateur.",
+    "featureBoard": "Tableau kanban avec glisser-déposer",
+    "featureList": "Profils d'entreprises détaillés",
+    "featureTimeline": "Chronologie des entretiens",
+    "featureStats": "Statistiques et événements à venir",
+    "boardTitle": "Tableau de statuts",
+    "boardSubtitle": "Visualisez votre pipeline avec glisser-déposer",
+    "boardDesc": "Chaque entreprise apparaît comme une carte dans sa colonne de statut. Faites glisser les cartes entre les colonnes pour mettre à jour le statut instantanément.",
+    "dragHint": "↑ Les étiquettes de parcours montrent votre progression",
+    "boardTip": "Conseil : Téléchargez une sauvegarde JSON chaque jour depuis la barre supérieure.",
+    "listTitle": "Liste & Édition",
+    "listSubtitle": "Gérez les entreprises et suivez les entretiens",
+    "listDesc": "L'onglet Liste est votre hub d'édition. Cliquez sur une entreprise pour voir les détails, ou ajoutez des entretiens et des notes de refus.",
+    "importTitle": "Importer des données existantes",
+    "importDesc": "Charger une sauvegarde JSON enregistrée précédemment",
+    "load": "Charger",
+    "addTitle": "Commencer de zéro",
+    "addDesc": "Ajouter votre première entreprise manuellement",
+    "add": "Ajouter",
+    "aiTitle": "Assistant IA",
+    "aiSubtitle": "Obtenez des conseils personnalisés basés sur Claude",
+    "aiDesc": "L'Assistant IA lit vos données d'entreprise et vous donne des conseils de préparation personnalisés et une analyse des refus — basé sur Claude.",
+    "aiFeature1": "Préparation entretien : 3 conseils ciblés avant chaque entretien",
+    "aiFeature2": "Analyse des refus : apprenez quoi améliorer",
+    "aiFeature3": "Analyse de patterns : identifiez les tendances",
+    "aiKeyTitle": "Apportez votre propre clé API",
+    "aiKeyDesc": "Vous avez besoin d'une clé API Anthropic gratuite. Cliquez sur l'icône ⚙️ dans l'en-tête pour l'ajouter.",
+    "setKey": "Définir la clé",
+    "shortcutsTitle": "Raccourcis clavier",
+    "shortcutsSubtitle": "Travaillez plus vite avec des raccourcis",
+    "shortcutsDesc": "Utilisez les raccourcis clavier pour naviguer plus rapidement :",
+    "shortcutN": "Ajouter une nouvelle entreprise",
+    "shortcutEsc": "Fermer les détails / annuler l'édition",
+    "shortcutSave": "Sauvegarde automatique dans le navigateur",
+    "finalTip": "Vous êtes prêt ! Ajoutez des notes de refus à chaque refus — l'IA peut identifier des patterns pour vous aider à vous améliorer.",
+    "back": "Retour",
+    "next": "Suivant",
+    "getStarted": "C'est parti !"
+  },
+  "ai": {
+    "title": "Assistant IA",
+    "noKey": "Définir une clé API pour activer l'IA →",
+    "prepNoCompany": "Sélectionnez d'abord une entreprise",
+    "prepButton": "Préparer l'entretien",
+    "debriefButton": "Analyser mes notes d'entretien",
+    "debriefTitle": "Débrief d'entretien",
+    "debriefContext": "Entreprise / Poste (optionnel)",
+    "debriefNotes": "Collez vos notes post-entretien",
+    "debriefPlaceholder": "Écrivez tout — quelles questions ont été posées, comment vous avez répondu, comment vous vous êtes senti...",
+    "debriefPrivacy": "Évitez d'écrire des noms personnels — ce texte est envoyé à l'IA.",
+    "debriefRun": "Analyser mes notes",
+    "analyzing": "Analyse en cours...",
+    "patternsButton": "Analyser mes patterns de recherche",
+    "chatButton": "Ouvrir le chat IA",
+    "changeSettings": "Modifier les paramètres IA",
+    "scheduleButton": "Planning de préparation entretien",
+    "scheduleNoDate": "Ajoutez d'abord une date d'entretien",
+    "resumeButton": "Adapter le CV pour ce poste"
+  },
+  "resume": {
+    "title": "Adaptation du CV",
+    "privacy": "N'incluez pas votre nom, e-mail ou téléphone — ce texte est envoyé à l'IA.",
+    "pasteLabel": "Collez votre expérience professionnelle / contenu du CV",
+    "placeholder": "Collez votre expérience, compétences et réalisations ici...",
+    "chars": "caractères utilisés",
+    "analyzeButton": "Obtenir des suggestions",
+    "analyzing": "Analyse en cours..."
+  },
+  "chat": {
+    "title": "Chat IA",
+    "empty": "Démarrez la conversation...",
+    "context": "Contexte",
+    "privacy": "Évitez d'écrire des noms personnels",
+    "placeholder": "Écrivez un message... (Entrée pour envoyer)",
+    "saveToNotes": "Sauvegarder dans les notes",
+    "saved": "Sauvegardé ✓"
+  },
+  "settings": {
+    "title": "Paramètres IA",
+    "keyActive": "IA active",
+    "providerLabel": "Fournisseur IA",
+    "apiKeyLabel": "Clé API",
+    "keyNote": "Stockée uniquement dans ce navigateur.",
+    "modelLabel": "Modèle",
+    "ollamaUrl": "URL Ollama",
+    "ollamaNote": "Assurez-vous qu'Ollama fonctionne localement avec CORS activé.",
+    "save": "Enregistrer et activer l'IA",
+    "saved": "Enregistré !",
+    "clearKey": "Supprimer"
+  },
+  "rejection": {
+    "analysisTitle": "Analyse du refus",
+    "aiNeeded": "Activez l'IA pour obtenir des suggestions d'amélioration personnalisées.",
+    "setupAI": "Configurer l'IA →",
+    "analyzing": "Analyse de votre refus...",
+    "retry": "Réessayer",
+    "close": "Fermer"
+  },
   "alert": {
     "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cette entreprise ?",
     "noCompanyData": "Aucune donnée d'entreprise trouvée dans le fichier.",
     "importError": "Erreur lors de l'importation. Vérifiez que le fichier JSON est valide.",
     "unnamedCompany": "Entreprise sans nom",
     "noName": "Sans nom"
+  },
+  "tooltips": {
+    "interviewType": "Sélectionnez le type d'entretien. RH = présélection, Technique = code/compétences, Manager = adéquation culturelle",
+    "rejectionMethod": "Comment vous avez été informé. Suivre ceci aide à identifier les patterns de ghosting.",
+    "responseRate": "Entreprises ayant répondu (toute étape) ÷ total des candidatures × 100",
+    "priority": "Haute = processus actif ou entreprise de rêve. Utilisez pour filtrer et concentrer votre énergie."
+  },
+  "templates": {
+    "title": "Bibliothèque de modèles d'entretien",
+    "search": "Rechercher des questions...",
+    "copy": "Copier",
+    "copied": "Copié !",
+    "footer": "Utilisez ces questions pour vous entraîner. Les réponses comportementales doivent suivre le format STAR.",
+    "categories": {
+      "hr": "RH / Présélection",
+      "technical": "Technique",
+      "behavioral": "Comportemental",
+      "manager": "Manager",
+      "culture": "Culture d'entreprise",
+      "questions_to_ask": "Questions à poser"
+    }
   }
 }
