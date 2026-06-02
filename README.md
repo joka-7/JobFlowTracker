@@ -28,7 +28,6 @@ Supports Google Gemini, Groq (free tier), Ollama (free/local), Anthropic Claude,
 ### Data & Sync
 - **Google Sign-In** — private, isolated data per user; no accounts to create
 - **Firestore sync** — subcollection-based storage with granular writes; auto-migrates legacy single-document data
-- **Share link** — publish a read-only snapshot anyone can view via `?share=uid`
 - **Offline backup** — export and import your full dataset as JSON at any time
 
 ### Interview Template Library
@@ -128,19 +127,13 @@ Click **Templates** in the header (or the template icon on any company). The lib
 
 Click any question to copy it to your clipboard. Use these to build a custom question list before each interview.
 
-### 8. Sharing Your Tracker
-
-Click the **Share** button in the header. This publishes a read-only snapshot of your current data to `shares/{uid}` in Firestore. Anyone with the link (`https://job-flow-tracker-ten.vercel.app?share=uid`) can view your board — no sign-in required.
-
-The snapshot is overwritten each time you click Share. To stop sharing, use the **Revoke** option (if available in your build) or manually delete the share document from Firestore.
-
-### 9. Backup and Restore
+### 8. Backup and Restore
 
 **Export:** Click **Export JSON** in the header menu. Your entire dataset downloads as a `.json` file. Store this as a backup or use it to migrate to another account.
 
 **Import:** Click **Import JSON** and select a previously exported file. The import merges the data — existing entries by ID are overwritten, new ones are added. Always export first before importing to avoid data loss.
 
-### 10. Keyboard Shortcuts
+### 9. Keyboard Shortcuts
 
 | Shortcut | Action |
 |---|---|
@@ -259,10 +252,6 @@ service cloud.firestore {
         allow read, write: if request.auth != null && request.auth.uid == uid;
       }
     }
-    match /shares/{uid} {
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == uid;
-    }
   }
 }
 ```
@@ -332,5 +321,3 @@ Companies are stored as individual Firestore documents in a subcollection — no
 ```
 
 **Valid status values:** `applied`, `screening`, `tech_interview`, `hr_interview`, `offer`, `rejected`, `ghosted`, `withdrawn`
-
-**Read-only shares:** `shares/{uid}` — a public snapshot document written when the user clicks Share. Readable by anyone without authentication; writable only by the owner.
