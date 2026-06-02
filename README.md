@@ -1,8 +1,19 @@
 # JobFlowTracker
 
-Personal job search tracker with AI assistance, kanban board, multi-language (EN/עב/FR), Firebase sync, and offline backup.
+Personal job search **and recruiter pipeline** tracker with AI assistance (job seeker mode), kanban board, multi-language (EN/עב/FR), Firebase sync, and offline backup.
 
 **Live app:** https://job-flow-tracker-ten.vercel.app
+
+---
+
+## Two modes (chosen once at first launch)
+
+| Mode | For | Tracks |
+|------|-----|--------|
+| **Job seeker** | People looking for work | Companies, applications, interviews |
+| **Recruiter** | Hiring managers / recruiters | Candidates through hiring stages |
+
+Mode is stored in `localStorage.appMode` and synced to your Firebase user profile. **There is no toggle** — pick once on first visit. See [docs/RECRUITER_MODE.md](docs/RECRUITER_MODE.md) for full recruiter details.
 
 ---
 
@@ -34,21 +45,26 @@ Supports Google Gemini, Groq (free tier), Ollama (free/local), Anthropic Claude,
 80+ curated questions across 6 categories: HR, Technical, Behavioral, Manager, Culture, and Questions to Ask. Browse and copy questions directly into your interview prep.
 
 ### Onboarding & UX
-- **Onboarding wizard** — 5-step guided tour on first visit
+- **Mode selection** — first-time users choose Job Seeker or Recruiter (fixed permanently)
+- **Onboarding wizard** — 5-step guided tour on first visit (job seeker only)
 - **3 languages** — English, Hebrew (RTL), French; persists across sessions
-- **Keyboard shortcuts** — `N` to add a company, `Esc` to close
+- **Keyboard shortcuts** — `N` to add a company/candidate, `Esc` to close
 
 ---
 
 ## How to Use
 
-### 1. First Launch / Onboarding
+### 1. First Launch
 
-Open the app at https://job-flow-tracker-ten.vercel.app. On your first visit, a 5-step onboarding wizard walks you through the main features. Click **Next** to advance through each step, or **Skip** to dismiss it. The wizard only appears once; to re-trigger it, clear your browser's local storage.
+**New users:** A full-screen mode picker asks whether you are a **Job Seeker** or **Recruiter**. This choice is saved permanently for this browser.
 
-Sign in with Google using the **Sign In** button in the header. Your data is private and tied to your Google account — no other user can see it.
+**Returning users with existing data:** If you already have a JSON backup in the browser, the app auto-selects **Job Seeker** and skips the picker.
 
-### 2. Adding Your First Company
+**Job seeker only:** A 5-step onboarding wizard may appear after mode selection. Click through or dismiss with **X**. Recruiter mode skips the wizard.
+
+Sign in with Google using **Connect Drive** in the header. Your data is private and tied to your Google account.
+
+### 2. Job seeker — Adding Your First Company
 
 Click the **+ Add Company** button (or press `N`) to open the company form. Fill in:
 
@@ -61,6 +77,18 @@ Click the **+ Add Company** button (or press `N`) to open the company form. Fill
 - **General notes** — anything else: recruiter name, referral source, compensation details
 
 Click **Save**. The company appears on the Kanban board and in the list.
+
+### 2b. Recruiter — Adding Your First Candidate
+
+Click **Add Candidate** (or press `N`). Fill in:
+
+- **Candidate name** (required)
+- **Position applied for**
+- **Hiring stage** — start with *Application Received*
+- **LinkedIn, current role, expected salary, source** — optional recruiter fields
+- **Interviews** and **hiring notes** — same pipeline UI as job seeker
+
+Data syncs to `users/{uid}/candidates/` when signed in. AI Assistant is not shown in recruiter mode.
 
 ### 3. Tracking the Process
 
@@ -161,40 +189,25 @@ Click any question to copy it to your clipboard. Use these to build a custom que
 
 ```
 src/
-├── JobTrackerApp.jsx        # Main app — UI, state, all event handlers
-├── firebase.js              # Auth + Firestore subcollection helpers
+├── JobTrackerApp.jsx        # Main app — UI, state, mode-aware labels/forms
+├── statuses.js              # Job seeker + recruiter status configs
+├── firebase.js              # Auth + mode-aware Firestore helpers
 ├── i18n.js                  # react-i18next setup
-├── logger.js                # Dev-only logging utility
-├── main.jsx / App.jsx       # React entry point and root component
+├── App.jsx                  # Mode gate → ModeSelection or JobTrackerApp
 ├── components/
-│   ├── AIAssistant.jsx      # Floating AI panel (prep, debrief, patterns, schedule, resume, chat)
-│   ├── APIKeySettings.jsx   # AI provider + key settings modal
-│   ├── ChatModal.jsx        # Multi-turn AI chat
-│   ├── Onboarding.jsx       # First-visit 5-step wizard
-│   ├── RejectionAnalysis.jsx# Rejection AI analysis modal
-│   ├── ResumeReview.jsx     # Resume tailoring AI modal
-│   ├── TemplateLibrary.jsx  # 80+ interview question templates
-│   └── Tooltip.jsx          # Hover tooltip component
-├── services/
-│   └── aiAssistant.js       # AI provider abstraction (5 providers, all streaming)
-├── data/
-│   └── interviewTemplates.js# 80+ questions across 6 categories
-├── locales/
-│   ├── en.json              # English translations
-│   ├── he.json              # Hebrew translations
-│   └── fr.json              # French translations
-└── __tests__/               # 141 Vitest tests
-    ├── AIKeySettings.test.jsx
-    ├── ChatModal.test.jsx
-    ├── Onboarding.test.jsx
-    ├── aiAssistant.test.js
-    ├── journey.test.js
-    ├── logic.test.js
-    └── utils.test.js
+│   ├── ModeSelection.jsx    # First-launch job seeker vs recruiter picker
+│   ├── AIAssistant.jsx      # Floating AI panel (job seeker only)
+│   ├── Onboarding.jsx       # First-visit wizard (job seeker only)
+│   └── ...
+├── locales/                 # en.json, he.json, fr.json (+ recruiter.* namespace)
+├── __tests__/               # Vitest unit + integration tests
+e2e/                         # Playwright end-to-end tests
 docs/
-├── HLD.md                   # High-level design
-└── LLD.md                   # Low-level design
-firestore.rules              # Firestore security rules (deploy with Firebase CLI)
+├── HLD.md
+├── LLD.md
+└── RECRUITER_MODE.md        # Recruiter mode reference
+firestore.rules
+playwright.config.js
 ```
 
 ---
@@ -231,32 +244,51 @@ OLLAMA_ORIGINS=* ollama serve
 
 ---
 
-## Firebase Setup
+## Firebase & your data
+
+**Using the [live app](https://job-flow-tracker-ten.vercel.app)?** You do not need a Firebase account or any backend setup.
+
+1. Open the app and sign in with Google (**Connect Drive** in the header).
+2. Your companies or candidates are stored in the app’s shared Firebase project, under your personal user ID (`users/{your-uid}/...`).
+3. Firestore security rules ensure you can only read and write **your own** data — other users cannot see yours.
+
+The only optional setup is **AI** (see [AI Setup](#ai-setup) above) if you want interview prep, rejection analysis, etc.
+
+---
+
+## Backend setup (maintainers & self-hosters only)
+
+Skip this section if you are only using the hosted app. It applies when you **clone the repo and deploy your own instance** with a separate Firebase project.
+
+The repo already includes a Firebase web config in `src/firebase.js` for the production deployment. To run your own copy:
 
 1. Create a project at https://console.firebase.google.com
 2. Enable **Authentication** → Google Sign-In provider
 3. Enable **Firestore Database** (start in production mode)
 4. Add a Web app to the project → copy the config object
-5. Replace the config in `src/firebase.js` with your own values
+5. Replace the config in `src/firebase.js` with your project’s values
 6. Go to **Authentication → Settings → Authorized domains** and add your deployment domain (e.g., your Vercel URL)
 
-**Firestore security rules** — copy the contents of `firestore.rules` into the Firestore Rules tab, or deploy directly:
+**Firestore security rules** — paste from [`firestore.rules`](firestore.rules) into Firebase Console → Firestore → Rules → **Publish**:
 
-```
+```javascript
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
-      match /companies/{companyId} {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      match /{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
   }
 }
 ```
 
+This allows each signed-in user to read/write their profile, `companies`, and `candidates` subcollections.
+
 Deploy rules via CLI:
+
 ```bash
 firebase deploy --only firestore:rules
 ```
@@ -275,20 +307,27 @@ firebase deploy --only firestore:rules
 ## Run Tests
 
 ```bash
-npm test
+npm test          # Vitest — unit + integration (155 tests)
+npm run test:e2e  # Playwright — browser e2e (12 tests, port 5199)
+npm run test:all  # Both suites
 ```
 
-141 Vitest tests covering AI provider logic, chat modal, onboarding, application journey helpers, utility functions, and business logic.
+**Unit/integration** (`src/__tests__/`): AI providers, mode selection, statuses config, onboarding, components, business logic.
+
+**E2E** (`e2e/`): Real browser flows — mode picker, add company/candidate, localStorage persistence, export, recruiter stats. Uses a dedicated dev server on port **5199** (avoids conflicting with other apps on 5173).
 
 ---
 
 ## Data Schema
 
-Companies are stored as individual Firestore documents in a subcollection — not as a single array on the user document. This allows granular, per-company writes.
+Entities share the same document shape; meaning of `name` / `role` depends on mode.
 
-**Firestore path:** `users/{uid}/companies/{companyId}`
+**Job seeker path:** `users/{uid}/companies/{companyId}`  
+**Recruiter path:** `users/{uid}/candidates/{candidateId}`
 
-**Company document:**
+**localStorage:** `jobTrackerAppV2Data_jobseeker` or `jobTrackerAppV2Data_recruiter`
+
+**Company / candidate document (shared shape):**
 
 ```json
 {
@@ -320,4 +359,8 @@ Companies are stored as individual Firestore documents in a subcollection — no
 }
 ```
 
-**Valid status values:** `applied`, `screening`, `tech_interview`, `hr_interview`, `offer`, `rejected`, `ghosted`, `withdrawn`
+**Job seeker status values:** `applied`, `hr_call`, `tech_interview`, `manager_interview`, `home_assignment`, `references`, `offer`, `frozen`, `rejected`, `ghosted`, `withdrawn`
+
+**Recruiter status values:** `applied`, `screening`, `phone_screen`, `technical`, `final_interview`, `offer_extended`, `offer_accepted`, `rejected`, `withdrawn`
+
+See [docs/RECRUITER_MODE.md](docs/RECRUITER_MODE.md) for recruiter field details.
