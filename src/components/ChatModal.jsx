@@ -54,19 +54,28 @@ function Message({ msg, onSave, t }) {
   );
 }
 
-export default function ChatModal({ company, language, t, onClose, onOpenSettings, onSaveToCompany }) {
+// sentinel value used to trigger AI-first simulation without showing a user bubble
+const SIM_TRIGGER = '__sim_start__';
+
+export default function ChatModal({
+  company, language, t, onClose, onOpenSettings, onSaveToCompany,
+  systemPromptOverride, // simulation: overrides default system prompt
+  simulationTitle,      // simulation: header subtitle
+  autoStart,            // simulation: fires hidden trigger on mount so AI speaks first
+}) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
+  const autoStarted = useRef(false);
 
   const aiReady = isAIReady();
 
-  const systemPrompt = company
+  const systemPrompt = systemPromptOverride || (company
     ? `You are a helpful job search assistant. The user is tracking their application to ${company.name}${company.role ? ` for the role of ${company.role}` : ''}${company.location ? ` in ${company.location}` : ''}. Current status: ${company.status}. Number of interviews: ${company.interviews?.length || 0}. Be concise and practical.`
-    : 'You are a helpful job search assistant. Be concise and practical.';
+    : 'You are a helpful job search assistant. Be concise and practical.');
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -76,23 +85,27 @@ export default function ChatModal({ company, language, t, onClose, onOpenSetting
     inputRef.current?.focus();
   }, []);
 
-  const send = async () => {
-    const text = input.trim();
-    if (!text || loading) return;
+  const send = async (textOverride) => {
+    const isTrigger = textOverride === SIM_TRIGGER;
+    const text = isTrigger ? SIM_TRIGGER : (textOverride || input).trim();
+    if ((!isTrigger && !text) || loading) return;
     if (!aiReady) { onOpenSettings(); return; }
 
-    const userMsg = { role: 'user', content: text };
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
-    setInput('');
+    // For the hidden sim trigger, don't add a user bubble to UI
+    const visibleUserMsg = isTrigger ? null : { role: 'user', content: text };
+    const newMessages = visibleUserMsg ? [...messages, visibleUserMsg] : [...messages];
+    if (visibleUserMsg) setMessages(newMessages);
+    if (!textOverride) setInput('');
     setError('');
     setLoading(true);
 
-    const assistantMsg = { role: 'assistant', content: '', streaming: true };
-    setMessages(prev => [...prev, assistantMsg]);
+    setMessages(prev => [...prev, { role: 'assistant', content: '', streaming: true }]);
 
-    // strip UI-only fields before sending to API
-    const apiMessages = newMessages.map(({ role, content }) => ({ role, content }));
+    // strip UI-only fields; replace trigger with a neutral user turn for the API
+    const apiMessages = [
+      ...newMessages.map(({ role, content }) => ({ role, content })),
+      ...(isTrigger ? [{ role: 'user', content: 'begin' }] : []),
+    ];
 
     try {
       await streamChat(
@@ -112,11 +125,20 @@ export default function ChatModal({ company, language, t, onClose, onOpenSetting
         return updated;
       });
     } catch (e) {
-      setMessages(prev => prev.slice(0, -1));
+      setMessages(prev => prev.filter(m => !m.streaming));
       setError(e.message || 'Error');
     }
     setLoading(false);
   };
+
+  // Auto-start: fire hidden trigger so AI opens the simulation
+  useEffect(() => {
+    if (autoStart && aiReady && !autoStarted.current) {
+      autoStarted.current = true;
+      const timer = setTimeout(() => send(SIM_TRIGGER), 150);
+      return () => clearTimeout(timer);
+    }
+  }, [aiReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSave = (content) => {
     if (onSaveToCompany && company) {
@@ -131,12 +153,12 @@ export default function ChatModal({ company, language, t, onClose, onOpenSetting
         {/* Header */}
         <div className="bg-gradient-to-r from-indigo-600 to-purple-700 px-4 py-3 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2 text-white">
-            <MessageSquare size={16} />
+            <span className="text-base">{simulationTitle ? '🎭' : <MessageSquare size={16} />}</span>
             <div>
-              <p className="font-bold text-sm">{t('chat.title', 'AI Chat')}</p>
-              {company && (
-                <p className="text-indigo-200 text-xs">{company.name}{company.role ? ` — ${company.role}` : ''}</p>
-              )}
+              <p className="font-bold text-sm">{simulationTitle ? t('chat.simulationTitle', 'Mock Interview') : t('chat.title', 'AI Chat')}</p>
+              <p className="text-indigo-200 text-xs">
+                {simulationTitle || (company && `${company.name}${company.role ? ` — ${company.role}` : ''}`)}
+              </p>
             </div>
           </div>
           <button onClick={onClose} className="text-white/70 hover:text-white"><X size={20} /></button>
@@ -144,18 +166,27 @@ export default function ChatModal({ company, language, t, onClose, onOpenSetting
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-4 py-4">
-          {messages.length === 0 && (
+          {messages.length === 0 && !loading && (
             <div className="text-center text-gray-400 mt-8">
-              <MessageSquare size={32} className="mx-auto mb-3 opacity-30" />
-              <p className="text-sm">{t('chat.empty', 'Start the conversation...')}</p>
-              {company && (
+              {simulationTitle
+                ? <p className="text-3xl mb-3">🎭</p>
+                : <MessageSquare size={32} className="mx-auto mb-3 opacity-30" />
+              }
+              <p className="text-sm">
+                {simulationTitle
+                  ? t('chat.simulationEmpty', 'Starting your mock interview...')
+                  : t('chat.empty', 'Start the conversation...')}
+              </p>
+              {!simulationTitle && company && (
                 <p className="text-xs mt-1 text-gray-300">
                   {t('chat.context', 'Context')}: {company.name}
                 </p>
               )}
-              <p className="text-[11px] text-amber-500 mt-3">
-                ⚠️ {t('chat.privacy', 'Avoid writing personal names')}
-              </p>
+              {!simulationTitle && (
+                <p className="text-[11px] text-amber-500 mt-3">
+                  ⚠️ {t('chat.privacy', 'Avoid writing personal names')}
+                </p>
+              )}
             </div>
           )}
           {messages.map((msg, i) => (

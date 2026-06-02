@@ -1,6 +1,6 @@
 # JobFlowTracker
 
-A personal job application tracker with Google Sign-In, cross-device sync via Firebase, Hebrew/English support, and offline JSON backup.
+Personal job search tracker with AI assistance, kanban board, multi-language (EN/עב/FR), Firebase sync, and offline backup.
 
 **Live app:** https://job-flow-tracker-ten.vercel.app
 
@@ -8,13 +8,145 @@ A personal job application tracker with Google Sign-In, cross-device sync via Fi
 
 ## Features
 
-- **Kanban board** — visualize applications by status
-- **List & edit** — detailed view with interview history, notes, contacts
-- **Timeline** — chronological activity history
-- **Google Sign-In** — each user has private, isolated data
-- **Cross-device sync** — data saved to Firestore, accessible anywhere
-- **Hebrew / English** — full RTL/LTR language toggle, persists across sessions
-- **Offline backup** — export/import JSON at any time
+### Views & Navigation
+- **Kanban board** — drag-and-drop cards across status columns (Applied, Screening, Tech Interview, HR Interview, Offer, Rejected, Ghosted, Withdrawn)
+- **List & edit view** — detailed company profiles with interview history, rejection notes, and contacts
+- **Timeline** — chronological activity log of all interviews and submissions
+- **Stats** — application counts, response rate, upcoming interviews, and a Hiring Funnel showing conversion rates by stage
+
+### AI Assistant (5 providers)
+Supports Google Gemini, Groq (free tier), Ollama (free/local), Anthropic Claude, and OpenAI.
+
+- **Interview prep** — 3 focused preparation tips generated before each interview
+- **Rejection analysis** — constructive improvement suggestions after a rejection
+- **Pattern analysis** — identifies trends and themes across all your applications
+- **Interview debrief** — structured analysis of post-interview notes
+- **Smart scheduling** — day-by-day prep plan counting down to your interview date
+- **Resume tailoring** — suggests which experiences and skills to highlight for each company
+- **Multi-turn AI chat** — open-ended conversation with full company context loaded
+
+### Data & Sync
+- **Google Sign-In** — private, isolated data per user; no accounts to create
+- **Firestore sync** — subcollection-based storage with granular writes; auto-migrates legacy single-document data
+- **Share link** — publish a read-only snapshot anyone can view via `?share=uid`
+- **Offline backup** — export and import your full dataset as JSON at any time
+
+### Interview Template Library
+80+ curated questions across 6 categories: HR, Technical, Behavioral, Manager, Culture, and Questions to Ask. Browse and copy questions directly into your interview prep.
+
+### Onboarding & UX
+- **Onboarding wizard** — 5-step guided tour on first visit
+- **3 languages** — English, Hebrew (RTL), French; persists across sessions
+- **Keyboard shortcuts** — `N` to add a company, `Esc` to close
+
+---
+
+## How to Use
+
+### 1. First Launch / Onboarding
+
+Open the app at https://job-flow-tracker-ten.vercel.app. On your first visit, a 5-step onboarding wizard walks you through the main features. Click **Next** to advance through each step, or **Skip** to dismiss it. The wizard only appears once; to re-trigger it, clear your browser's local storage.
+
+Sign in with Google using the **Sign In** button in the header. Your data is private and tied to your Google account — no other user can see it.
+
+### 2. Adding Your First Company
+
+Click the **+ Add Company** button (or press `N`) to open the company form. Fill in:
+
+- **Company name** (required)
+- **Role** — the position you applied for
+- **Status** — start with *Applied*
+- **Priority** — High / Medium / Low
+- **Location, Website, LinkedIn** — optional but useful for quick reference
+- **Description / Products** — notes about what the company does
+- **General notes** — anything else: recruiter name, referral source, compensation details
+
+Click **Save**. The company appears on the Kanban board and in the list.
+
+### 3. Tracking the Process
+
+**Update status** — on the Kanban board, drag the card to the new column. In the list view, open the company and change the Status dropdown, then save.
+
+**Add an interview** — open the company, scroll to the Interviews section, click **+ Add Interview**. Fill in the type (e.g., Technical, HR), date, interviewer name, and a brief summary of how it went.
+
+**Log a rejection** — set status to *Rejected*. A modal prompts you to record the rejection date, method (email, phone, portal), and any notes. This data feeds the AI rejection analysis.
+
+**General notes** — use the General Notes field for anything free-form: salary discussed, red flags, next steps.
+
+### 4. Using the Kanban Board
+
+The board shows one column per status. Each card displays the company name, role, priority badge, and number of interviews logged.
+
+**Drag and drop** — grab a card and drop it into a different column to update the status instantly. The change syncs to Firestore automatically if you are signed in.
+
+**Filter** — use the search bar at the top to filter by company name or role. Use the status dropdown to restrict the board to one stage.
+
+### 5. Setting Up AI
+
+Click the **gear icon (⚙️)** in the header to open AI Settings. Choose a provider:
+
+| Provider | Cost | Key required | Notes |
+|---|---|---|---|
+| Groq | Free tier | Yes | Fast; get key at console.groq.com/keys |
+| Ollama | Free (local) | No | Runs on your machine; needs CORS enabled |
+| Google Gemini | Free tier / paid | Yes | Get key at aistudio.google.com/app/apikey |
+| Anthropic Claude | Paid | Yes | Get key at console.anthropic.com/settings/keys |
+| OpenAI | Paid | Yes | Get key at platform.openai.com/api-keys |
+
+**Recommended for getting started:** Groq — create a free account, generate an API key, paste it in, and click **Save**.
+
+**Ollama (local):** Install from https://ollama.ai, pull a model (`ollama pull llama3.2`), and start the server with CORS enabled:
+```bash
+OLLAMA_ORIGINS=* ollama serve
+```
+No key is needed; just set the Ollama URL (default: `http://localhost:11434`).
+
+### 6. Using the AI Assistant Panel
+
+Once a provider is configured, open any company and click the **AI Assistant** button (sparkle icon). The panel slides in from the right with the following tabs:
+
+- **Interview Prep** — generates 3 targeted tips based on the company description, role, and upcoming interview type. Click the button on any company with a scheduled interview.
+- **Smart Schedule** — enter your interview date and get a day-by-day preparation plan counting down to it.
+- **Rejection Analysis** — available after a rejection is logged. Returns constructive, actionable feedback based on your notes and interview history.
+- **Interview Debrief** — after an interview, paste or type your notes and receive a structured analysis: what went well, what to improve, and follow-up questions.
+- **Pattern Analysis** — analyzes all your applications at once to surface trends: response rates by industry, interview-to-offer conversion, common rejection themes.
+- **Resume Tailoring** — given the company's products and description, suggests which resume experiences and skills to emphasize for that specific role.
+- **AI Chat** — open-ended multi-turn chat with the company's full profile loaded as context. Ask anything: "What salary should I negotiate?", "Write a thank-you email", "How do I explain my career gap?"
+
+All AI responses stream in real time. You can stop generation mid-stream with the **Stop** button.
+
+### 7. Interview Template Library
+
+Click **Templates** in the header (or the template icon on any company). The library contains 80+ questions across 6 categories:
+
+- **HR** — compensation, timeline, process
+- **Technical** — stack, code review, architecture
+- **Behavioral** — STAR-format situational questions
+- **Manager** — team structure, management style, growth
+- **Culture** — values, work-life balance, remote policy
+- **Questions to Ask** — questions you should ask the interviewer
+
+Click any question to copy it to your clipboard. Use these to build a custom question list before each interview.
+
+### 8. Sharing Your Tracker
+
+Click the **Share** button in the header. This publishes a read-only snapshot of your current data to `shares/{uid}` in Firestore. Anyone with the link (`https://job-flow-tracker-ten.vercel.app?share=uid`) can view your board — no sign-in required.
+
+The snapshot is overwritten each time you click Share. To stop sharing, use the **Revoke** option (if available in your build) or manually delete the share document from Firestore.
+
+### 9. Backup and Restore
+
+**Export:** Click **Export JSON** in the header menu. Your entire dataset downloads as a `.json` file. Store this as a backup or use it to migrate to another account.
+
+**Import:** Click **Import JSON** and select a previously exported file. The import merges the data — existing entries by ID are overwritten, new ones are added. Always export first before importing to avoid data loss.
+
+### 10. Keyboard Shortcuts
+
+| Shortcut | Action |
+|---|---|
+| `N` | Open "Add Company" form |
+| `Esc` | Close modal / cancel form |
+| `Ctrl+S` | Save form (when a form is open) |
 
 ---
 
@@ -26,6 +158,7 @@ A personal job application tracker with Google Sign-In, cross-device sync via Fi
 | Styling | Tailwind CSS |
 | Auth + DB | Firebase (Authentication + Firestore) |
 | i18n | react-i18next |
+| AI providers | Anthropic SDK, Groq, Gemini, OpenAI, Ollama |
 | Icons | lucide-react |
 | Hosting | Vercel |
 
@@ -35,24 +168,40 @@ A personal job application tracker with Google Sign-In, cross-device sync via Fi
 
 ```
 src/
-├── JobTrackerApp.jsx   # Main app component (UI + state)
-├── firebase.js         # Firebase auth + Firestore helpers
-├── driveSync.js        # Google Drive sync helpers
-├── logger.js           # Dev logging utility
-├── i18n.js             # i18next configuration
-├── main.jsx            # React entry point
-├── App.jsx             # Root component
+├── JobTrackerApp.jsx        # Main app — UI, state, all event handlers
+├── firebase.js              # Auth + Firestore subcollection helpers
+├── i18n.js                  # react-i18next setup
+├── logger.js                # Dev-only logging utility
+├── main.jsx / App.jsx       # React entry point and root component
+├── components/
+│   ├── AIAssistant.jsx      # Floating AI panel (prep, debrief, patterns, schedule, resume, chat)
+│   ├── APIKeySettings.jsx   # AI provider + key settings modal
+│   ├── ChatModal.jsx        # Multi-turn AI chat
+│   ├── Onboarding.jsx       # First-visit 5-step wizard
+│   ├── RejectionAnalysis.jsx# Rejection AI analysis modal
+│   ├── ResumeReview.jsx     # Resume tailoring AI modal
+│   ├── TemplateLibrary.jsx  # 80+ interview question templates
+│   └── Tooltip.jsx          # Hover tooltip component
+├── services/
+│   └── aiAssistant.js       # AI provider abstraction (5 providers, all streaming)
+├── data/
+│   └── interviewTemplates.js# 80+ questions across 6 categories
 ├── locales/
-│   ├── en.json         # English translations
-│   ├── he.json         # Hebrew translations
-│   └── fr.json         # French translations
-└── __tests__/
-    ├── journey.test.js # Interview journey helper tests
-    ├── utils.test.js   # Utility function tests
-    └── logic.test.js   # Business logic tests
+│   ├── en.json              # English translations
+│   ├── he.json              # Hebrew translations
+│   └── fr.json              # French translations
+└── __tests__/               # 141 Vitest tests
+    ├── AIKeySettings.test.jsx
+    ├── ChatModal.test.jsx
+    ├── Onboarding.test.jsx
+    ├── aiAssistant.test.js
+    ├── journey.test.js
+    ├── logic.test.js
+    └── utils.test.js
 docs/
-├── HLD.md              # High Level Design
-└── LLD.md              # Low Level Design
+├── HLD.md                   # High-level design
+└── LLD.md                   # Low-level design
+firestore.rules              # Firestore security rules (deploy with Firebase CLI)
 ```
 
 ---
@@ -60,14 +209,9 @@ docs/
 ## Run Locally
 
 ```bash
-# Clone
 git clone https://github.com/joka-7/JobFlowTracker.git
 cd JobFlowTracker
-
-# Install
 npm install
-
-# Start dev server
 npm run dev
 ```
 
@@ -75,25 +219,57 @@ Open http://localhost:5173
 
 ---
 
+## AI Setup
+
+Click the **⚙️ gear icon** in the app header → choose your provider → paste your API key → **Save**.
+
+| Provider | Free? | Where to get a key |
+|---|---|---|
+| Groq | Yes (free tier) | https://console.groq.com/keys |
+| Ollama | Yes (runs locally) | https://ollama.ai — no key needed |
+| Google Gemini | Free tier available | https://aistudio.google.com/app/apikey |
+| Anthropic Claude | Paid | https://console.anthropic.com/settings/keys |
+| OpenAI | Paid | https://platform.openai.com/api-keys |
+
+**Ollama note:** Ollama must be started with CORS enabled so the browser can reach it:
+```bash
+OLLAMA_ORIGINS=* ollama serve
+```
+
+---
+
 ## Firebase Setup
 
 1. Create a project at https://console.firebase.google.com
-2. Enable **Authentication** → Google Sign-In
-3. Enable **Firestore Database** (production mode)
-4. Create a Web app → copy the config
-5. Replace the config in `src/firebase.js`
-6. Add your domain to Firebase → Authentication → Settings → Authorized domains
+2. Enable **Authentication** → Google Sign-In provider
+3. Enable **Firestore Database** (start in production mode)
+4. Add a Web app to the project → copy the config object
+5. Replace the config in `src/firebase.js` with your own values
+6. Go to **Authentication → Settings → Authorized domains** and add your deployment domain (e.g., your Vercel URL)
 
-**Firestore security rules:**
+**Firestore security rules** — copy the contents of `firestore.rules` into the Firestore Rules tab, or deploy directly:
+
 ```
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+      match /companies/{companyId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+    match /shares/{uid} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == uid;
     }
   }
 }
+```
+
+Deploy rules via CLI:
+```bash
+firebase deploy --only firestore:rules
 ```
 
 ---
@@ -101,48 +277,60 @@ service cloud.firestore {
 ## Deploy to Vercel
 
 1. Push to GitHub
-2. Import repo at https://vercel.com
+2. Import the repo at https://vercel.com
 3. Framework preset: **Vite**
-4. Deploy
+4. Deploy — no build configuration needed beyond the preset
 
 ---
 
 ## Run Tests
 
 ```bash
-npm run test
+npm test
 ```
+
+141 Vitest tests covering AI provider logic, chat modal, onboarding, application journey helpers, utility functions, and business logic.
 
 ---
 
 ## Data Schema
 
-Each user's data is stored in Firestore at `users/{uid}`:
+Companies are stored as individual Firestore documents in a subcollection — not as a single array on the user document. This allows granular, per-company writes.
+
+**Firestore path:** `users/{uid}/companies/{companyId}`
+
+**Company document:**
 
 ```json
 {
-  "companies": [
+  "id": "1234567890",
+  "name": "Acme Corp",
+  "role": "Software Engineer",
+  "status": "tech_interview",
+  "priority": "high",
+  "location": "Tel Aviv",
+  "website": "https://acme.com",
+  "linkedinCompany": "https://linkedin.com/company/acme",
+  "linkedinHR": "https://linkedin.com/in/recruiter",
+  "description": "What the company does",
+  "products": "Main products or services",
+  "generalNotes": "Free-form personal notes",
+  "interviews": [
     {
-      "id": "1234567890",
-      "name": "Acme Corp",
-      "role": "Software Engineer",
-      "status": "tech_interview",
-      "priority": "high",
-      "location": "Tel Aviv",
-      "website": "https://acme.com",
-      "linkedinCompany": "https://linkedin.com/company/acme",
-      "description": "What they do",
-      "generalNotes": "Personal notes",
-      "interviews": [
-        {
-          "type": "Technical Interview",
-          "date": "2026-05-01",
-          "interviewer": "John",
-          "summary": "Went well"
-        }
-      ]
+      "type": "Technical Interview",
+      "date": "2026-05-01",
+      "interviewer": "Jane Smith",
+      "summary": "Went well, discussed system design"
     }
   ],
-  "updatedAt": "2026-05-29T10:00:00.000Z"
+  "rejection": {
+    "date": "2026-05-10",
+    "method": "email",
+    "notes": "Went with a more senior candidate"
+  }
 }
 ```
+
+**Valid status values:** `applied`, `screening`, `tech_interview`, `hr_interview`, `offer`, `rejected`, `ghosted`, `withdrawn`
+
+**Read-only shares:** `shares/{uid}` — a public snapshot document written when the user clicks Share. Readable by anyone without authentication; writable only by the owner.

@@ -41,7 +41,10 @@
     "connectDrive": "Connecter Drive",
     "driveOnTooltip": "Drive synchronisé — cliquer pour déconnecter",
     "connectDriveTooltip": "Connecter Google Drive pour synchroniser sur tous les appareils",
-    "aiSettings": "Paramètres IA"
+    "aiSettings": "Paramètres IA",
+    "shareTooltip": "Partager un lien en lecture seule",
+    "viewOnly": "Lecture seule",
+    "viewOnlyDesc": "Vous consultez un instantané partagé en lecture seule."
   },
   "tabs": {
     "board": "Tableau",
@@ -73,7 +76,9 @@
     "searchPlaceholder": "Rechercher une entreprise...",
     "allStatuses": "Tous les statuts",
     "noResults": "Aucun résultat trouvé.",
-    "backToList": "Retour à la liste"
+    "backToList": "Retour à la liste",
+    "loadMore": "Charger plus",
+    "remaining": "restants"
   },
   "form": {
     "editTitle": "Modifier les détails",
@@ -138,7 +143,11 @@
     "interviews": "Entretiens",
     "byStatus": "Par statut",
     "upcoming": "À venir — 14 prochains jours",
-    "today": "Aujourd'hui"
+    "today": "Aujourd'hui",
+    "journey": "Entonnoir de recrutement",
+    "journeySubtitle": "Combien de candidatures ont atteint chaque étape — montre où la plupart abandonnent",
+    "avgDays": "Jours moy. premier → dernier entretien",
+    "noData": "Ajoutez plus d'entreprises pour voir les tendances"
   },
   "toast": {
     "saved": "Modifications enregistrées !",
@@ -207,7 +216,19 @@
     "analyzing": "Analyse en cours...",
     "patternsButton": "Analyser mes patterns de recherche",
     "chatButton": "Ouvrir le chat IA",
-    "changeSettings": "Modifier les paramètres IA"
+    "changeSettings": "Modifier les paramètres IA",
+    "scheduleButton": "Planning de préparation entretien",
+    "scheduleNoDate": "Ajoutez d'abord une date d'entretien",
+    "resumeButton": "Adapter le CV pour ce poste"
+  },
+  "resume": {
+    "title": "Adaptation du CV",
+    "privacy": "N'incluez pas votre nom, e-mail ou téléphone — ce texte est envoyé à l'IA.",
+    "pasteLabel": "Collez votre expérience professionnelle / contenu du CV",
+    "placeholder": "Collez votre expérience, compétences et réalisations ici...",
+    "chars": "caractères utilisés",
+    "analyzeButton": "Obtenir des suggestions",
+    "analyzing": "Analyse en cours..."
   },
   "chat": {
     "title": "Chat IA",
@@ -216,7 +237,9 @@
     "privacy": "Évitez d'écrire des noms personnels",
     "placeholder": "Écrivez un message... (Entrée pour envoyer)",
     "saveToNotes": "Sauvegarder dans les notes",
-    "saved": "Sauvegardé ✓"
+    "saved": "Sauvegardé ✓",
+    "simulationTitle": "Entretien simulé",
+    "simulationEmpty": "Démarrage de l'entretien simulé..."
   },
   "settings": {
     "title": "Paramètres IA",
@@ -245,5 +268,27 @@
     "importError": "Erreur lors de l'importation. Vérifiez que le fichier JSON est valide.",
     "unnamedCompany": "Entreprise sans nom",
     "noName": "Sans nom"
+  },
+  "tooltips": {
+    "interviewType": "Sélectionnez le type d'entretien. RH = présélection, Technique = code/compétences, Manager = adéquation culturelle",
+    "rejectionMethod": "Comment vous avez été informé. Suivre ceci aide à identifier les patterns de ghosting.",
+    "responseRate": "Entreprises ayant répondu (toute étape) ÷ total des candidatures × 100",
+    "priority": "Haute = processus actif ou entreprise de rêve. Utilisez pour filtrer et concentrer votre énergie."
+  },
+  "templates": {
+    "title": "Bibliothèque de modèles d'entretien",
+    "search": "Rechercher des questions...",
+    "copy": "Copier",
+    "copied": "Copié !",
+    "footer": "Utilisez ces questions pour vous entraîner. Les réponses comportementales doivent suivre le format STAR.",
+    "practiceButton": "Entretien simulé",
+    "categories": {
+      "hr": "RH / Présélection",
+      "technical": "Technique",
+      "behavioral": "Comportemental",
+      "manager": "Manager",
+      "culture": "Culture d'entreprise",
+      "questions_to_ask": "Questions à poser"
+    }
   }
 }
