@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { initJobSeekerApp, fillLabeledInput, saveForm } from './helpers.js';
+import { writeFile, unlink } from 'fs/promises';
+import { join } from 'path';
+import { tmpdir } from 'os';
+import {
+  initJobSeekerApp, fillLabeledInput, selectLabeledOption, saveForm,
+  goToBoardTab, goToListTab, acceptNextDialog, dragCardToColumn,
+} from './helpers.js';
 
 test.describe('Job seeker mode flows', () => {
   test.beforeEach(async ({ page }) => {
@@ -44,5 +50,68 @@ test.describe('Job seeker mode flows', () => {
     await page.getByTitle(/Download backup/i).click();
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toMatch(/job-tracker-backup.*\.json/);
+  });
+
+  test('import JSON backup loads companies', async ({ page }) => {
+    const filePath = join(tmpdir(), `jobflow-import-${Date.now()}.json`);
+    await writeFile(filePath, JSON.stringify([
+      { id: 'import-1', name: 'Imported Co', role: 'Engineer', status: 'applied' },
+    ]));
+
+    await page.locator('#main-file-upload').setInputFiles(filePath);
+    await expect(page.getByText('File loaded successfully!')).toBeVisible();
+    await goToBoardTab(page);
+    await expect(page.getByText('Imported Co')).toBeVisible();
+    await expect(page.getByText('Engineer')).toBeVisible();
+
+    await unlink(filePath);
+  });
+
+  test('drag company to new status column on board', async ({ page }) => {
+    await page.getByRole('button', { name: /Add Company/i }).click();
+    await fillLabeledInput(page, /Company Name/i, 'Drag Co');
+    await saveForm(page);
+
+    await page.getByRole('button', { name: /Add Company/i }).click();
+    await fillLabeledInput(page, /Company Name/i, 'HR Anchor Co');
+    await selectLabeledOption(page, /Process Status/i, 'hr_call');
+    await saveForm(page);
+
+    await goToBoardTab(page);
+    await dragCardToColumn(page, 'Drag Co', /^HR Call \(\d+\)$/);
+
+    const hrCol = page.locator('.w-80').filter({ has: page.getByText(/^HR Call \(\d+\)$/) });
+    await expect(hrCol.getByText('Drag Co')).toBeVisible();
+  });
+
+  test('edit company updates name on board', async ({ page }) => {
+    await page.getByRole('button', { name: /Add Company/i }).click();
+    await fillLabeledInput(page, /Company Name/i, 'Before Edit');
+    await saveForm(page);
+
+    await goToListTab(page);
+    await page.getByRole('button', { name: /Edit Details/i }).click();
+    await fillLabeledInput(page, /Company Name/i, 'After Edit');
+    await saveForm(page);
+
+    await goToBoardTab(page);
+    await expect(page.getByText('After Edit')).toBeVisible();
+    await expect(page.getByText('Before Edit')).toHaveCount(0);
+  });
+
+  test('delete company removes from list and board', async ({ page }) => {
+    await page.getByRole('button', { name: /Add Company/i }).click();
+    await fillLabeledInput(page, /Company Name/i, 'Delete Me Co');
+    await saveForm(page);
+
+    await goToListTab(page);
+    acceptNextDialog(page);
+    await page.getByTitle(/Delete Company/i).click();
+    await expect(page.getByText('Company deleted.')).toBeVisible();
+
+    await goToListTab(page);
+    await expect(page.getByText('Delete Me Co')).toHaveCount(0);
+    await goToBoardTab(page);
+    await expect(page.getByText('Delete Me Co')).toHaveCount(0);
   });
 });
