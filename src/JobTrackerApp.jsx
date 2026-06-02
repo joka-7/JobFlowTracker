@@ -4,9 +4,14 @@ import {
   Search, Plus, MapPin, Globe, Calendar,
   User, CheckCircle, Clock, Trash2, Edit2,
   ArrowLeft, ArrowRight, Download, Upload, Filter, Layout, List, Activity, AlertTriangle,
-  Cloud, CloudOff, Languages, BarChart2
+  Cloud, CloudOff, Languages, BarChart2, Settings
 } from 'lucide-react';
 import { signInWithGoogle, signOut, onAuthChange, loadUserData, saveUserData } from './firebase';
+import { initAI } from './services/aiAssistant';
+import Onboarding from './components/Onboarding';
+import AIAssistant from './components/AIAssistant';
+import APIKeySettings from './components/APIKeySettings';
+import RejectionAnalysis from './components/RejectionAnalysis';
 
 const Linkedin = ({ size = 16, ...p }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
@@ -160,6 +165,27 @@ export default function JobTrackerApp() {
   const saveTimer = useRef(null);
   const dragCompanyId = useRef(null);
 
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showAISettings, setShowAISettings] = useState(false);
+  const [rejectionCompany, setRejectionCompany] = useState(null);
+
+  useEffect(() => {
+    const provider = localStorage.getItem('aiProvider') || 'gemini';
+    const apiKey = localStorage.getItem('aiApiKey') || localStorage.getItem('anthropicApiKey') || '';
+    const model = localStorage.getItem('aiModel') || '';
+    const ollamaUrl = localStorage.getItem('ollamaUrl') || 'http://localhost:11434';
+    initAI(provider, apiKey, model, ollamaUrl);
+    if (!localStorage.getItem('hasCompletedOnboarding')) {
+      setShowOnboarding(true);
+    }
+  }, []);
+
+  const initialFormState = {
+    name: '', role: '', location: '', status: 'applied', priority: 'medium',
+    website: '', linkedinCompany: '', linkedinHR: '', description: '', products: '',
+    interviews: [], homeworks: [], contacts: [], generalNotes: '',
+    rejection: { date: '', method: '', notes: '' },
+  };
   const [formData, setFormData] = useState(initialFormState);
 
   useEffect(() => {
@@ -474,17 +500,24 @@ export default function JobTrackerApp() {
               onClick={openNewForm}
               className="w-full bg-green-600 hover:bg-green-700 text-white font-bold text-base py-3.5 px-6 rounded-xl shadow transition-transform hover:scale-105 active:scale-95 flex items-center justify-center gap-3 mb-3"
             >
-              <Plus size={20} /> {t('board.addFirstButton')}
+              <Plus size={20} /> {t('board.addFirstButton', 'Add your first company')}
             </button>
 
             <button
               onClick={triggerFileInput}
-              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm py-3 px-6 rounded-xl flex items-center justify-center gap-2"
+              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm py-3 px-6 rounded-xl flex items-center justify-center gap-2 mb-3"
             >
               <Upload size={16} /> {t('board.loadButton')}
             </button>
 
-            <div className={`mt-6 grid grid-cols-2 gap-3 text-left text-xs text-gray-500`}>
+            <button
+              onClick={() => setShowOnboarding(true)}
+              className="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm py-2.5 px-6 rounded-xl border border-indigo-200 flex items-center justify-center gap-2 mb-4"
+            >
+              💡 {t('board.viewTutorial', 'View Tutorial')}
+            </button>
+
+            <div className="grid grid-cols-2 gap-3 text-left text-xs text-gray-500">
               <div className="bg-indigo-50 p-3 rounded-lg">
                 <div className="font-bold text-indigo-700 mb-1 flex items-center gap-1"><Cloud size={12} /> {t('board.modeCloudTitle')}</div>
                 <p>{t('board.modeCloudDesc')}</p>
@@ -687,6 +720,13 @@ export default function JobTrackerApp() {
                 <Upload size={18} />
                 <input id="main-file-upload" type="file" accept=".json" onChange={handleImport} className="hidden" />
               </label>
+              <button
+                onClick={() => setShowAISettings(true)}
+                title={t('header.aiSettings', 'AI Settings')}
+                className="p-2 hover:bg-white/20 rounded text-white transition-colors"
+              >
+                <Settings size={18} />
+              </button>
             </div>
           </div>
         </div>
@@ -1017,9 +1057,17 @@ export default function JobTrackerApp() {
 
                           {isRejected && company.rejection && (company.rejection.date || company.rejection.method || company.rejection.notes) && (
                             <div className="bg-red-50 p-5 rounded-xl shadow-sm border border-red-100">
-                              <h3 className="font-bold text-red-800 mb-3 flex items-center gap-2">
-                                <AlertTriangle size={18} /> {t('detail.rejectionTitle', 'Rejection Details')}
-                              </h3>
+                              <div className="flex items-center justify-between mb-3">
+                                <h3 className="font-bold text-red-800 flex items-center gap-2">
+                                  <AlertTriangle size={18} /> {t('detail.rejectionTitle', 'Rejection Details')}
+                                </h3>
+                                <button
+                                  onClick={() => setRejectionCompany(company)}
+                                  className="text-xs px-3 py-1.5 bg-white border border-red-200 text-red-700 rounded-lg hover:bg-red-50 font-medium transition-colors flex items-center gap-1"
+                                >
+                                  ✨ {t('detail.analyzeRejection', 'Analyze with AI')}
+                                </button>
+                              </div>
                               {company.rejection.date && (
                                 <div className="mb-2 text-sm text-gray-700">
                                   <span className="font-bold text-gray-500">{t('form.rejectionDate', 'Date')}: </span>
@@ -1110,6 +1158,52 @@ export default function JobTrackerApp() {
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
         .custom-scrollbar:hover::-webkit-scrollbar-thumb { background-color: #94a3b8; }
       `}} />
+
+      {showOnboarding && (
+        <Onboarding
+          t={t}
+          i18n={i18n}
+          isRTL={isRTL}
+          onClose={() => setShowOnboarding(false)}
+          openNewForm={() => { setShowOnboarding(false); openNewForm(); }}
+          triggerFileInput={() => { setShowOnboarding(false); triggerFileInput(); }}
+          openAISettings={() => { setShowOnboarding(false); setShowAISettings(true); }}
+        />
+      )}
+
+      {showAISettings && (
+        <APIKeySettings t={t} onClose={() => setShowAISettings(false)} />
+      )}
+
+      {rejectionCompany && (
+        <RejectionAnalysis
+          company={rejectionCompany}
+          language={i18n.language}
+          t={t}
+          onClose={() => setRejectionCompany(null)}
+          onOpenSettings={() => { setRejectionCompany(null); setShowAISettings(true); }}
+          onSave={(text) => setCompanies(prev => prev.map(c =>
+            c.id === rejectionCompany.id
+              ? { ...c, generalNotes: c.generalNotes ? `${c.generalNotes}\n\n---\n${text}` : text }
+              : c
+          ))}
+        />
+      )}
+
+      <AIAssistant
+        company={selectedId ? formData : null}
+        companies={companies}
+        language={i18n.language}
+        t={t}
+        onOpenSettings={() => setShowAISettings(true)}
+        onSaveToCompany={selectedId ? (companyId, text) => {
+          setCompanies(prev => prev.map(c =>
+            c.id === selectedId
+              ? { ...c, generalNotes: c.generalNotes ? `${c.generalNotes}\n\n---\n${text}` : text }
+              : c
+          ));
+        } : null}
+      />
     </div>
   );
 }
