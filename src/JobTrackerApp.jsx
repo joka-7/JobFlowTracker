@@ -586,6 +586,55 @@ export default function JobTrackerApp() {
     ];
     const maxCount = Math.max(...STATUSES.map(s => stats.byStatus[s.id] || 0), 1);
 
+    // Application Journey funnel
+    const JOURNEY_STAGES = [
+      { id: 'applied',           label: 'Applied',   color: 'bg-blue-100 text-blue-800 border-blue-300' },
+      { id: 'hr_call',           label: 'HR Call',   color: 'bg-purple-100 text-purple-800 border-purple-300' },
+      { id: 'tech_interview',    label: 'Technical', color: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
+      { id: 'manager_interview', label: 'Manager',   color: 'bg-orange-100 text-orange-800 border-orange-300' },
+      { id: 'offer',             label: 'Offer',     color: 'bg-green-100 text-green-800 border-green-300' },
+    ];
+    const FUNNEL_ORDER = ['applied', 'hr_call', 'tech_interview', 'manager_interview', 'offer'];
+    const INTERVIEW_TYPE_TO_STAGE = {
+      'Intro Call / HR': 'hr_call',
+      'Technical Interview': 'tech_interview',
+      'Manager Interview': 'manager_interview',
+      'VP / CEO Interview': 'manager_interview',
+      'Salary Offer': 'offer',
+      'References Check': 'offer',
+    };
+    const funnelIdx = (id) => FUNNEL_ORDER.indexOf(id);
+    const companiesReachedStage = (stageId) => {
+      const idx = funnelIdx(stageId);
+      return companies.filter(c => {
+        if (funnelIdx(c.status) >= idx && funnelIdx(c.status) !== -1) return true;
+        if (Array.isArray(c.interviews)) {
+          for (const iv of c.interviews) {
+            const mapped = INTERVIEW_TYPE_TO_STAGE[iv.type];
+            if (mapped && funnelIdx(mapped) >= idx) return true;
+          }
+        }
+        return false;
+      }).length;
+    };
+    const journeyCounts = JOURNEY_STAGES.map(s => ({ ...s, count: companiesReachedStage(s.id) }));
+    const hasJourneyData = journeyCounts[0].count > 0;
+
+    // Avg days: first to last interview date for companies with >=2 dated interviews
+    const companiesWithDates = companies.filter(c =>
+      Array.isArray(c.interviews) && c.interviews.filter(i => i.date).length >= 2
+    );
+    let avgDays = null;
+    if (companiesWithDates.length > 0) {
+      const totalDays = companiesWithDates.reduce((acc, c) => {
+        const dates = c.interviews.map(i => new Date(i.date)).filter(d => !isNaN(d.getTime()));
+        if (dates.length < 2) return acc;
+        const span = Math.round((Math.max(...dates) - Math.min(...dates)) / (1000 * 60 * 60 * 24));
+        return acc + span;
+      }, 0);
+      avgDays = Math.round(totalDays / companiesWithDates.length);
+    }
+
     return (
       <div className="flex-1 overflow-y-auto p-6 bg-slate-50 min-h-0 custom-scrollbar">
         <div className="max-w-4xl mx-auto space-y-8">
@@ -606,6 +655,49 @@ export default function JobTrackerApp() {
                 <div className="text-sm text-gray-500">{card.label}</div>
               </div>
             ))}
+          </div>
+
+          {/* Application Journey card */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="font-bold text-gray-800">{t('stats.journey', 'Application Journey')}</h3>
+              {avgDays !== null && (
+                <span className="text-xs text-gray-500 bg-gray-50 border border-gray-100 px-2 py-1 rounded-lg">
+                  {t('stats.avgDays', 'Avg. days per stage')}: <span className="font-bold text-gray-700">{avgDays}d</span>
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-gray-400 mb-5">{t('stats.journeySubtitle', 'Your pipeline conversion')}</p>
+            {!hasJourneyData ? (
+              <div className="text-center text-gray-400 py-6 bg-gray-50 rounded-lg border border-dashed border-gray-200 text-sm">
+                {t('stats.noData', 'Add more companies to see patterns')}
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-1">
+                {journeyCounts.map((stage, i) => {
+                  const prevCount = i > 0 ? journeyCounts[i - 1].count : null;
+                  const pct = prevCount && prevCount > 0
+                    ? Math.round((stage.count / prevCount) * 100)
+                    : null;
+                  return (
+                    <React.Fragment key={stage.id}>
+                      {i > 0 && (
+                        <div className="flex flex-col items-center mx-1">
+                          <span className="text-gray-400 text-lg leading-none">›</span>
+                          {pct !== null && (
+                            <span className="text-[10px] text-gray-400 font-medium">{pct}%</span>
+                          )}
+                        </div>
+                      )}
+                      <div className={`flex flex-col items-center px-3 py-2 rounded-lg border font-medium text-sm ${stage.color}`}>
+                        <span className="font-bold">{stage.label}</span>
+                        <span className="text-lg font-black leading-tight">{stage.count}</span>
+                      </div>
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">

@@ -138,7 +138,11 @@
     "interviews": "Interviews",
     "byStatus": "By Status",
     "upcoming": "Upcoming — Next 14 Days",
-    "today": "Today"
+    "today": "Today",
+    "journey": "Application Journey",
+    "journeySubtitle": "Your pipeline conversion",
+    "avgDays": "Avg. days per stage",
+    "noData": "Add more companies to see patterns"
   },
   "toast": {
     "saved": "Changes saved successfully!",
@@ -214,7 +218,9 @@
     "analyzing": "Analyzing...",
     "patternsButton": "Analyze my job hunt patterns",
     "chatButton": "Open AI chat",
-    "changeSettings": "Change AI settings"
+    "changeSettings": "Change AI settings",
+    "scheduleButton": "Interview prep schedule",
+    "scheduleNoDate": "Add an interview date first"
   },
   "chat": {
     "title": "AI Chat",
