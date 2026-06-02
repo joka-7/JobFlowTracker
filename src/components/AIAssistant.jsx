@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Sparkles, X, Loader2, AlertTriangle, ArrowLeft, FileText, MessageSquare, Save } from 'lucide-react';
-import { getInterviewPrep, analyzePatterns, debriefInterview, isAIReady } from '../services/aiAssistant';
+import { getInterviewPrep, analyzePatterns, debriefInterview, getSchedulingAdvice, isAIReady } from '../services/aiAssistant';
 import ChatModal from './ChatModal';
+import ResumeReview from './ResumeReview';
 
 function MarkdownText({ text }) {
   if (!text) return null;
@@ -134,11 +135,13 @@ function DebriefScreen({ t, language, company, onBack, onOpenSettings, onSaveToC
             {streamText && !loading && !error && onSaveToCompany && (
               <button
                 onClick={saveResult}
-                className={`w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  saved ? 'bg-green-100 text-green-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-bold transition-colors border ${
+                  saved
+                    ? 'bg-green-500 text-white border-green-500'
+                    : 'bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-600'
                 }`}
               >
-                <Save size={12} />
+                <Save size={14} />
                 {saved ? t('chat.saved', 'Saved ✓') : t('chat.saveToNotes', 'Save to notes')}
               </button>
             )}
@@ -154,6 +157,7 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
   const [isOpen, setIsOpen] = useState(false);
   const [screen, setScreen] = useState('menu'); // 'menu' | 'debrief'
   const [chatOpen, setChatOpen] = useState(false);
+  const [resumeOpen, setResumeOpen] = useState(false);
   const [activeMode, setActiveMode] = useState(null);
   const [streamText, setStreamText] = useState('');
   const [loading, setLoading] = useState(false);
@@ -186,6 +190,8 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
         await getInterviewPrep(company, interviewType, language, setStreamText);
       } else if (mode === 'patterns') {
         await analyzePatterns(companies, language, setStreamText);
+      } else if (mode === 'schedule' && company) {
+        await getSchedulingAdvice(company, language, setStreamText);
       }
     } catch (e) {
       setError(e.message || 'Error');
@@ -194,6 +200,9 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
   };
 
   const noCompany = !company;
+  const hasUpcomingInterview = !!(company?.interviews?.some(
+    i => i.date && new Date(i.date) > new Date()
+  ));
 
   return (
     <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
@@ -265,6 +274,18 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
               </button>
 
               <button
+                onClick={() => { if (aiReady) { setIsOpen(false); setResumeOpen(true); } else onOpenSettings(); }}
+                disabled={noCompany || loading}
+                className={`w-full flex items-center gap-2 p-3 rounded-lg text-sm font-medium transition-colors text-left ${
+                  noCompany ? 'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-100' :
+                  'bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-700'
+                }`}
+              >
+                <span>📄</span>
+                <span>{noCompany ? t('ai.prepNoCompany', 'Select a company first') : t('ai.resumeButton', 'Tailor resume for this role')}</span>
+              </button>
+
+              <button
                 onClick={() => run('patterns')}
                 disabled={loading || !companies?.length}
                 className={`w-full flex items-center gap-2 p-3 rounded-lg text-sm font-medium transition-colors text-left ${
@@ -275,6 +296,25 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
               >
                 {loading && activeMode === 'patterns' ? <Loader2 size={16} className="animate-spin flex-shrink-0" /> : <span>🔍</span>}
                 {t('ai.patternsButton', 'Analyze my job hunt patterns')}
+              </button>
+
+              <button
+                onClick={() => run('schedule')}
+                disabled={!hasUpcomingInterview || loading}
+                title={!hasUpcomingInterview ? t('ai.scheduleNoDate', 'Add an interview date first') : undefined}
+                className={`w-full flex items-center gap-2 p-3 rounded-lg text-sm font-medium transition-colors text-left ${
+                  !hasUpcomingInterview ? 'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-100' :
+                  activeMode === 'schedule' && loading ? 'bg-orange-50 border border-orange-200 text-orange-700' :
+                  'bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-700'
+                }`}
+              >
+                {loading && activeMode === 'schedule' ? <Loader2 size={16} className="animate-spin flex-shrink-0" /> : <span>📅</span>}
+                <span>
+                  {!hasUpcomingInterview
+                    ? t('ai.scheduleNoDate', 'Add an interview date first')
+                    : t('ai.scheduleButton', 'Interview prep schedule')
+                  }
+                </span>
               </button>
 
               {(streamText || error || (loading && activeMode && activeMode !== 'debrief')) && (
@@ -294,11 +334,13 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
                   {streamText && !loading && !error && onSaveToCompany && (
                     <button
                       onClick={saveResult}
-                      className={`w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                        resultSaved ? 'bg-green-100 text-green-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                      className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-bold transition-colors border ${
+                        resultSaved
+                          ? 'bg-green-500 text-white border-green-500'
+                          : 'bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-600'
                       }`}
                     >
-                      <Save size={12} />
+                      <Save size={14} />
                       {resultSaved ? t('chat.saved', 'Saved ✓') : t('chat.saveToNotes', 'Save to notes')}
                     </button>
                   )}
@@ -329,6 +371,17 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
           onClose={() => setChatOpen(false)}
           onOpenSettings={() => { setChatOpen(false); onOpenSettings(); }}
           onSaveToCompany={onSaveToCompany}
+        />
+      )}
+
+      {resumeOpen && company && (
+        <ResumeReview
+          company={company}
+          language={language}
+          t={t}
+          onClose={() => setResumeOpen(false)}
+          onOpenSettings={() => { setResumeOpen(false); onOpenSettings(); }}
+          onSave={onSaveToCompany ? (text) => onSaveToCompany(company.id, text) : null}
         />
       )}
     </div>

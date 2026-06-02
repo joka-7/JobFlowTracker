@@ -41,7 +41,10 @@
     "connectDrive": "Connect Drive",
     "driveOnTooltip": "Drive syncing — click to disconnect",
     "connectDriveTooltip": "Connect Google Drive for cross-device sync",
-    "aiSettings": "AI Settings"
+    "aiSettings": "AI Settings",
+    "shareTooltip": "Share read-only link",
+    "viewOnly": "View only",
+    "viewOnlyDesc": "You are viewing a shared read-only snapshot."
   },
   "tabs": {
     "board": "Status Board",
@@ -73,7 +76,9 @@
     "searchPlaceholder": "Search company...",
     "allStatuses": "All Statuses",
     "noResults": "No results found.",
-    "backToList": "Back to List"
+    "backToList": "Back to List",
+    "loadMore": "Load more",
+    "remaining": "remaining"
   },
   "form": {
     "editTitle": "Edit Company Details",
@@ -138,7 +143,11 @@
     "interviews": "Interviews",
     "byStatus": "By Status",
     "upcoming": "Upcoming — Next 14 Days",
-    "today": "Today"
+    "today": "Today",
+    "journey": "Hiring Funnel",
+    "journeySubtitle": "How many applications reached each stage — shows where most drop off",
+    "avgDays": "Avg. days first → last interview",
+    "noData": "Add more companies to see patterns"
   },
   "toast": {
     "saved": "Changes saved successfully!",
@@ -214,7 +223,19 @@
     "analyzing": "Analyzing...",
     "patternsButton": "Analyze my job hunt patterns",
     "chatButton": "Open AI chat",
-    "changeSettings": "Change AI settings"
+    "changeSettings": "Change AI settings",
+    "scheduleButton": "Interview prep schedule",
+    "scheduleNoDate": "Add an interview date first",
+    "resumeButton": "Tailor resume for this role"
+  },
+  "resume": {
+    "title": "Resume Tailoring",
+    "privacy": "Do not include your name, email, or phone — this text is sent to the AI.",
+    "pasteLabel": "Paste your work experience / resume content",
+    "placeholder": "Paste your work experience, skills, and achievements here...",
+    "chars": "characters used",
+    "analyzeButton": "Get tailoring suggestions",
+    "analyzing": "Analyzing..."
   },
   "chat": {
     "title": "AI Chat",
@@ -223,7 +244,9 @@
     "privacy": "Avoid writing personal names",
     "placeholder": "Type a message... (Enter to send)",
     "saveToNotes": "Save to notes",
-    "saved": "Saved ✓"
+    "saved": "Saved ✓",
+    "simulationTitle": "Mock Interview",
+    "simulationEmpty": "Starting your mock interview..."
   },
   "settings": {
     "title": "AI Settings",
@@ -245,5 +268,27 @@
     "analyzing": "Analyzing your rejection...",
     "retry": "Try again",
     "close": "Close"
+  },
+  "tooltips": {
+    "interviewType": "Select the type of interview. HR = screening, Technical = coding/skills, Manager = culture fit",
+    "rejectionMethod": "How you were notified. Tracking this helps identify ghosting patterns.",
+    "responseRate": "Companies that replied (any stage) ÷ total applications × 100",
+    "priority": "High = active process or dream company. Use to filter and focus your energy."
+  },
+  "templates": {
+    "title": "Interview Template Library",
+    "search": "Search questions...",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "footer": "Use these to practice. Behavioral answers should follow the STAR format.",
+    "practiceButton": "Mock interview",
+    "categories": {
+      "hr": "HR / Screening",
+      "technical": "Technical",
+      "behavioral": "Behavioral",
+      "manager": "Manager",
+      "culture": "Culture Fit",
+      "questions_to_ask": "Questions to Ask"
+    }
   }
 }

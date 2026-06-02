@@ -41,7 +41,10 @@
     "connectDrive": "חבר Drive",
     "driveOnTooltip": "Drive מסנכרן — לחץ לניתוק",
     "connectDriveTooltip": "חבר Google Drive לסנכרון בין מכשירים",
-    "aiSettings": "הגדרות AI"
+    "aiSettings": "הגדרות AI",
+    "shareTooltip": "שתף קישור לצפייה בלבד",
+    "viewOnly": "צפייה בלבד",
+    "viewOnlyDesc": "אתה צופה בתמונת מצב משותפת לקריאה בלבד."
   },
   "tabs": {
     "board": "לוח סטטוסים",
@@ -73,7 +76,9 @@
     "searchPlaceholder": "חיפוש חברה...",
     "allStatuses": "כל הסטטוסים",
     "noResults": "לא נמצאו תוצאות.",
-    "backToList": "חזור לרשימה"
+    "backToList": "חזור לרשימה",
+    "loadMore": "טען עוד",
+    "remaining": "נותרו"
   },
   "form": {
     "editTitle": "עריכת פרטי חברה",
@@ -138,7 +143,11 @@
     "interviews": "ראיונות",
     "byStatus": "לפי סטטוס",
     "upcoming": "קרובים — 14 הימים הבאים",
-    "today": "היום"
+    "today": "היום",
+    "journey": "משפך הגיוס",
+    "journeySubtitle": "כמה מועמדויות הגיעו לכל שלב — מראה היכן רוב ה\"נפילות\"",
+    "avgDays": "ממוצע ימים ראיון ראשון ← אחרון",
+    "noData": "הוסף עוד חברות כדי לראות דפוסים"
   },
   "toast": {
     "saved": "השינויים נשמרו בהצלחה!",
@@ -214,7 +223,19 @@
     "analyzing": "מנתח...",
     "patternsButton": "נתח את דפוסי החיפוש שלי",
     "chatButton": "פתח צ'אט AI",
-    "changeSettings": "שנה הגדרות AI"
+    "changeSettings": "שנה הגדרות AI",
+    "scheduleButton": "לוח זמנים להכנה לראיון",
+    "scheduleNoDate": "הוסף תאריך ראיון קודם",
+    "resumeButton": "התאם קורות חיים לתפקיד"
+  },
+  "resume": {
+    "title": "התאמת קורות חיים",
+    "privacy": "אל תכלול שם, אימייל או טלפון — טקסט זה נשלח לבינה המלאכותית.",
+    "pasteLabel": "הדבק ניסיון תעסוקתי / תוכן קורות חיים",
+    "placeholder": "הדבק כאן ניסיון, כישורים והישגים...",
+    "chars": "תווים בשימוש",
+    "analyzeButton": "קבל הצעות התאמה",
+    "analyzing": "מנתח..."
   },
   "chat": {
     "title": "צ'אט AI",
@@ -223,7 +244,9 @@
     "privacy": "הימנע מכתיבת שמות אישיים",
     "placeholder": "כתוב הודעה... (Enter לשליחה)",
     "saveToNotes": "שמור להערות",
-    "saved": "נשמר ✓"
+    "saved": "נשמר ✓",
+    "simulationTitle": "ראיון מדומה",
+    "simulationEmpty": "מתחיל את הראיון המדומה..."
   },
   "settings": {
     "title": "הגדרות AI",
@@ -245,5 +268,27 @@
     "analyzing": "מנתח את הדחייה שלך...",
     "retry": "נסה שוב",
     "close": "סגור"
+  },
+  "tooltips": {
+    "interviewType": "בחר את סוג הראיון. HR = סינון, טכני = קוד/כישורים, מנהל = התאמה תרבותית",
+    "rejectionMethod": "איך קיבלת הודעה. מעקב זה עוזר לזהות דפוסי גוסטינג.",
+    "responseRate": "חברות שענו (כל שלב) ÷ סך המועמדויות × 100",
+    "priority": "גבוהה = תהליך פעיל או חברת חלומות. השתמש לסינון ומיקוד האנרגיה שלך."
+  },
+  "templates": {
+    "title": "ספריית תבניות ראיון",
+    "search": "חיפוש שאלות...",
+    "copy": "העתק",
+    "copied": "הועתק!",
+    "footer": "השתמש בשאלות אלה לתרגול. תשובות התנהגותיות צריכות לעקוב אחר פורמט STAR.",
+    "practiceButton": "ראיון מדומה",
+    "categories": {
+      "hr": "משאבי אנוש / סינון",
+      "technical": "טכני",
+      "behavioral": "התנהגותי",
+      "manager": "מנהל",
+      "culture": "התאמה תרבותית",
+      "questions_to_ask": "שאלות לשאול"
+    }
   }
 }

@@ -365,6 +365,62 @@ ${LANG[language] || LANG.en}`;
   return runStream(prompt, onChunk);
 }
 
+export async function getSchedulingAdvice(company, language = 'en', onChunk) {
+  const upcoming = (company.interviews || []).filter(
+    i => i.date && new Date(i.date) > new Date()
+  );
+  if (!upcoming.length) return '';
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const interviewLines = upcoming.map(i => {
+    const d = new Date(i.date);
+    d.setHours(0, 0, 0, 0);
+    const daysUntil = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
+    return `- ${i.type || 'Interview'} on ${i.date} (${daysUntil} day${daysUntil !== 1 ? 's' : ''} from today)`;
+  }).join('\n');
+
+  const prompt = `You are an interview prep coach. Create a day-by-day preparation timeline for an upcoming interview.
+
+Company: ${company.name}
+Role: ${company.role || 'Not specified'}
+Upcoming interviews:
+${interviewLines}
+
+For each upcoming interview, create a focused day-by-day prep plan starting from today until the interview date. Each day should have:
+- A bold heading with the day (e.g., **Day 1 — Today**)
+- 1-2 specific, actionable tasks focused on preparation (research, practice, logistics)
+
+Keep each day's tasks brief and actionable. Do not include any personal data beyond what is listed above.
+
+${LANG[language] || LANG.en}`;
+  return runStream(prompt, onChunk);
+}
+
+export async function getResumeAdvice(company, resumeText, language = 'en', onChunk) {
+  const prompt = `You are a job application coach helping tailor a resume for a specific role.
+
+Company: ${company.name}
+${company.role ? `Role: ${company.role}` : ''}
+${company.location ? `Location: ${company.location}` : ''}
+
+Resume content:
+---
+${resumeText.slice(0, 3000)}
+---
+
+Based on the resume above, suggest 3 specific experiences or achievements to highlight for this application. For each:
+- Start with a **bold title** naming the experience
+- One sentence on why it's relevant to this company/role
+- One concrete tip (e.g., quantify impact, lead with it in summary, reword for keywords)
+
+Be specific to the content provided. Keep tips actionable.
+
+${LANG[language] || LANG.en}`;
+  return runStream(prompt, onChunk);
+}
+
 export async function debriefInterview(notes, context, language = 'en', onChunk) {
   const prompt = `You are an expert interview coach. Analyze these post-interview notes written by the candidate:
 
