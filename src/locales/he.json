@@ -200,6 +200,13 @@
     "noKey": "הגדר מפתח API להפעלת AI →",
     "prepNoCompany": "בחר חברה קודם",
     "prepButton": "הכנה לראיון",
+    "debriefButton": "נתח הערות ראיון",
+    "debriefTitle": "סיכום ראיון",
+    "debriefContext": "חברה / תפקיד (לא חובה)",
+    "debriefNotes": "הדבק כאן את ההערות שלך מאחרי הראיון",
+    "debriefPlaceholder": "כתוב הכל — אילו שאלות נשאלו, איך ענית, איך הרגשת, מה הפתיע אותך...",
+    "debriefRun": "נתח את ההערות שלי",
+    "analyzing": "מנתח...",
     "patternsButton": "נתח את דפוסי החיפוש שלי"
   },
   "settings": {

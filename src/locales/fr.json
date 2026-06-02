@@ -193,6 +193,13 @@
     "noKey": "Définir une clé API pour activer l'IA →",
     "prepNoCompany": "Sélectionnez d'abord une entreprise",
     "prepButton": "Préparer l'entretien",
+    "debriefButton": "Analyser mes notes d'entretien",
+    "debriefTitle": "Débrief d'entretien",
+    "debriefContext": "Entreprise / Poste (optionnel)",
+    "debriefNotes": "Collez vos notes post-entretien",
+    "debriefPlaceholder": "Écrivez tout — quelles questions ont été posées, comment vous avez répondu, comment vous vous êtes senti...",
+    "debriefRun": "Analyser mes notes",
+    "analyzing": "Analyse en cours...",
     "patternsButton": "Analyser mes patterns de recherche"
   },
   "settings": {

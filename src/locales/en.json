@@ -200,6 +200,13 @@
     "noKey": "Set API key to enable AI →",
     "prepNoCompany": "Select a company first",
     "prepButton": "Prep for interview",
+    "debriefButton": "Analyze interview notes",
+    "debriefTitle": "Interview Debrief",
+    "debriefContext": "Company / Role (optional)",
+    "debriefNotes": "Paste your post-interview notes",
+    "debriefPlaceholder": "Write anything — what questions were asked, how you answered, how you felt, what surprised you...",
+    "debriefRun": "Analyze my notes",
+    "analyzing": "Analyzing...",
     "patternsButton": "Analyze my job hunt patterns"
   },
   "settings": {

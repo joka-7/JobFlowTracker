@@ -273,3 +273,29 @@ Identify 3 patterns or insights. For each:
 - 1-2 sentences with a specific, actionable recommendation`;
   return runStream(prompt, onChunk);
 }
+
+export async function debriefInterview(notes, context, language = 'en', onChunk) {
+  const prompt = `You are an expert interview coach. Analyze these post-interview notes written by the candidate:
+
+---
+${notes}
+---
+${context ? `\nContext: ${context}` : ''}
+
+Provide a structured debrief with these 4 sections:
+
+**✅ What went well**
+(2-3 bullet points of strengths shown)
+
+**⚠️ Areas to improve**
+(2-3 specific things to work on before the next interview)
+
+**📌 Key topics covered**
+(quick list of main subjects discussed)
+
+**🎯 Action items**
+(1-3 concrete next steps before next interview or follow-up)
+
+Be direct, specific, and constructive. ${LANG[language] || LANG.en}`;
+  return runStream(prompt, onChunk);
+}
