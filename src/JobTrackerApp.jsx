@@ -12,6 +12,7 @@ import Onboarding from './components/Onboarding';
 import AIAssistant from './components/AIAssistant';
 import APIKeySettings from './components/APIKeySettings';
 import RejectionAnalysis from './components/RejectionAnalysis';
+import Tooltip from './components/Tooltip';
 
 const Linkedin = ({ size = 16, ...p }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
@@ -857,9 +858,11 @@ export default function JobTrackerApp() {
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-gray-700 mb-1">{t('form.priority')}</label>
-                      <select value={formData.priority || 'medium'} onChange={e => setFormData({...formData, priority: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white">
-                        {PRIORITIES.map(p => <option key={p.id} value={p.id}>{t(`priority.${p.id}`)}</option>)}
-                      </select>
+                      <Tooltip text={t('tooltips.priority')} position="top">
+                        <select value={formData.priority || 'medium'} onChange={e => setFormData({...formData, priority: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white">
+                          {PRIORITIES.map(p => <option key={p.id} value={p.id}>{t(`priority.${p.id}`)}</option>)}
+                        </select>
+                      </Tooltip>
                     </div>
                   </div>
 
@@ -892,15 +895,17 @@ export default function JobTrackerApp() {
                           <Trash2 size={16} />
                         </button>
                         <div className={`grid grid-cols-1 md:grid-cols-3 gap-3 mb-3 ${isRTL ? 'pr-6' : 'pl-6'}`}>
-                          <select
-                            value={safeStr(interview.type)}
-                            onChange={e => { const a = [...formData.interviews]; a[index].type = e.target.value; setFormData({...formData, interviews: a}); }}
-                            className="w-full p-2 text-sm border rounded bg-white"
-                          >
-                            <option value="" disabled>{t('form.selectInterviewType')}</option>
-                            {INTERVIEW_TYPE_KEYS.map(key => <option key={key} value={key}>{t(`interviewType.${key}`, key)}</option>)}
-                            {interview.type && !INTERVIEW_TYPE_KEYS.includes(interview.type) && <option value={safeStr(interview.type)}>{safeStr(interview.type)}</option>}
-                          </select>
+                          <Tooltip text={t('tooltips.interviewType')} position="top">
+                            <select
+                              value={safeStr(interview.type)}
+                              onChange={e => { const a = [...formData.interviews]; a[index].type = e.target.value; setFormData({...formData, interviews: a}); }}
+                              className="w-full p-2 text-sm border rounded bg-white"
+                            >
+                              <option value="" disabled>{t('form.selectInterviewType')}</option>
+                              {INTERVIEW_TYPE_KEYS.map(key => <option key={key} value={key}>{t(`interviewType.${key}`, key)}</option>)}
+                              {interview.type && !INTERVIEW_TYPE_KEYS.includes(interview.type) && <option value={safeStr(interview.type)}>{safeStr(interview.type)}</option>}
+                            </select>
+                          </Tooltip>
                           <input type="date" value={safeStr(interview.date)} onChange={e => { const a = [...formData.interviews]; a[index].date = e.target.value; setFormData({...formData, interviews: a}); }} className="w-full p-2 text-sm border rounded" />
                           <input type="text" placeholder={t('form.interviewerPlaceholder')} value={safeStr(interview.interviewer)} onChange={e => { const a = [...formData.interviews]; a[index].interviewer = e.target.value; setFormData({...formData, interviews: a}); }} className="w-full p-2 text-sm border rounded" />
                         </div>
@@ -926,14 +931,16 @@ export default function JobTrackerApp() {
                         </div>
                         <div>
                           <label className="block text-sm font-bold text-gray-700 mb-1">{t('form.rejectionMethod', 'How Were You Notified')}</label>
-                          <select
-                            value={safeStr(formData.rejection?.method)}
-                            onChange={e => setFormData({...formData, rejection: {...(formData.rejection || {}), method: e.target.value}})}
-                            className="w-full p-2.5 border border-red-200 rounded-lg focus:ring-2 focus:ring-red-400 bg-white"
-                          >
-                            <option value="">{t('form.rejectionMethodSelect', 'Select...')}</option>
-                            {REJECTION_METHOD_KEYS.map(key => <option key={key} value={key}>{t(`rejectionMethod.${key}`, key)}</option>)}
-                          </select>
+                          <Tooltip text={t('tooltips.rejectionMethod')} position="top">
+                            <select
+                              value={safeStr(formData.rejection?.method)}
+                              onChange={e => setFormData({...formData, rejection: {...(formData.rejection || {}), method: e.target.value}})}
+                              className="w-full p-2.5 border border-red-200 rounded-lg focus:ring-2 focus:ring-red-400 bg-white"
+                            >
+                              <option value="">{t('form.rejectionMethodSelect', 'Select...')}</option>
+                              {REJECTION_METHOD_KEYS.map(key => <option key={key} value={key}>{t(`rejectionMethod.${key}`, key)}</option>)}
+                            </select>
+                          </Tooltip>
                         </div>
                       </div>
                       <div>
