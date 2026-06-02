@@ -4,6 +4,10 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      # Tailwind v4 requires @tailwindcss/postcss and CSS import migration
+      - dependency-name: tailwindcss
+        update-types: [version-update:semver-major]
   - package-ecosystem: github-actions
     directory: /
     schedule:
