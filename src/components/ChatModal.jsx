@@ -41,8 +41,8 @@ function Message({ msg, onSave, t }) {
         {!isUser && !msg.streaming && onSave && (
           <button
             onClick={handleSave}
-            className={`absolute -bottom-6 right-0 text-[11px] opacity-0 group-hover:opacity-100 transition-all flex items-center gap-1 whitespace-nowrap ${
-              saved ? 'text-green-600' : 'text-gray-400 hover:text-indigo-600'
+            className={`mt-2 text-[11px] flex items-center gap-1 transition-colors ${
+              saved ? 'text-green-600 font-medium' : 'text-gray-400 hover:text-indigo-600'
             }`}
           >
             <Save size={11} />
