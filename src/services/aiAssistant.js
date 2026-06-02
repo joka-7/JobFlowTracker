@@ -229,7 +229,7 @@ ${LANG[language] || LANG.en}`;
   return runStream(prompt, onChunk);
 }
 
-export async function analyzeRejection(company, onChunk) {
+export async function analyzeRejection(company, language = 'en', onChunk) {
   const interviews = Array.isArray(company.interviews) ? company.interviews : [];
   const last = interviews[interviews.length - 1];
   const r = company.rejection || {};
@@ -245,11 +245,13 @@ Give 3 constructive, empathetic improvement suggestions. Each should:
 - Start with a bold emoji + title (e.g., **💪 Strengthen Technical Skills**)
 - Be actionable and specific (under 40 words)
 
-End with one short encouraging sentence.`;
+End with one short encouraging sentence.
+
+${LANG[language] || LANG.en}`;
   return runStream(prompt, onChunk);
 }
 
-export async function analyzePatterns(companies, onChunk) {
+export async function analyzePatterns(companies, language = 'en', onChunk) {
   const rejected = companies.filter(c => ['rejected', 'ghosted'].includes(c.status)).length;
   const active = companies.filter(c => !['rejected', 'ghosted', 'withdrawn'].includes(c.status)).length;
   const totalInterviews = companies.reduce((acc, c) => acc + (c.interviews?.length || 0), 0);
@@ -270,7 +272,9 @@ Recent applications: ${JSON.stringify(sample, null, 2)}
 
 Identify 3 patterns or insights. For each:
 - Bold title with emoji
-- 1-2 sentences with a specific, actionable recommendation`;
+- 1-2 sentences with a specific, actionable recommendation
+
+${LANG[language] || LANG.en}`;
   return runStream(prompt, onChunk);
 }
 

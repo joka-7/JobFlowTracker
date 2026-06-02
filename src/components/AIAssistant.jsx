@@ -152,7 +152,7 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
           : 'General';
         await getInterviewPrep(company, interviewType, language, setStreamText);
       } else if (mode === 'patterns') {
-        await analyzePatterns(companies, setStreamText);
+        await analyzePatterns(companies, language, setStreamText);
       }
     } catch (e) {
       setError(e.message || 'Error');
