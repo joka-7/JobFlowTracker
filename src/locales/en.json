@@ -245,5 +245,11 @@
     "analyzing": "Analyzing your rejection...",
     "retry": "Try again",
     "close": "Close"
+  },
+  "tooltips": {
+    "interviewType": "Select the type of interview. HR = screening, Technical = coding/skills, Manager = culture fit",
+    "rejectionMethod": "How you were notified. Tracking this helps identify ghosting patterns.",
+    "responseRate": "Companies that replied (any stage) ÷ total applications × 100",
+    "priority": "High = active process or dream company. Use to filter and focus your energy."
   }
 }

@@ -245,5 +245,11 @@
     "importError": "Erreur lors de l'importation. Vérifiez que le fichier JSON est valide.",
     "unnamedCompany": "Entreprise sans nom",
     "noName": "Sans nom"
+  },
+  "tooltips": {
+    "interviewType": "Sélectionnez le type d'entretien. RH = présélection, Technique = code/compétences, Manager = adéquation culturelle",
+    "rejectionMethod": "Comment vous avez été informé. Suivre ceci aide à identifier les patterns de ghosting.",
+    "responseRate": "Entreprises ayant répondu (toute étape) ÷ total des candidatures × 100",
+    "priority": "Haute = processus actif ou entreprise de rêve. Utilisez pour filtrer et concentrer votre énergie."
   }
 }
