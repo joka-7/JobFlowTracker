@@ -40,7 +40,8 @@
     "driveSyncing": "Synchronisation...",
     "connectDrive": "Connecter Drive",
     "driveOnTooltip": "Drive synchronisé — cliquer pour déconnecter",
-    "connectDriveTooltip": "Connecter Google Drive pour synchroniser sur tous les appareils"
+    "connectDriveTooltip": "Connecter Google Drive pour synchroniser sur tous les appareils",
+    "aiSettings": "Paramètres IA"
   },
   "tabs": {
     "board": "Tableau",
@@ -50,8 +51,10 @@
   },
   "board": {
     "emptyTitle": "Système prêt pour vos données",
-    "emptyDesc": "Pour commencer, sélectionnez votre fichier de sauvegarde JSON depuis votre appareil.",
-    "loadButton": "Charger les données (JSON)",
+    "emptyDesc": "Commencez en important une sauvegarde, ajoutant votre première entreprise, ou en suivant une visite guidée.",
+    "loadButton": "Charger sauvegarde JSON",
+    "addFirstCompany": "Ajouter une entreprise",
+    "viewTutorial": "Visite guidée",
     "noteLabel": "Note :",
     "noteText": "En fin de journée, pensez à télécharger une copie mise à jour sur votre ordinateur."
   },
@@ -120,7 +123,8 @@
     "selectCompany": "Sélectionnez une entreprise dans la liste",
     "selectCompanyHint": "ou utilisez les boutons JSON ci-dessus pour charger des données",
     "priorityLabel": "Priorité",
-    "rejectionTitle": "Détails du refus"
+    "rejectionTitle": "Détails du refus",
+    "analyzeRejection": "Analyser avec IA"
   },
   "stats": {
     "title": "Statistiques",
@@ -141,6 +145,73 @@
     "driveConnectedEmpty": "Drive connecté — synchronisation automatique activée.",
     "driveFailed": "Échec de la connexion Drive.",
     "driveDisconnected": "Drive déconnecté."
+  },
+  "onboarding": {
+    "welcomeTitle": "Bienvenue sur JobFlowTracker !",
+    "welcomeSubtitle": "Votre centre de commande de recherche d'emploi",
+    "welcomeDesc": "Suivez chaque entreprise, entretien et refus — tout en un seul endroit. Vos données restent privées dans votre navigateur.",
+    "featureBoard": "Tableau kanban avec glisser-déposer",
+    "featureList": "Profils d'entreprises détaillés",
+    "featureTimeline": "Chronologie des entretiens",
+    "featureStats": "Statistiques et événements à venir",
+    "boardTitle": "Tableau de statuts",
+    "boardSubtitle": "Visualisez votre pipeline avec glisser-déposer",
+    "boardDesc": "Chaque entreprise apparaît comme une carte dans sa colonne de statut. Faites glisser les cartes entre les colonnes pour mettre à jour le statut instantanément.",
+    "dragHint": "↑ Les étiquettes de parcours montrent votre progression",
+    "boardTip": "Conseil : Téléchargez une sauvegarde JSON chaque jour depuis la barre supérieure.",
+    "listTitle": "Liste & Édition",
+    "listSubtitle": "Gérez les entreprises et suivez les entretiens",
+    "listDesc": "L'onglet Liste est votre hub d'édition. Cliquez sur une entreprise pour voir les détails, ou ajoutez des entretiens et des notes de refus.",
+    "importTitle": "Importer des données existantes",
+    "importDesc": "Charger une sauvegarde JSON enregistrée précédemment",
+    "load": "Charger",
+    "addTitle": "Commencer de zéro",
+    "addDesc": "Ajouter votre première entreprise manuellement",
+    "add": "Ajouter",
+    "aiTitle": "Assistant IA",
+    "aiSubtitle": "Obtenez des conseils personnalisés basés sur Claude",
+    "aiDesc": "L'Assistant IA lit vos données d'entreprise et vous donne des conseils de préparation personnalisés et une analyse des refus — basé sur Claude.",
+    "aiFeature1": "Préparation entretien : 3 conseils ciblés avant chaque entretien",
+    "aiFeature2": "Analyse des refus : apprenez quoi améliorer",
+    "aiFeature3": "Analyse de patterns : identifiez les tendances",
+    "aiKeyTitle": "Apportez votre propre clé API",
+    "aiKeyDesc": "Vous avez besoin d'une clé API Anthropic gratuite. Cliquez sur l'icône ⚙️ dans l'en-tête pour l'ajouter.",
+    "setKey": "Définir la clé",
+    "shortcutsTitle": "Raccourcis clavier",
+    "shortcutsSubtitle": "Travaillez plus vite avec des raccourcis",
+    "shortcutsDesc": "Utilisez les raccourcis clavier pour naviguer plus rapidement :",
+    "shortcutN": "Ajouter une nouvelle entreprise",
+    "shortcutEsc": "Fermer les détails / annuler l'édition",
+    "shortcutSave": "Sauvegarde automatique dans le navigateur",
+    "finalTip": "Vous êtes prêt ! Ajoutez des notes de refus à chaque refus — l'IA peut identifier des patterns pour vous aider à vous améliorer.",
+    "back": "Retour",
+    "next": "Suivant",
+    "getStarted": "C'est parti !"
+  },
+  "ai": {
+    "title": "Assistant IA",
+    "noKey": "Définir une clé API pour activer l'IA →",
+    "prepNoCompany": "Sélectionnez d'abord une entreprise",
+    "prepButton": "Préparer l'entretien",
+    "patternsButton": "Analyser mes patterns de recherche"
+  },
+  "settings": {
+    "title": "Paramètres IA",
+    "keyActive": "Clé API active — fonctionnalités IA activées",
+    "apiKeyLabel": "Clé API Anthropic",
+    "keyNote": "Votre clé est stockée uniquement dans ce navigateur et n'est jamais envoyée à nos serveurs.",
+    "getKey": "Obtenir une clé API gratuite sur Anthropic Console →",
+    "save": "Enregistrer et activer l'IA",
+    "saved": "Enregistré !",
+    "clearKey": "Supprimer la clé API"
+  },
+  "rejection": {
+    "analysisTitle": "Analyse du refus",
+    "aiNeeded": "Activez l'IA pour obtenir des suggestions d'amélioration personnalisées.",
+    "setupAI": "Configurer l'IA →",
+    "analyzing": "Analyse de votre refus...",
+    "retry": "Réessayer",
+    "close": "Fermer"
   },
   "alert": {
     "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cette entreprise ?",
