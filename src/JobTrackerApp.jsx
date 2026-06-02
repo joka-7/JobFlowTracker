@@ -905,13 +905,18 @@ Rules:
               {user && !shareMode && (
                 <button
                   onClick={async () => {
+                    const url = `${window.location.origin}${window.location.pathname}?share=${user.uid}`;
+                    // publish snapshot (best-effort — requires firestore.rules deployed)
+                    publishShare(user.uid, companies).catch(console.error);
+                    // copy URL regardless of Firestore result
                     try {
-                      await publishShare(user.uid, companies);
-                      const url = `${window.location.origin}${window.location.pathname}?share=${user.uid}`;
                       await navigator.clipboard.writeText(url);
-                      setShareCopied(true);
-                      setTimeout(() => setShareCopied(false), 3000);
-                    } catch (e) { console.error(e); }
+                    } catch {
+                      // fallback for browsers without clipboard API
+                      window.prompt('Copy this share link:', url);
+                    }
+                    setShareCopied(true);
+                    setTimeout(() => setShareCopied(false), 3000);
                   }}
                   title={t('header.shareTooltip', 'Share read-only link')}
                   className="p-2 hover:bg-white/20 rounded text-white transition-colors"

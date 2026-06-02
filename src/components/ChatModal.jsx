@@ -86,8 +86,10 @@ export default function ChatModal({
   }, []);
 
   const send = async (textOverride) => {
-    const isTrigger = textOverride === SIM_TRIGGER;
-    const text = isTrigger ? SIM_TRIGGER : (textOverride || input).trim();
+    // guard: onClick passes a SyntheticEvent — treat non-string as "no override"
+    const explicit = typeof textOverride === 'string' ? textOverride : null;
+    const isTrigger = explicit === SIM_TRIGGER;
+    const text = isTrigger ? SIM_TRIGGER : (explicit || input).trim();
     if ((!isTrigger && !text) || loading) return;
     if (!aiReady) { onOpenSettings(); return; }
 
@@ -95,7 +97,7 @@ export default function ChatModal({
     const visibleUserMsg = isTrigger ? null : { role: 'user', content: text };
     const newMessages = visibleUserMsg ? [...messages, visibleUserMsg] : [...messages];
     if (visibleUserMsg) setMessages(newMessages);
-    if (!textOverride) setInput('');
+    if (!explicit) setInput('');
     setError('');
     setLoading(true);
 
