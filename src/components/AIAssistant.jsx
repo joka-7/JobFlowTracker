@@ -135,11 +135,13 @@ function DebriefScreen({ t, language, company, onBack, onOpenSettings, onSaveToC
             {streamText && !loading && !error && onSaveToCompany && (
               <button
                 onClick={saveResult}
-                className={`w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  saved ? 'bg-green-100 text-green-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-bold transition-colors border ${
+                  saved
+                    ? 'bg-green-500 text-white border-green-500'
+                    : 'bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-600'
                 }`}
               >
-                <Save size={12} />
+                <Save size={14} />
                 {saved ? t('chat.saved', 'Saved ✓') : t('chat.saveToNotes', 'Save to notes')}
               </button>
             )}
@@ -332,11 +334,13 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
                   {streamText && !loading && !error && onSaveToCompany && (
                     <button
                       onClick={saveResult}
-                      className={`w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                        resultSaved ? 'bg-green-100 text-green-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                      className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-bold transition-colors border ${
+                        resultSaved
+                          ? 'bg-green-500 text-white border-green-500'
+                          : 'bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-600'
                       }`}
                     >
-                      <Save size={12} />
+                      <Save size={14} />
                       {resultSaved ? t('chat.saved', 'Saved ✓') : t('chat.saveToNotes', 'Save to notes')}
                     </button>
                   )}

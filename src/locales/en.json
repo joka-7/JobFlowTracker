@@ -144,9 +144,9 @@
     "byStatus": "By Status",
     "upcoming": "Upcoming — Next 14 Days",
     "today": "Today",
-    "journey": "Application Journey",
-    "journeySubtitle": "Your pipeline conversion",
-    "avgDays": "Avg. days per stage",
+    "journey": "Hiring Funnel",
+    "journeySubtitle": "How many applications reached each stage — shows where most drop off",
+    "avgDays": "Avg. days first → last interview",
     "noData": "Add more companies to see patterns"
   },
   "toast": {
