@@ -694,14 +694,14 @@ export default function JobTrackerApp() {
           {/* Application Journey card */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div className="flex items-center justify-between mb-1">
-              <h3 className="font-bold text-gray-800">{t('stats.journey', 'Application Journey')}</h3>
+              <h3 className="font-bold text-gray-800">🔽 {t('stats.journey', 'Hiring Funnel')}</h3>
               {avgDays !== null && (
                 <span className="text-xs text-gray-500 bg-gray-50 border border-gray-100 px-2 py-1 rounded-lg">
-                  {t('stats.avgDays', 'Avg. days per stage')}: <span className="font-bold text-gray-700">{avgDays}d</span>
+                  {t('stats.avgDays', 'Avg. days from first to last interview')}: <span className="font-bold text-gray-700">{avgDays}d</span>
                 </span>
               )}
             </div>
-            <p className="text-xs text-gray-400 mb-5">{t('stats.journeySubtitle', 'Your pipeline conversion')}</p>
+            <p className="text-xs text-gray-400 mb-5">{t('stats.journeySubtitle', 'How many of your applications reached each stage — shows where most drop off')}</p>
             {!hasJourneyData ? (
               <div className="text-center text-gray-400 py-6 bg-gray-50 rounded-lg border border-dashed border-gray-200 text-sm">
                 {t('stats.noData', 'Add more companies to see patterns')}

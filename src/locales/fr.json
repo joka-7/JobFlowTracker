@@ -144,9 +144,9 @@
     "byStatus": "Par statut",
     "upcoming": "À venir — 14 prochains jours",
     "today": "Aujourd'hui",
-    "journey": "Parcours de candidature",
-    "journeySubtitle": "Conversion de votre pipeline",
-    "avgDays": "Jours moyens par étape",
+    "journey": "Entonnoir de recrutement",
+    "journeySubtitle": "Combien de candidatures ont atteint chaque étape — montre où la plupart abandonnent",
+    "avgDays": "Jours moy. premier → dernier entretien",
     "noData": "Ajoutez plus d'entreprises pour voir les tendances"
   },
   "toast": {
