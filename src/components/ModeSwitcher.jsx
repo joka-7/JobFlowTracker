@@ -3,9 +3,9 @@ import { Briefcase, Users, ClipboardList } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const MODES = [
-  { id: 'jobseeker', Icon: Briefcase, labelKey: 'recruiter.modeSelection.jobSeekerTitle', short: 'Jobs' },
-  { id: 'recruiter', Icon: Users, labelKey: 'recruiter.modeSelection.recruiterTitle', short: 'Recruit' },
-  { id: 'tasks', Icon: ClipboardList, labelKey: 'tasks.modeSelection.title', short: 'Tasks' },
+  { id: 'jobseeker', Icon: Briefcase, labelKey: 'recruiter.modeSelection.jobSeekerTitle', shortKey: 'recruiter.modeSelection.jobSeekerShort', short: 'Jobs' },
+  { id: 'recruiter', Icon: Users, labelKey: 'recruiter.modeSelection.recruiterTitle', shortKey: 'recruiter.modeSelection.recruiterShort', short: 'Recruit' },
+  { id: 'tasks', Icon: ClipboardList, labelKey: 'tasks.modeSelection.title', shortKey: 'tasks.modeSelection.short', short: 'Tasks' },
 ];
 
 export default function ModeSwitcher({ currentMode, onModeChange }) {
@@ -23,9 +23,10 @@ export default function ModeSwitcher({ currentMode, onModeChange }) {
       role="tablist"
       aria-label="App mode"
     >
-      {MODES.map(({ id, Icon, labelKey, short }) => {
+      {MODES.map(({ id, Icon, labelKey, shortKey, short }) => {
         const active = id === currentMode;
         const fullLabel = t(labelKey, short);
+        const compactLabel = t(shortKey, short);
         return (
           <button
             key={id}
@@ -41,7 +42,7 @@ export default function ModeSwitcher({ currentMode, onModeChange }) {
             }`}
           >
             <Icon size={14} className="shrink-0" aria-hidden />
-            <span className="sm:hidden">{short}</span>
+            <span className="sm:hidden whitespace-nowrap">{compactLabel}</span>
             <span className="hidden sm:inline whitespace-nowrap">{fullLabel}</span>
           </button>
         );

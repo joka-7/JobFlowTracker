@@ -327,7 +327,11 @@
   "tasks": {
     "modeSelection": {
       "title": "Gestionnaire de tâches",
+      "short": "Tâches",
       "desc": "Gérez vos tâches avec plusieurs étapes et suivez la progression"
+    },
+    "timeline": {
+      "dueDate": "Échéance"
     },
     "header": {
       "title": "Gestionnaire de tâches",
@@ -428,8 +432,10 @@
       "title": "Comment utiliserez-vous JobFlowTracker ?",
       "subtitle": "Choisissez votre rôle — ce choix est définitif",
       "jobSeekerTitle": "Je suis candidat",
+      "jobSeekerShort": "Emploi",
       "jobSeekerDesc": "Suivre entreprises, candidatures et entretiens",
       "recruiterTitle": "Je suis recruteur",
+      "recruiterShort": "Recrut.",
       "recruiterDesc": "Suivre les candidats dans votre pipeline de recrutement",
       "fixedNote": "Vous pouvez changer de mode à tout moment depuis l'en-tête"
     },

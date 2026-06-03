@@ -44,6 +44,27 @@ body {
 .touch-manipulation {
   touch-action: manipulation;
 }
+
+/* Keep calendar readable when OS uses dark mode / smart invert */
+.calendar-page,
+.calendar-force-light {
+  color-scheme: only light;
+  forced-color-adjust: none;
+  background-color: #ffffff !important;
+  color: #111827 !important;
+}
+
+.calendar-force-light .calendar-month-title,
+.calendar-force-light .calendar-nav-btn,
+.calendar-force-light .calendar-today-btn {
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+}
+
+.calendar-force-light .calendar-today-btn {
+  background-color: #ffffff !important;
+  border-color: #6b7280 !important;
+}
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }

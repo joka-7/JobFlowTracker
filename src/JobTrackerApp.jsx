@@ -967,6 +967,12 @@ Rules:
               </button>
             )}
 
+            {onModeChange && (
+              <div className="hidden md:block shrink-0">
+                <ModeSwitcher currentMode={mode} onModeChange={onModeChange} />
+              </div>
+            )}
+
             {canInstall && (
               <button
                 type="button"
@@ -1087,7 +1093,7 @@ Rules:
           </div>
 
           {onModeChange && (
-            <div className="w-full overflow-x-auto scrollbar-none -mx-1 px-1">
+            <div className="md:hidden w-full overflow-x-auto scrollbar-none -mx-1 px-1">
               <ModeSwitcher currentMode={mode} onModeChange={onModeChange} />
             </div>
           )}
@@ -1104,9 +1110,9 @@ Rules:
             <button
               key={key}
               onClick={() => navigateTo(key)}
-              className={`px-3 sm:px-4 py-2.5 rounded-t-lg font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap flex-shrink-0 text-sm min-h-[44px] touch-manipulation ${activeTab === key ? 'bg-gray-50 text-indigo-800' : 'bg-white/10 text-blue-100 hover:bg-white/20 active:bg-white/25'}`}
+              className={`px-2.5 sm:px-4 py-2.5 rounded-t-lg font-medium flex items-center gap-1 sm:gap-2 transition-colors whitespace-nowrap flex-shrink-0 text-xs sm:text-sm min-h-[44px] touch-manipulation ${activeTab === key ? 'bg-gray-50 text-indigo-800' : 'bg-white/10 text-blue-100 hover:bg-white/20 active:bg-white/25'}`}
             >
-              {icon} {t(`tabs.${key}`, key)}
+              {icon} <span className="hidden min-[380px]:inline">{t(`tabs.${key}`, key)}</span>
             </button>
           ))}
         </div>
@@ -1117,7 +1123,7 @@ Rules:
       {activeTab === 'timeline' && renderTimeline()}
       {activeTab === 'stats' && renderStats()}
       {activeTab === 'calendar' && (
-        <div className="flex-1 overflow-auto bg-gray-50 min-h-0">
+        <div className="flex-1 overflow-auto calendar-page min-h-0">
           <CalendarView
             events={calendarEvents}
             isRTL={isRTL}
