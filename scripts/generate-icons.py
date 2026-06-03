@@ -54,8 +54,15 @@ def make_maskable(src: Image.Image, size: int = 512, scale: float = 0.72) -> Ima
 
 
 def make_favicon_ico(src: Image.Image, dest: Path) -> None:
-    images = [resize_square(src, s) for s in (16, 32, 48)]
-    images[0].save(dest, format="ICO", sizes=[(s, s) for s in (16, 32, 48)])
+    sizes = (16, 32, 48)
+    images = [resize_square(src, s) for s in sizes]
+    # PIL embeds multiple sizes only when the largest image is saved first.
+    images[-1].save(
+        dest,
+        format="ICO",
+        sizes=[(s, s) for s in sizes],
+        append_images=images[:-1],
+    )
 
 
 def write_favicon_svg(src: Image.Image, dest: Path) -> None:

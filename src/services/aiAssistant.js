@@ -52,17 +52,35 @@ export const PROVIDERS = {
 let config = { provider: 'gemini', apiKey: '', model: '', ollamaUrl: 'http://localhost:11434' };
 
 export function initAI(provider, apiKey, model, ollamaUrl) {
+  const p = provider || 'gemini';
   config = {
-    provider: provider || 'gemini',
-    apiKey: apiKey || '',
-    model: model || PROVIDERS[provider || 'gemini']?.defaultModel || '',
+    provider: p,
+    apiKey: String(apiKey ?? '').trim(),
+    model: (model && String(model).trim()) || PROVIDERS[p]?.defaultModel || '',
     ollamaUrl: ollamaUrl || 'http://localhost:11434',
   };
 }
 
+export const AI_CONFIG_UPDATED = 'ai-config-updated';
+
+/** Reload provider/key/model from localStorage (call when opening chat). */
+export function loadAIConfigFromStorage() {
+  const provider = localStorage.getItem('aiProvider') || 'gemini';
+  const apiKey = (localStorage.getItem('aiApiKey')
+    || localStorage.getItem('anthropicApiKey') || '').trim();
+  const model = (localStorage.getItem('aiModel') || '').trim();
+  const ollamaUrl = (localStorage.getItem('ollamaUrl') || 'http://localhost:11434').trim();
+  initAI(provider, apiKey, model, ollamaUrl);
+  const ready = isAIReady();
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(AI_CONFIG_UPDATED, { detail: { ready } }));
+  }
+  return ready;
+}
+
 export function isAIReady() {
   if (config.provider === 'ollama') return true;
-  return !!config.apiKey;
+  return Boolean(config.apiKey?.trim());
 }
 
 export function getCurrentProvider() {

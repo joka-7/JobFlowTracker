@@ -22,6 +22,8 @@ import CalendarView from './components/CalendarView';
 import TemplateLibrary from './components/TemplateLibrary';
 import APIKeySettings from './components/APIKeySettings';
 import { usePwaInstall } from './usePwaInstall';
+import AppBrandMark from './components/AppBrandMark';
+import WelcomeModal from './components/WelcomeModal';
 
 const MODE = 'tasks';
 
@@ -128,6 +130,9 @@ export default function TasksApp({ onModeChange }) {
   const [showAISettings, setShowAISettings] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [simulationData, setSimulationData] = useState(null);
+  const [showTasksWelcome, setShowTasksWelcome] = useState(
+    () => !localStorage.getItem('hasCompletedOnboarding_tasks'),
+  );
   const { canInstall, runInstall } = usePwaInstall();
 
   const dragTaskId = useRef(null);
@@ -472,14 +477,23 @@ Rules:
       {tasks.length === 0 ? (
         <div className="flex items-center justify-center flex-1 min-h-[200px]">
           <div className="text-center max-w-sm px-4">
-            <ClipboardList className="mx-auto text-gray-300 mb-4" size={48} />
+            <div className="mx-auto mb-4 w-14 h-14 flex items-center justify-center">
+              <AppBrandMark size={56} />
+            </div>
             <h2 className="text-xl sm:text-2xl font-bold text-gray-700 mb-2">{tt('board.emptyTitle', 'Welcome to Task Manager')}</h2>
             <p className="text-sm text-gray-500 mb-6">{tt('board.emptyDesc', 'Add your first task to get started.')}</p>
             <button
               onClick={openNewForm}
-              className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-emerald-700 transition-colors"
+              className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-emerald-700 transition-colors mb-3"
             >
               {tt('board.addFirstButton', 'Add your first task')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowTasksWelcome(true)}
+              className="text-sm text-emerald-700 hover:text-emerald-900 font-medium"
+            >
+              💡 {tt('board.viewTutorial', 'View welcome')}
             </button>
           </div>
         </div>
@@ -1005,7 +1019,7 @@ Rules:
         <div className="px-3 sm:px-6 py-3 sm:py-4 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             <div className="bg-white/20 p-1.5 sm:p-2 rounded-lg backdrop-blur-sm shrink-0">
-              <ClipboardList size={20} className="text-white sm:w-6 sm:h-6" />
+              <AppBrandMark size={24} className="sm:w-7 sm:h-7" />
             </div>
             <div className="min-w-0">
               <h1 className="text-base sm:text-xl font-bold tracking-tight flex items-center gap-2 flex-wrap">
@@ -1097,6 +1111,14 @@ Rules:
               >
                 <Settings size={18} />
               </button>
+              <button
+                type="button"
+                onClick={() => setShowTasksWelcome(true)}
+                title={tt('board.viewTutorial', 'View welcome')}
+                className="p-2 hover:bg-white/20 rounded text-white transition-colors"
+              >
+                💡
+              </button>
             </div>
 
             {/* Mobile overflow menu */}
@@ -1137,6 +1159,9 @@ Rules:
                     </button>
                     <button onClick={() => { setShowAISettings(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <Settings size={16} className="text-gray-500" /> {t('header.aiSettings', 'AI Settings')}
+                    </button>
+                    <button onClick={() => { setShowTasksWelcome(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                      <span>💡</span> {tt('board.viewTutorial', 'View welcome')}
                     </button>
                     {canInstall && (
                       <button
@@ -1193,6 +1218,18 @@ Rules:
         </div>
       )}
 
+      {showTasksWelcome && (
+        <WelcomeModal
+          title={tt('welcome.title', 'Welcome to Task Manager')}
+          subtitle={tt('welcome.subtitle', 'Plan work in steps and track progress')}
+          description={tt('welcome.desc', 'Create tasks with checklists and AI coaching.')}
+          skipLabel={tt('welcome.skip', 'Skip')}
+          startLabel={tt('welcome.getStarted', 'Get started')}
+          onClose={() => setShowTasksWelcome(false)}
+          onComplete={() => localStorage.setItem('hasCompletedOnboarding_tasks', '1')}
+        />
+      )}
+
       {showAISettings && (
         <APIKeySettings t={t} onClose={() => setShowAISettings(false)} />
       )}
@@ -1232,7 +1269,7 @@ Rules:
           simulationTitle={simulationData.title}
           autoStart={true}
           onClose={() => setSimulationData(null)}
-          onOpenSettings={() => { setSimulationData(null); setShowAISettings(true); }}
+          onOpenSettings={() => setShowAISettings(true)}
           onSaveToTask={selectedTask ? handleSaveToTask : null}
         />
       )}

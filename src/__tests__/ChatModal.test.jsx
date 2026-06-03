@@ -5,8 +5,9 @@ import userEvent from '@testing-library/user-event';
 import ChatModal from '../components/ChatModal';
 
 // vi.hoisted ensures these are available inside the vi.mock factory (which is hoisted to top)
-const { mockIsAIReady, mockStreamChat } = vi.hoisted(() => ({
+const { mockIsAIReady, mockStreamChat, mockLoadAIConfig } = vi.hoisted(() => ({
   mockIsAIReady: vi.fn(() => true),
+  mockLoadAIConfig: vi.fn(() => true),
   mockStreamChat: vi.fn(async (_messages, _system, onChunk) => {
     onChunk('Test response');
     return 'Test response';
@@ -18,6 +19,7 @@ vi.mock('../services/aiAssistant', async (importOriginal) => {
   return {
     ...actual,
     isAIReady: mockIsAIReady,
+    loadAIConfigFromStorage: mockLoadAIConfig,
     streamChat: mockStreamChat,
   };
 });
@@ -43,6 +45,7 @@ beforeEach(() => {
   window.HTMLElement.prototype.scrollIntoView = vi.fn();
   // Reset to "AI is ready" by default for most tests
   mockIsAIReady.mockReturnValue(true);
+  mockLoadAIConfig.mockReturnValue(true);
   mockStreamChat.mockImplementation(async (_messages, _system, onChunk) => {
     onChunk('Test response');
     return 'Test response';
@@ -103,12 +106,14 @@ describe('ChatModal', () => {
 
   it('shows "Set API key" button when AI is not ready', () => {
     mockIsAIReady.mockReturnValue(false);
+    mockLoadAIConfig.mockReturnValue(false);
     render(<ChatModal {...defaultProps} />);
     expect(screen.getByText(/Set API key to enable AI/i)).toBeInTheDocument();
   });
 
   it('"Set API key" button calls onOpenSettings', async () => {
     mockIsAIReady.mockReturnValue(false);
+    mockLoadAIConfig.mockReturnValue(false);
     const user = userEvent.setup();
     const onOpenSettings = vi.fn();
     render(<ChatModal {...defaultProps} onOpenSettings={onOpenSettings} />);

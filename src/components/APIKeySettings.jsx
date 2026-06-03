@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Key, Eye, EyeOff, ExternalLink, CheckCircle, Trash2, ChevronDown } from 'lucide-react';
-import { initAI, isAIReady, PROVIDERS } from '../services/aiAssistant';
+import { loadAIConfigFromStorage, isAIReady, PROVIDERS } from '../services/aiAssistant';
 
 const PROVIDER_ORDER = ['gemini', 'groq', 'ollama', 'anthropic', 'openai'];
 
@@ -37,7 +37,7 @@ export default function APIKeySettings({ t, onClose }) {
     localStorage.setItem('aiApiKey', key);
     localStorage.setItem('aiModel', effectiveModel);
     if (isOllama) localStorage.setItem('ollamaUrl', ollamaUrl.trim());
-    initAI(provider, key, effectiveModel, ollamaUrl.trim());
+    loadAIConfigFromStorage();
     setDone(true);
     setTimeout(() => { setDone(false); onClose(); }, 900);
   };
@@ -50,7 +50,7 @@ export default function APIKeySettings({ t, onClose }) {
   const alreadySet = isAIReady();
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
         <div className="bg-gradient-to-r from-purple-600 to-indigo-700 p-5 text-white flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-lg">

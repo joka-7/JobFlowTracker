@@ -214,6 +214,7 @@
     "finalTip": "Vous êtes prêt ! Ajoutez des notes de refus à chaque refus — l'IA peut identifier des patterns pour vous aider à vous améliorer.",
     "back": "Retour",
     "next": "Suivant",
+    "skip": "Passer le tutoriel",
     "getStarted": "C'est parti !"
   },
   "ai": {
@@ -346,9 +347,17 @@
       "done": "Terminé",
       "blocked": "Bloqué"
     },
+    "welcome": {
+      "title": "Bienvenue dans le gestionnaire de tâches",
+      "subtitle": "Planifiez le travail par étapes",
+      "desc": "Créez des tâches avec listes, modèles IA et sauvegarde locale.",
+      "skip": "Passer",
+      "getStarted": "Commencer"
+    },
     "board": {
       "emptyTitle": "Bienvenue dans le gestionnaire de tâches",
       "emptyDesc": "Organisez vos tâches avec plusieurs étapes et suivez la progression.",
+      "viewTutorial": "Voir l'accueil",
       "addFirstButton": "Ajouter votre première tâche",
       "signInButton": "Se connecter avec Google — synchroniser partout",
       "loadButton": "Restaurer depuis une sauvegarde JSON"

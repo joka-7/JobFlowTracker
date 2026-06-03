@@ -13,6 +13,7 @@ import {
   getStorageKey, INTERVIEW_TYPE_KEYS, filterItemsForMode,
 } from './statuses';
 import Onboarding from './components/Onboarding';
+import AppBrandMark from './components/AppBrandMark';
 import AIAssistant from './components/AIAssistant';
 import APIKeySettings from './components/APIKeySettings';
 import RejectionAnalysis from './components/RejectionAnalysis';
@@ -172,7 +173,9 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
   const [syncing, setSyncing] = useState(false);
   const dragCompanyId = useRef(null);
 
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(
+    () => !isRecruiter && !localStorage.getItem('hasCompletedOnboarding'),
+  );
   const [showAISettings, setShowAISettings] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [simulationData, setSimulationData] = useState(null); // { systemPrompt, title }
@@ -186,11 +189,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
     const model = localStorage.getItem('aiModel') || '';
     const ollamaUrl = localStorage.getItem('ollamaUrl') || 'http://localhost:11434';
     initAI(provider, apiKey, model, ollamaUrl);
-    if (autoOnboarding && !localStorage.getItem('hasCompletedOnboarding') && !isRecruiter) {
-      setShowOnboarding(true);
-    }
-
-  }, [isRecruiter, autoOnboarding]);
+  }, [isRecruiter]);
 
   const initialFormState = makeInitialFormState(isRecruiter);
   const [formData, setFormData] = useState(initialFormState);
@@ -633,8 +632,8 @@ Rules:
       {companies.length === 0 && (
         <div className="w-full flex flex-col items-center justify-center p-8">
           <div className="bg-white p-10 rounded-2xl shadow-xl border border-gray-200 text-center max-w-lg w-full">
-            <div className="bg-indigo-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Activity size={40} className="text-indigo-600" />
+            <div className="bg-indigo-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 p-3">
+              <AppBrandMark size={56} />
             </div>
             <h2 className="text-2xl font-black text-gray-800 mb-2">{tMode('board.emptyTitle')}</h2>
             <p className="text-gray-500 mb-8 text-sm">{tMode('board.emptyDesc')}</p>
@@ -926,8 +925,8 @@ Rules:
       } text-white shadow-md flex-shrink-0`}>
         <div className="px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
-              <Activity size={24} className="text-white" />
+            <div className="bg-white/20 p-1.5 rounded-lg backdrop-blur-sm">
+              <AppBrandMark size={28} />
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
@@ -1019,6 +1018,15 @@ Rules:
               >
                 <Settings size={18} />
               </button>
+              {!isRecruiter && (
+              <button
+                onClick={() => setShowOnboarding(true)}
+                title={tMode('board.viewTutorial', 'View Tutorial')}
+                className="p-2 hover:bg-white/20 rounded text-white transition-colors"
+              >
+                💡
+              </button>
+              )}
             </div>
 
             {/* Mobile overflow menu */}
@@ -1060,6 +1068,11 @@ Rules:
                     <button onClick={() => { setShowAISettings(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <Settings size={16} className="text-gray-500" /> {t('header.aiSettings', 'AI Settings')}
                     </button>
+                    {!isRecruiter && (
+                    <button onClick={() => { setShowOnboarding(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                      <span>💡</span> {tMode('board.viewTutorial', 'View Tutorial')}
+                    </button>
+                    )}
                     {canInstall && (
                       <button
                         type="button"
@@ -1627,7 +1640,7 @@ Rules:
           simulationTitle={simulationData.title}
           autoStart={true}
           onClose={() => setSimulationData(null)}
-          onOpenSettings={() => { setSimulationData(null); setShowAISettings(true); }}
+          onOpenSettings={() => setShowAISettings(true)}
         />
       )}
     </div>

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { PROVIDERS, initAI, isAIReady, getCurrentProvider, getInterviewPrep, analyzeRejection, analyzePatterns, debriefInterview, buildApiMessages } from '../services/aiAssistant.js';
+import { PROVIDERS, initAI, isAIReady, loadAIConfigFromStorage, getCurrentProvider, getInterviewPrep, analyzeRejection, analyzePatterns, debriefInterview, buildApiMessages } from '../services/aiAssistant.js';
 
 vi.mock('@anthropic-ai/sdk', () => ({ default: vi.fn() }));
 
@@ -141,6 +141,17 @@ describe('PROVIDERS config', () => {
 // ---------------------------------------------------------------------------
 // 2. initAI / isAIReady
 // ---------------------------------------------------------------------------
+
+describe('loadAIConfigFromStorage', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('loads provider and legacy anthropicApiKey from localStorage', () => {
+    localStorage.setItem('aiProvider', 'anthropic');
+    localStorage.setItem('anthropicApiKey', 'sk-ant-test');
+    expect(loadAIConfigFromStorage()).toBe(true);
+    expect(getCurrentProvider()).toBe('anthropic');
+  });
+});
 
 describe('initAI / isAIReady', () => {
   beforeEach(() => {

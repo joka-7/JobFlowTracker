@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Layout, List, Activity, BarChart2, Lightbulb, ChevronRight, ChevronLeft, Upload, Plus } from 'lucide-react';
+import AppBrandMark from './AppBrandMark';
 
 const STEPS = [
   {
@@ -229,7 +230,11 @@ export default function Onboarding({ t, i18n, isRTL, onClose, openNewForm, trigg
               </button>
             </div>
           </div>
-          <div className="text-4xl mb-3">{current.icon}</div>
+          {current.titleKey === 'welcome' ? (
+            <div className="mb-3"><AppBrandMark size={48} /></div>
+          ) : (
+            <div className="text-4xl mb-3">{current.icon}</div>
+          )}
           <h2 className="text-2xl font-bold">{t(`onboarding.${current.titleKey}Title`, current.defaults.title)}</h2>
           <p className="text-blue-200 text-sm mt-1">{t(`onboarding.${current.titleKey}Subtitle`, current.defaults.subtitle)}</p>
         </div>
@@ -238,26 +243,36 @@ export default function Onboarding({ t, i18n, isRTL, onClose, openNewForm, trigg
           {content}
         </div>
 
-        <div className="px-6 pb-6 flex justify-between items-center">
+        <div className={`px-6 pb-6 gap-2 items-center ${isFirst ? 'grid grid-cols-3' : 'flex justify-between'}`}>
           <button
             onClick={() => setStep(s => s - 1)}
             disabled={isFirst}
-            className={`flex items-center gap-1 px-4 py-2 rounded-lg font-medium transition-colors ${isFirst ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'}`}
+            className={`flex items-center gap-1 px-4 py-2 rounded-lg font-medium transition-colors justify-self-start ${isFirst ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'}`}
           >
             <Back size={16} /> {t('onboarding.back', 'Back')}
           </button>
 
+          {isFirst ? (
+            <button
+              type="button"
+              onClick={handleClose}
+              className="text-sm font-medium text-gray-500 hover:text-gray-800 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors justify-self-center"
+            >
+              {t('onboarding.skip', 'Skip tutorial')}
+            </button>
+          ) : <span />}
+
           {isLast ? (
             <button
               onClick={handleClose}
-              className="flex items-center gap-2 px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors"
+              className="flex items-center gap-2 px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors justify-self-end"
             >
               {t('onboarding.getStarted', "Let's go!")} 🚀
             </button>
           ) : (
             <button
               onClick={() => setStep(s => s + 1)}
-              className="flex items-center gap-2 px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors"
+              className="flex items-center gap-2 px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors justify-self-end"
             >
               {t('onboarding.next', 'Next')} <Next size={16} />
             </button>

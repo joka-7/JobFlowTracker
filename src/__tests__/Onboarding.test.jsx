@@ -59,6 +59,16 @@ describe('Onboarding', () => {
     expect(localStorage.getItem('appLanguage')).toBe('fr');
   });
 
+  it('Skip tutorial on welcome closes onboarding and marks complete', async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    render(<Onboarding {...defaultProps} onClose={onClose} />);
+    await user.click(screen.getByRole('button', { name: /skip tutorial/i }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(localStorage.getItem('hasCompletedOnboarding')).toBe('1');
+    expect(screen.getByText('Welcome to JobFlowTracker!')).toBeInTheDocument();
+  });
+
   it('clicking Next advances to step 2 (Status Board)', async () => {
     const user = userEvent.setup();
     render(<Onboarding {...defaultProps} />);

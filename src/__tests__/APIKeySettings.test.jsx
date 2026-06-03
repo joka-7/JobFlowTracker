@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 import APIKeySettings from '../components/APIKeySettings';
 
 vi.mock('../services/aiAssistant', () => ({
-  initAI: vi.fn(),
+  loadAIConfigFromStorage: vi.fn(),
   isAIReady: vi.fn(() => false),
   PROVIDERS: {
     gemini: {
@@ -182,14 +182,14 @@ describe('APIKeySettings', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('calls initAI with correct arguments when saving', async () => {
-    const { initAI } = await import('../services/aiAssistant');
+  it('calls loadAIConfigFromStorage when saving', async () => {
+    const { loadAIConfigFromStorage } = await import('../services/aiAssistant');
     const user = userEvent.setup();
     render(<APIKeySettings {...defaultProps} />);
     await user.click(screen.getByText('Groq'));
     const passwordInput = document.querySelector('input[type="password"]');
     fireEvent.change(passwordInput, { target: { value: 'gsk_mykey' } });
     await user.click(screen.getByRole('button', { name: /save/i }));
-    expect(initAI).toHaveBeenCalledWith('groq', 'gsk_mykey', expect.any(String), expect.any(String));
+    expect(loadAIConfigFromStorage).toHaveBeenCalled();
   });
 });
