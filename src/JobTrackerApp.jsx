@@ -21,6 +21,10 @@ import Tooltip from './components/Tooltip';
 import ModeSwitcher from './components/ModeSwitcher';
 import CalendarView from './components/CalendarView';
 import { TEMPLATES } from './data/interviewTemplates';
+import {
+  getLocalizedQuestions, getLocalizedCategoryLabel, formatQuestionList,
+} from './utils/templateQuestions';
+import { usePwaInstall } from './usePwaInstall';
 
 const Linkedin = ({ size = 16, ...p }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
@@ -173,14 +177,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
   const [simulationData, setSimulationData] = useState(null); // { systemPrompt, title }
   const [rejectionCompany, setRejectionCompany] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [installPrompt, setInstallPrompt] = useState(null);
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-  useEffect(() => {
-    const handler = (e) => { e.preventDefault(); setInstallPrompt(e); };
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
+  const { canInstall, runInstall } = usePwaInstall();
 
   useEffect(() => {
     const provider = localStorage.getItem('aiProvider') || 'gemini';
@@ -421,10 +418,12 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
     const cat = TEMPLATES[categoryKey];
     if (!cat) return;
     const isQuestionsToAsk = categoryKey === 'questions_to_ask';
-    const questionList = cat.questions.map((q, i) => `${i + 1}. ${q}`).join('\n');
+    const label = getLocalizedCategoryLabel(t, false, categoryKey, cat.label);
+    const questions = getLocalizedQuestions(t, false, categoryKey, cat.questions);
+    const questionList = formatQuestionList(questions);
     let systemPrompt;
     if (isRecruiter) {
-      systemPrompt = `You are a realistic job candidate being interviewed for a software/tech role. The user is the interviewer practicing conducting a ${cat.label} interview.
+      systemPrompt = `You are a realistic job candidate being interviewed for a software/tech role. The user is the interviewer practicing conducting a ${label} interview.
 
 Use these questions as a guide for what the interviewer may ask:
 ${questionList}
@@ -447,7 +446,7 @@ Rules:
 - Stay in character throughout
 - When the user says "begin", introduce yourself briefly and invite the first question`;
     } else {
-      systemPrompt = `You are a professional interviewer running a ${cat.label} mock interview practice session.
+      systemPrompt = `You are a professional interviewer running a ${label} mock interview practice session.
 
 Ask these questions one at a time:
 ${questionList}
@@ -463,10 +462,10 @@ Rules:
 
     setSimulationData({
       systemPrompt,
-      title: `${cat.icon} ${cat.label}`,
+      title: `${cat.icon} ${label}`,
     });
     setShowTemplates(false);
-  }, [isRecruiter]);
+  }, [isRecruiter, t]);
 
   const handleExport = () => {
     const dataStr = JSON.stringify(companies, null, 2);
@@ -971,23 +970,15 @@ Rules:
               <ModeSwitcher currentMode={mode} onModeChange={onModeChange} />
             )}
 
-            {/* Install button — visible on mobile when installable */}
-            {(installPrompt || isIOS) && (
+            {canInstall && (
               <button
-                onClick={async () => {
-                  if (installPrompt) {
-                    installPrompt.prompt();
-                    const { outcome } = await installPrompt.userChoice;
-                    if (outcome === 'accepted') setInstallPrompt(null);
-                  } else {
-                    alert(t('header.iosInstallHint', 'Tap the Share button (□↑) in Safari, then "Add to Home Screen"'));
-                  }
-                }}
-                className="md:hidden flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold bg-white text-indigo-700 shadow-sm min-h-[40px] transition-colors hover:bg-blue-50 active:bg-blue-100"
-                title={t('header.installApp', 'Install App')}
+                type="button"
+                onClick={() => runInstall(t)}
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-bold bg-white text-indigo-700 shadow-sm min-h-[40px] transition-colors hover:bg-blue-50 active:bg-blue-100 shrink-0"
+                title={t('header.installApp')}
               >
-                <Smartphone size={16} />
-                <span className="hidden xs:inline">{t('header.installApp', 'Install')}</span>
+                <Smartphone size={16} className="shrink-0" />
+                <span className="hidden sm:inline">{t('header.installApp')}</span>
               </button>
             )}
 
@@ -1068,25 +1059,13 @@ Rules:
                     <button onClick={() => { setShowAISettings(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <Settings size={16} className="text-gray-500" /> {t('header.aiSettings', 'AI Settings')}
                     </button>
-                    {installPrompt && (
+                    {canInstall && (
                       <button
-                        onClick={async () => {
-                          installPrompt.prompt();
-                          const { outcome } = await installPrompt.userChoice;
-                          if (outcome === 'accepted') setInstallPrompt(null);
-                          setMobileMenuOpen(false);
-                        }}
+                        type="button"
+                        onClick={() => { runInstall(t); setMobileMenuOpen(false); }}
                         className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-indigo-700 hover:bg-indigo-50 active:bg-indigo-100 border-t border-gray-100"
                       >
-                        <Smartphone size={16} className="text-indigo-600" /> {t('header.installApp', 'Install App')}
-                      </button>
-                    )}
-                    {isIOS && !installPrompt && (
-                      <button
-                        onClick={() => { alert(t('header.iosInstallHint', 'Tap the Share button (□↑) in Safari, then "Add to Home Screen"')); setMobileMenuOpen(false); }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-indigo-700 hover:bg-indigo-50 active:bg-indigo-100 border-t border-gray-100"
-                      >
-                        <Smartphone size={16} className="text-indigo-600" /> {t('header.installApp', 'Install App')}
+                        <Smartphone size={16} className="text-indigo-600" /> {t('header.installApp')}
                       </button>
                     )}
                   </div>

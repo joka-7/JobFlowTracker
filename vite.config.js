@@ -9,12 +9,14 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'favicon.ico', 'apple-touch-icon-180x180.png'],
       manifest: {
+        id: '/',
         name: 'JobFlow Tracker',
         short_name: 'JobFlow',
-        description: 'Track your job applications',
+        description: 'Track your job applications and tasks',
         theme_color: '#3b82f6',
         background_color: '#f8fafc',
         display: 'standalone',
+        scope: '/',
         start_url: '/',
         icons: [
           { src: 'pwa-64x64.png', sizes: '64x64', type: 'image/png' },

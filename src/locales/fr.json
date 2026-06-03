@@ -44,7 +44,11 @@
     "aiSettings": "Paramètres IA",
     "shareTooltip": "Partager un lien en lecture seule",
     "viewOnly": "Lecture seule",
-    "viewOnlyDesc": "Vous consultez un instantané partagé en lecture seule."
+    "viewOnlyDesc": "Vous consultez un instantané partagé en lecture seule.",
+    "installApp": "Installer l'app",
+    "iosInstallHint": "Sur iPhone/iPad : touchez Partager (□↑) dans Safari, puis « Sur l'écran d'accueil ».",
+    "androidInstallHint": "L'installation fonctionne dans Chrome sur le site en ligne (HTTPS). Menu ⋮ → « Installer l'application ».",
+    "chromeInstallHint": "Dans Chrome : ⋮ (en haut à droite) → « Installer l'application » ou « Ajouter à l'écran d'accueil ». Utilisez le lien https:// publié (pas localhost). Sinon, actualisez la page."
   },
   "tabs": {
     "board": "Tableau",
