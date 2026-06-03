@@ -59,8 +59,8 @@ export default function ModeSelection({ onSelect }) {
             onClick={() => handleSelect('recruiter')}
             className="bg-white rounded-2xl p-6 text-left hover:shadow-2xl hover:scale-105 active:scale-95 active:shadow-md transition-all group"
           >
-            <div className="bg-indigo-100 w-14 h-14 rounded-xl flex items-center justify-center mb-4 group-hover:bg-indigo-200 transition-colors">
-              <Users size={28} className="text-indigo-700" />
+            <div className="bg-yellow-100 w-14 h-14 rounded-xl flex items-center justify-center mb-4 group-hover:bg-yellow-200 transition-colors">
+              <Users size={28} className="text-yellow-600" />
             </div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">{t('recruiter.modeSelection.recruiterTitle')}</h2>
             <p className="text-sm text-gray-500">{t('recruiter.modeSelection.recruiterDesc')}</p>
