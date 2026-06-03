@@ -50,7 +50,18 @@
     "board": "Tableau",
     "list": "Liste & Édition",
     "timeline": "Chronologie",
+    "calendar": "Calendrier",
     "stats": "Statistiques"
+  },
+  "calendar": {
+    "today": "Aujourd'hui",
+    "noEvents": "Aucun événement ce jour.",
+    "selectDay": "Cliquez sur un jour pour voir les événements",
+    "type": {
+      "interview": "Entretien",
+      "assignment": "Exercice",
+      "task": "Tâche"
+    }
   },
   "board": {
     "emptyTitle": "Bienvenue dans Job Search Tracker",

@@ -50,7 +50,18 @@
     "board": "Status Board",
     "list": "List & Edit",
     "timeline": "Timeline",
+    "calendar": "Calendar",
     "stats": "Statistics"
+  },
+  "calendar": {
+    "today": "Today",
+    "noEvents": "No events on this day.",
+    "selectDay": "Click a day to see events",
+    "type": {
+      "interview": "Interview",
+      "assignment": "Assignment",
+      "task": "Task"
+    }
   },
   "board": {
     "emptyTitle": "Welcome to Job Search Tracker",

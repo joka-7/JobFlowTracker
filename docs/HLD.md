@@ -30,10 +30,12 @@ JobFlowTracker is a single-page application (SPA) for tracking a job search, a r
 │  │    │     ├── Kanban Board (drag & drop)             │     │
 │  │    │     ├── List / Edit view                       │     │
 │  │    │     ├── Timeline view                          │     │
+│  │    │     ├── Calendar view (interviews + deadlines) │     │
 │  │    │     └── Stats view (Hiring Funnel)             │     │
 │  │    └── TasksApp  (task manager)                     │     │
 │  │          ├── Kanban Board (4 columns)               │     │
 │  │          ├── List / Step-detail view                │     │
+│  │          ├── Calendar view (task due dates)         │     │
 │  │          └── Stats view                             │     │
 │  │                                                     │     │
 │  │  Shared: ModeSwitcher, AIAssistant, APIKeySettings, │     │
@@ -85,6 +87,7 @@ JobFlowTracker is a single-page application (SPA) for tracking a job search, a r
 | `src/components/RejectionAnalysis.jsx` | Modal | Rejection AI analysis for a specific company, streaming result |
 | `src/components/ResumeReview.jsx` | Modal | Resume paste, calls `getResumeAdvice`, streaming result |
 | `src/components/TemplateLibrary.jsx` | Modal | 80+ interview questions, 6 categories, full-text search |
+| `src/components/CalendarView.jsx` | View | Monthly calendar grid; receives `events[]`, shows color-coded chips per day, day-detail side panel, RTL-aware, i18n date formatting |
 | `src/components/Tooltip.jsx` | Utility | Hover tooltip using Tailwind group/group-hover classes |
 | `src/data/interviewTemplates.js` | Data | `TEMPLATES` with 6 category keys |
 | `src/locales/en.json` | i18n | English strings (includes `tasks.*` namespace) |

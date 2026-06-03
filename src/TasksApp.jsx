@@ -12,6 +12,7 @@ import {
 } from './firebase';
 import { getStorageKey, STATUSES_TASKS } from './statuses';
 import ModeSwitcher from './components/ModeSwitcher';
+import CalendarView from './components/CalendarView';
 
 const MODE = 'tasks';
 
@@ -201,6 +202,29 @@ export default function TasksApp({ onModeChange }) {
     return () => window.removeEventListener('keydown', handler);
   }, [openNewForm]);
 
+  // Browser back/forward support
+  const navigateTo = useCallback((tab, taskId = null) => {
+    const state = { tab, selectedId: taskId };
+    window.history.pushState(state, '');
+    setActiveTab(tab);
+    if (taskId) {
+      setSelectedId(taskId);
+      setIsEditing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const onPop = (e) => {
+      const s = e.state;
+      if (!s) return;
+      setActiveTab(s.tab || 'board');
+      setSelectedId(s.selectedId || null);
+      setIsEditing(false);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
   const handleSave = async () => {
     if (!safeStr(formData.name).trim()) {
       alert(tt('form.requiredName', 'Task name is required'));
@@ -344,6 +368,15 @@ export default function TasksApp({ onModeChange }) {
     return { total, active, completed, totalSteps, doneSteps, byStatus };
   }, [tasks]);
 
+  const calendarEvents = useMemo(() =>
+    tasks.filter(t => t.dueDate).map(t => ({
+      date: t.dueDate,
+      title: t.name,
+      type: 'task',
+      parentId: t.id,
+    }))
+  , [tasks]);
+
   const renderStepStatusBadge = (status) => {
     const cfg = STEP_STATUS_CONFIG[status] || STEP_STATUS_CONFIG.todo;
     const Icon = cfg.icon;
@@ -419,7 +452,7 @@ export default function TasksApp({ onModeChange }) {
                         key={task.id}
                         draggable
                         onDragStart={() => handleDragStart(task.id)}
-                        onClick={() => { setSelectedId(task.id); setActiveTab('list'); setIsEditing(false); }}
+                        onClick={() => navigateTo('list', task.id)}
                         className="bg-white border border-gray-200 rounded-xl p-3 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all group"
                       >
                         <div className="flex items-start justify-between gap-2 mb-1">
@@ -887,6 +920,7 @@ export default function TasksApp({ onModeChange }) {
   const TABS = [
     { id: 'board', icon: Layout, label: t('tabs.board', 'Board') },
     { id: 'list', icon: List, label: t('tabs.list', 'List & Edit') },
+    { id: 'calendar', icon: Calendar, label: t('tabs.calendar', 'Calendar') },
     { id: 'stats', icon: BarChart2, label: t('tabs.stats', 'Statistics') },
   ];
 
@@ -940,7 +974,7 @@ export default function TasksApp({ onModeChange }) {
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => navigateTo(tab.id)}
               className={`flex items-center gap-1.5 px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${
                 active
                   ? 'border-emerald-600 text-emerald-700'
@@ -959,6 +993,15 @@ export default function TasksApp({ onModeChange }) {
         {activeTab === 'board' && renderBoard()}
         {activeTab === 'list' && renderList()}
         {activeTab === 'stats' && renderStats()}
+        {activeTab === 'calendar' && (
+          <div className="flex-1 overflow-auto bg-gray-50">
+            <CalendarView
+              events={calendarEvents}
+              isRTL={isRTL}
+              onEventClick={ev => { navigateTo('list', ev.parentId); }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Toast */}

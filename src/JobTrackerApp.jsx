@@ -19,6 +19,7 @@ import RejectionAnalysis from './components/RejectionAnalysis';
 import TemplateLibrary from './components/TemplateLibrary';
 import Tooltip from './components/Tooltip';
 import ModeSwitcher from './components/ModeSwitcher';
+import CalendarView from './components/CalendarView';
 import { TEMPLATES } from './data/interviewTemplates';
 
 const Linkedin = ({ size = 16, ...p }) => (
@@ -245,6 +246,29 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
     return () => window.removeEventListener('keydown', handler);
   }, [openNewForm]);
 
+  // Browser back/forward support
+  const navigateTo = useCallback((tab, companyId = null) => {
+    const state = { tab, selectedId: companyId };
+    window.history.pushState(state, '');
+    setActiveTab(tab);
+    if (companyId) {
+      setSelectedId(companyId);
+      setIsEditing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const onPop = (e) => {
+      const s = e.state;
+      if (!s) return;
+      setActiveTab(s.tab || 'board');
+      setSelectedId(s.selectedId || null);
+      setIsEditing(false);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
   const handleSignIn = async () => {
     try {
       await signInWithGoogle();
@@ -291,6 +315,26 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
     });
     return events.sort((a, b) => new Date(safeStr(b.date)) - new Date(safeStr(a.date)));
   }, [companies, i18n.language]);
+
+  const calendarEvents = useMemo(() => {
+    const evs = [];
+    companies.forEach(company => {
+      const cName = safeStr(company.name || company.company || t('alert.noName'));
+      if (Array.isArray(company.interviews)) {
+        company.interviews.forEach(iv => {
+          if (iv && iv.date)
+            evs.push({ date: iv.date, title: `${cName} – ${iv.type || ''}`, type: 'interview', parentId: company.id });
+        });
+      }
+      if (Array.isArray(company.homeworks)) {
+        company.homeworks.forEach(hw => {
+          if (hw && hw.deadline)
+            evs.push({ date: hw.deadline, title: `${cName} – ${hw.title || t('timeline.assignmentSubmission')}`, type: 'assignment', parentId: company.id });
+        });
+      }
+    });
+    return evs;
+  }, [companies]);
 
   const stats = useMemo(() => {
     const total = companies.length;
@@ -494,8 +538,9 @@ Rules:
   };
 
   const selectCompany = (company) => {
-    setSelectedId(company.id);
-    setFormData({ ...initialFormState, ...company, rejection: company.rejection || { date: '', method: '', notes: '' } });
+    const full = companies.find(c => c.id === company.id) || company;
+    setSelectedId(full.id);
+    setFormData({ ...initialFormState, ...full, rejection: full.rejection || { date: '', method: '', notes: '' } });
     setIsEditing(false);
   };
 
@@ -547,7 +592,7 @@ Rules:
                     draggable
                     onDragStart={e => handleDragStart(e, company.id)}
                     onDragEnd={handleDragEnd}
-                    onClick={() => { selectCompany(company); setActiveTab('list'); }}
+                    onClick={() => { selectCompany(company); navigateTo('list', company.id); }}
                     className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
                   >
                     <div className="font-bold text-gray-800 mb-1">{safeStr(company.name)}</div>
@@ -1032,11 +1077,12 @@ Rules:
             { key: 'board', icon: <Layout size={16} /> },
             { key: 'list', icon: <List size={16} /> },
             { key: 'timeline', icon: <Calendar size={16} /> },
+            { key: 'calendar', icon: <Calendar size={16} /> },
             { key: 'stats', icon: <BarChart2 size={16} /> },
           ].map(({ key, icon }) => (
             <button
               key={key}
-              onClick={() => setActiveTab(key)}
+              onClick={() => navigateTo(key)}
               className={`px-4 py-2 rounded-t-lg font-medium flex items-center gap-2 transition-colors ${activeTab === key ? 'bg-gray-50 text-indigo-800' : 'bg-white/10 text-blue-100 hover:bg-white/20'}`}
             >
               {icon} {t(`tabs.${key}`, key)}
@@ -1049,6 +1095,15 @@ Rules:
       {activeTab === 'board' && renderBoard()}
       {activeTab === 'timeline' && renderTimeline()}
       {activeTab === 'stats' && renderStats()}
+      {activeTab === 'calendar' && (
+        <div className="flex-1 overflow-auto bg-gray-50">
+          <CalendarView
+            events={calendarEvents}
+            isRTL={isRTL}
+            onEventClick={ev => { selectCompany({ id: ev.parentId }); navigateTo('list', ev.parentId); }}
+          />
+        </div>
+      )}
 
       {activeTab === 'list' && (
         <div className="flex flex-1 overflow-hidden">
