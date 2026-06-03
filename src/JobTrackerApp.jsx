@@ -4,7 +4,7 @@ import {
   Search, Plus, MapPin, Globe, Calendar,
   User, CheckCircle, Clock, Trash2, Edit2,
   ArrowLeft, ArrowRight, Download, Upload, Filter, Layout, List, Activity, AlertTriangle,
-  Cloud, CloudOff, Languages, BarChart2, Settings, MoreVertical
+  Cloud, CloudOff, Languages, BarChart2, Settings, MoreVertical, Smartphone
 } from 'lucide-react';
 import { signInWithGoogle, signOut, onAuthChange, loadAllItems, updateItem, deleteItem, batchSaveItems, loadUserProfile, saveUserProfile, publishShare, loadSharedData } from './firebase';
 import { initAI } from './services/aiAssistant';
@@ -163,6 +163,14 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
   const [shareMode, setShareMode] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState(null);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  useEffect(() => {
+    const handler = (e) => { e.preventDefault(); setInstallPrompt(e); };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
 
   useEffect(() => {
     const provider = localStorage.getItem('aiProvider') || 'gemini';
@@ -732,12 +740,14 @@ Rules:
           </div>
 
           {/* Application Journey card */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div className="flex items-center justify-between mb-1">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-6">
+            <div className="flex items-center justify-between mb-1 gap-2">
               <h3 className="font-bold text-gray-800">🔽 {tMode('stats.journey', 'Hiring Funnel')}</h3>
               {avgDays !== null && (
-                <span className="text-xs text-gray-500 bg-gray-50 border border-gray-100 px-2 py-1 rounded-lg">
-                  {tMode('stats.avgDays', 'Avg. days from first to last interview')}: <span className="font-bold text-gray-700">{avgDays}d</span>
+                <span className="text-xs text-gray-500 bg-gray-50 border border-gray-100 px-2 py-1 rounded-lg whitespace-nowrap">
+                  <span className="hidden sm:inline">{tMode('stats.avgDays', 'Avg. days from first to last interview')}: </span>
+                  <span className="sm:hidden">{tMode('stats.avgDaysShort', 'Avg')}: </span>
+                  <span className="font-bold text-gray-700">{avgDays}d</span>
                 </span>
               )}
             </div>
@@ -747,7 +757,8 @@ Rules:
                 {tMode('stats.noData', 'Add more to see patterns')}
               </div>
             ) : (
-              <div className="flex flex-wrap items-center gap-1">
+              <div className="overflow-x-auto -mx-1 px-1">
+              <div className="flex items-center gap-1 min-w-max">
                 {journeyCounts.map((stage, i) => {
                   const prevCount = i > 0 ? journeyCounts[i - 1].count : null;
                   const pct = prevCount && prevCount > 0
@@ -771,15 +782,16 @@ Rules:
                   );
                 })}
               </div>
+              </div>
             )}
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-6">
             <h3 className="font-bold text-gray-800 mb-5">{tMode('stats.byStatus', 'By Status')}</h3>
             <div className="space-y-3">
               {STATUSES.filter(s => (stats.byStatus[s.id] || 0) > 0).map(s => (
-                <div key={s.id} className="flex items-center gap-3">
-                  <div className="w-32 text-sm text-gray-600 flex-shrink-0 truncate">{tStatus(s.id)}</div>
+                <div key={s.id} className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-20 sm:w-32 text-sm text-gray-600 flex-shrink-0 truncate">{tStatus(s.id)}</div>
                   <div className="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all ${s.color.split(' ')[0]}`}
@@ -991,6 +1003,27 @@ Rules:
                     <button onClick={() => { setShowAISettings(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <Settings size={16} className="text-gray-500" /> {t('header.aiSettings', 'AI Settings')}
                     </button>
+                    {installPrompt && (
+                      <button
+                        onClick={async () => {
+                          installPrompt.prompt();
+                          const { outcome } = await installPrompt.userChoice;
+                          if (outcome === 'accepted') setInstallPrompt(null);
+                          setMobileMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-indigo-700 hover:bg-indigo-50 active:bg-indigo-100 border-t border-gray-100"
+                      >
+                        <Smartphone size={16} className="text-indigo-600" /> {t('header.installApp', 'Install App')}
+                      </button>
+                    )}
+                    {isIOS && !installPrompt && (
+                      <button
+                        onClick={() => { alert(t('header.iosInstallHint', 'Tap the Share button (□↑) in Safari, then "Add to Home Screen"')); setMobileMenuOpen(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-indigo-700 hover:bg-indigo-50 active:bg-indigo-100 border-t border-gray-100"
+                      >
+                        <Smartphone size={16} className="text-indigo-600" /> {t('header.installApp', 'Install App')}
+                      </button>
+                    )}
                   </div>
                 </>
               )}
