@@ -76,6 +76,11 @@ describe('buildApiMessages', () => {
     expect(out[0].content).toContain('Hi');
     expect(out[0].content).toContain('There');
   });
+
+  it('strips simulation trigger sentinel from API history', () => {
+    const out = buildApiMessages([{ role: 'user', content: '__sim_start__' }]);
+    expect(out).toEqual([{ role: 'user', content: 'begin' }]);
+  });
 });
 
 describe('PROVIDERS config', () => {

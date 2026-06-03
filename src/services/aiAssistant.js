@@ -188,13 +188,15 @@ async function streamAnthropic(apiKey, model, prompt, onChunk) {
  * Build a provider-safe chat history from UI messages.
  * Ensures user-first ordering (required by Anthropic/Gemini) and strict alternation.
  */
+const SIM_TRIGGER = '__sim_start__';
+
 export function buildApiMessages(uiMessages, { appendSimBegin = false } = {}) {
   let msgs = (Array.isArray(uiMessages) ? uiMessages : [])
     .map(({ role, content }) => ({
       role: role === 'assistant' ? 'assistant' : 'user',
       content: String(content ?? '').trim(),
     }))
-    .filter(m => m.content.length > 0);
+    .filter(m => m.content.length > 0 && m.content !== SIM_TRIGGER);
 
   if (appendSimBegin) {
     msgs = [...msgs, { role: 'user', content: 'begin' }];
@@ -214,11 +216,17 @@ export function buildApiMessages(uiMessages, { appendSimBegin = false } = {}) {
   return out.length > 0 ? out : [{ role: 'user', content: 'begin' }];
 }
 
-// Multi-turn chat streaming
+// Multi-turn chat streaming (messages must already be normalized via buildApiMessages)
 export async function streamChat(messages, systemPrompt, onChunk) {
   const { provider, apiKey, model, ollamaUrl } = config;
-  const apiMessages = buildApiMessages(messages);
-  const emit = (text) => onChunk(String(text ?? ''));
+  const apiMessages = Array.isArray(messages) && messages.length > 0
+    ? messages
+    : buildApiMessages(messages);
+  const emit = (text) => {
+    try {
+      onChunk(String(text ?? ''));
+    } catch { /* ignore UI callback errors */ }
+  };
 
   if (!provider || !PROVIDERS[provider]) {
     throw new Error(`Unknown AI provider: ${provider || '(not set)'}`);

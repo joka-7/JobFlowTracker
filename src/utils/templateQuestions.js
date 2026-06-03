@@ -18,5 +18,6 @@ export function getLocalizedCategoryLabel(t, isTasks, categoryKey, fallbackLabel
 }
 
 export function formatQuestionList(questions) {
-  return questions.map((q, i) => `${i + 1}. ${q}`).join('\n');
+  const list = Array.isArray(questions) ? questions : [];
+  return list.map((q, i) => `${i + 1}. ${String(q ?? '')}`).join('\n');
 }

@@ -5,8 +5,9 @@ import ChatModal from './ChatModal';
 import ResumeReview from './ResumeReview';
 
 function MarkdownText({ text }) {
-  if (!text) return null;
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  const safe = String(text ?? '');
+  if (!safe) return null;
+  const parts = safe.split(/(\*\*[^*]+\*\*)/g);
   return (
     <span>
       {parts.map((part, i) =>
@@ -19,10 +20,11 @@ function MarkdownText({ text }) {
 }
 
 function StreamingText({ text, loading }) {
-  if (!text && !loading) return null;
+  const safe = String(text ?? '');
+  if (!safe && !loading) return null;
   return (
     <div className="text-sm text-gray-700 leading-relaxed">
-      {text.split('\n').map((line, i) => (
+      {safe.split('\n').map((line, i) => (
         <p key={i} className="mb-1"><MarkdownText text={line} /></p>
       ))}
       {loading && <span className="inline-block w-1.5 h-4 bg-indigo-400 animate-pulse rounded ml-0.5" />}
@@ -365,8 +367,10 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
 
       {chatOpen && (
         <ChatModal
+          key={`ai-chat-${company?.id || 'general'}`}
           company={company}
           language={language}
+          sessionKey={`ai-chat-${company?.id || 'general'}`}
           t={t}
           onClose={() => setChatOpen(false)}
           onOpenSettings={() => { setChatOpen(false); onOpenSettings(); }}
