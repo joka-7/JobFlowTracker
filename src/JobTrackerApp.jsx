@@ -801,9 +801,9 @@ Rules:
             <BarChart2 className="text-indigo-600" /> {tMode('stats.title', 'Statistics')}
           </h2>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             {statCards.map(card => (
-              <div key={card.label} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 text-center">
+              <div key={card.label} className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-5 text-center">
                 {card.label === tMode('stats.responseRate', 'Response Rate') ? (
                   <Tooltip text={t('tooltips.responseRate')} position="top">
                     <div className={`text-3xl font-black mb-1 ${card.color}`}>{card.value}</div>
@@ -967,6 +967,26 @@ Rules:
               <ModeSwitcher currentMode={mode} onModeChange={onModeChange} />
             )}
 
+            {/* Install button — visible on mobile when installable */}
+            {(installPrompt || isIOS) && (
+              <button
+                onClick={async () => {
+                  if (installPrompt) {
+                    installPrompt.prompt();
+                    const { outcome } = await installPrompt.userChoice;
+                    if (outcome === 'accepted') setInstallPrompt(null);
+                  } else {
+                    alert(t('header.iosInstallHint', 'Tap the Share button (□↑) in Safari, then "Add to Home Screen"'));
+                  }
+                }}
+                className="md:hidden flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold bg-white text-indigo-700 shadow-sm min-h-[40px] transition-colors hover:bg-blue-50 active:bg-blue-100"
+                title={t('header.installApp', 'Install App')}
+              >
+                <Smartphone size={16} />
+                <span className="hidden xs:inline">{t('header.installApp', 'Install')}</span>
+              </button>
+            )}
+
             {/* Desktop controls */}
             <div className="hidden md:flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-white/10 border border-white/20">
               <Languages size={16} className="text-blue-100 flex-shrink-0" />
@@ -1072,18 +1092,18 @@ Rules:
           </div>
         </div>
 
-        <div className="flex px-6 gap-2 mt-2">
+        <div className="flex px-2 sm:px-6 gap-0.5 sm:gap-2 mt-2 overflow-x-auto scrollbar-none">
           {[
-            { key: 'board', icon: <Layout size={16} /> },
-            { key: 'list', icon: <List size={16} /> },
-            { key: 'timeline', icon: <Calendar size={16} /> },
-            { key: 'calendar', icon: <Calendar size={16} /> },
-            { key: 'stats', icon: <BarChart2 size={16} /> },
+            { key: 'board', icon: <Layout size={15} /> },
+            { key: 'list', icon: <List size={15} /> },
+            { key: 'timeline', icon: <Calendar size={15} /> },
+            { key: 'calendar', icon: <Calendar size={15} /> },
+            { key: 'stats', icon: <BarChart2 size={15} /> },
           ].map(({ key, icon }) => (
             <button
               key={key}
               onClick={() => navigateTo(key)}
-              className={`px-4 py-2 rounded-t-lg font-medium flex items-center gap-2 transition-colors ${activeTab === key ? 'bg-gray-50 text-indigo-800' : 'bg-white/10 text-blue-100 hover:bg-white/20'}`}
+              className={`px-3 sm:px-4 py-2 rounded-t-lg font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap flex-shrink-0 text-sm ${activeTab === key ? 'bg-gray-50 text-indigo-800' : 'bg-white/10 text-blue-100 hover:bg-white/20'}`}
             >
               {icon} {t(`tabs.${key}`, key)}
             </button>
