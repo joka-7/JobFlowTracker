@@ -4,7 +4,7 @@ import {
   Plus, Search, Download, Upload, Layout, List, BarChart2,
   Trash2, Edit2, ArrowLeft, ArrowRight, CheckCircle2, CheckCircle, Circle,
   Clock, AlertCircle, ChevronDown, Calendar, Cloud, CloudOff,
-  ClipboardList, X, GripVertical, Languages, MoreVertical, Settings,
+  ClipboardList, X, GripVertical, Languages, MoreVertical, Settings, Smartphone,
 } from 'lucide-react';
 import {
   signInWithGoogle, signOut, onAuthChange, loadAllItems,
@@ -13,6 +13,8 @@ import {
 import { getStorageKey, STATUSES_TASKS } from './statuses';
 import ModeSwitcher from './components/ModeSwitcher';
 import CalendarView from './components/CalendarView';
+import TemplateLibrary from './components/TemplateLibrary';
+import APIKeySettings from './components/APIKeySettings';
 
 const MODE = 'tasks';
 
@@ -114,6 +116,10 @@ export default function TasksApp({ onModeChange }) {
   const [newStepTitle, setNewStepTitle] = useState('');
   const [visibleCount, setVisibleCount] = useState(25);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [showAISettings, setShowAISettings] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState(null);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
   const dragTaskId = useRef(null);
   const fileInputRef = useRef(null);
@@ -133,6 +139,12 @@ export default function TasksApp({ onModeChange }) {
       }
     } catch { /* ignore */ }
   }, [tasks]);
+
+  useEffect(() => {
+    const handler = (e) => { e.preventDefault(); setInstallPrompt(e); };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
 
   useEffect(() => {
     const unsub = onAuthChange(async (firebaseUser) => {
@@ -998,6 +1010,20 @@ export default function TasksApp({ onModeChange }) {
                 <Upload size={18} />
                 <input ref={fileInputRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
               </label>
+              <button
+                onClick={() => setShowTemplates(true)}
+                title={t('templates.title', 'Templates')}
+                className="p-2 hover:bg-white/20 rounded text-white transition-colors"
+              >
+                📚
+              </button>
+              <button
+                onClick={() => setShowAISettings(true)}
+                title={t('header.aiSettings', 'AI Settings')}
+                className="p-2 hover:bg-white/20 rounded text-white transition-colors"
+              >
+                <Settings size={18} />
+              </button>
             </div>
 
             {/* Mobile overflow menu */}
@@ -1033,6 +1059,33 @@ export default function TasksApp({ onModeChange }) {
                       <Upload size={16} className="text-blue-600" /> {t('header.uploadTooltip')}
                       <input type="file" accept=".json" onChange={e => { handleImport(e); setMobileMenuOpen(false); }} className="hidden" />
                     </label>
+                    <button onClick={() => { setShowTemplates(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                      <span>📚</span> {t('templates.title', 'Templates')}
+                    </button>
+                    <button onClick={() => { setShowAISettings(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                      <Settings size={16} className="text-gray-500" /> {t('header.aiSettings', 'AI Settings')}
+                    </button>
+                    {installPrompt && (
+                      <button
+                        onClick={async () => {
+                          installPrompt.prompt();
+                          const { outcome } = await installPrompt.userChoice;
+                          if (outcome === 'accepted') setInstallPrompt(null);
+                          setMobileMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-indigo-700 hover:bg-indigo-50 active:bg-indigo-100 border-t border-gray-100"
+                      >
+                        <Smartphone size={16} className="text-indigo-600" /> {t('header.installApp', 'Install App')}
+                      </button>
+                    )}
+                    {isIOS && !installPrompt && (
+                      <button
+                        onClick={() => { alert(t('header.iosInstallHint', 'Tap the Share button (□↑) in Safari, then "Add to Home Screen"')); setMobileMenuOpen(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-indigo-700 hover:bg-indigo-50 active:bg-indigo-100 border-t border-gray-100"
+                      >
+                        <Smartphone size={16} className="text-indigo-600" /> {t('header.installApp', 'Install App')}
+                      </button>
+                    )}
                   </div>
                 </>
               )}
@@ -1075,6 +1128,17 @@ export default function TasksApp({ onModeChange }) {
         <div className="fixed bottom-5 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-5 py-2.5 rounded-xl shadow-xl text-sm font-medium z-50 animate-fade-in">
           {toastMessage}
         </div>
+      )}
+
+      {showAISettings && (
+        <APIKeySettings t={t} onClose={() => setShowAISettings(false)} />
+      )}
+
+      {showTemplates && (
+        <TemplateLibrary
+          t={t}
+          onClose={() => setShowTemplates(false)}
+        />
       )}
     </div>
   );
