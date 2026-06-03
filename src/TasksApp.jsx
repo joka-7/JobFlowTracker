@@ -24,6 +24,7 @@ import APIKeySettings from './components/APIKeySettings';
 import { usePwaInstall } from './usePwaInstall';
 import AppBrandMark from './components/AppBrandMark';
 import WelcomeModal from './components/WelcomeModal';
+import { STORAGE_KEYS } from './storageKeys.js';
 
 const MODE = 'tasks';
 
@@ -131,7 +132,7 @@ export default function TasksApp({ onModeChange }) {
   const [chatOpen, setChatOpen] = useState(false);
   const [simulationData, setSimulationData] = useState(null);
   const [showTasksWelcome, setShowTasksWelcome] = useState(
-    () => !localStorage.getItem('hasCompletedOnboarding_tasks'),
+    () => !localStorage.getItem(STORAGE_KEYS.tasksWelcome),
   );
   const { canInstall, runInstall } = usePwaInstall();
 
@@ -1099,7 +1100,7 @@ Rules:
 
             <div className="flex items-center gap-2 shrink-0">
             <button onClick={openNewForm} className="flex items-center gap-2 bg-white text-emerald-700 hover:bg-green-50 active:bg-green-100 px-3 sm:px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-sm min-h-[44px] touch-manipulation">
-              <Plus size={18} /> <span className="hidden sm:inline">{tt('header.addTask', 'Add Task')}</span>
+              <Plus size={18} className="shrink-0" /> <span className="shrink-0 max-w-[5rem] truncate sm:max-w-none">{tt('header.addTask', 'Add Task')}</span>
             </button>
 
             {user ? (
@@ -1109,7 +1110,7 @@ Rules:
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-colors border min-h-[44px] touch-manipulation ${syncing ? 'bg-yellow-500/20 border-yellow-400/30 text-yellow-100' : 'bg-green-500/20 border-green-400/30 text-green-100 hover:bg-red-500/20 hover:border-red-400/30 hover:text-red-100'}`}
               >
                 <Cloud size={16} className={syncing ? 'animate-pulse' : ''} />
-                <span className="hidden sm:inline">{syncing ? t('header.driveSyncing') : user.displayName?.split(' ')[0] || t('header.driveOn')}</span>
+                <span className="shrink-0 max-w-[5rem] truncate sm:max-w-none">{syncing ? t('header.driveSyncing') : user.displayName?.split(' ')[0] || t('header.driveOn')}</span>
               </button>
             ) : (
               <button
@@ -1117,13 +1118,13 @@ Rules:
                 title={t('header.connectDriveTooltip')}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-green-100 transition-colors min-h-[44px] touch-manipulation"
               >
-                <CloudOff size={16} /> <span className="hidden sm:inline">{t('header.connectDrive')}</span>
+                <CloudOff size={16} className="shrink-0" /> <span className="shrink-0 max-w-[5rem] truncate sm:max-w-none">{t('header.connectDrive')}</span>
               </button>
             )}
 
             {onModeChange && (
               <div className="hidden md:block shrink-0">
-                <ModeSwitcher currentMode={MODE} onModeChange={onModeChange} />
+                <ModeSwitcher currentMode={MODE} onModeChange={onModeChange} labelSize="compact" />
               </div>
             )}
 
@@ -1135,7 +1136,7 @@ Rules:
                 title={t('header.installApp')}
               >
                 <Smartphone size={16} className="shrink-0" />
-                <span className="hidden sm:inline">{t('header.installApp')}</span>
+                <span className="shrink-0 max-w-[5rem] truncate sm:max-w-none">{t('header.installApp')}</span>
               </button>
             )}
 
@@ -1162,6 +1163,9 @@ Rules:
                 <input ref={fileInputRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
               </label>
               <button
+                type="button"
+                data-testid="open-templates"
+                aria-label={t('templates.titleTasks', 'Task Planning Prompts')}
                 onClick={() => setShowTemplates(true)}
                 title={t('templates.titleTasks', 'Task Planning Prompts')}
                 className="p-2 hover:bg-white/20 rounded text-white transition-colors"
@@ -1218,7 +1222,7 @@ Rules:
                       <Upload size={16} className="text-blue-600" /> {t('header.uploadTooltip')}
                       <input type="file" accept=".json" onChange={e => { handleImport(e); setMobileMenuOpen(false); }} className="hidden" />
                     </label>
-                    <button onClick={() => { setShowTemplates(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                    <button type="button" data-testid="open-templates" onClick={() => { setShowTemplates(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <span>📚</span> {t('templates.titleTasks', 'Task Planning Prompts')}
                     </button>
                     <button onClick={() => { setShowAISettings(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
@@ -1245,7 +1249,7 @@ Rules:
 
           {onModeChange && (
             <div className="md:hidden w-full overflow-x-auto scrollbar-none -mx-1 px-1">
-              <ModeSwitcher currentMode={MODE} onModeChange={onModeChange} />
+              <ModeSwitcher currentMode={MODE} onModeChange={onModeChange} labelSize="full" />
             </div>
           )}
         </div>
@@ -1260,7 +1264,7 @@ Rules:
               className={`px-2.5 sm:px-4 py-2.5 rounded-t-lg font-medium flex items-center gap-1 sm:gap-2 transition-colors whitespace-nowrap flex-shrink-0 text-xs sm:text-sm min-h-[44px] touch-manipulation ${activeTab === id ? 'bg-gray-50 text-emerald-800' : 'bg-white/10 text-green-100 hover:bg-white/20 active:bg-white/25'}`}
             >
               <Icon size={15} className="shrink-0" />
-              <span className="hidden min-[380px]:inline">{label}</span>
+              <span className="shrink-0">{label}</span>
             </button>
           ))}
         </div>
@@ -1298,7 +1302,7 @@ Rules:
           skipLabel={tt('welcome.skip', 'Skip')}
           startLabel={tt('welcome.getStarted', 'Get started')}
           onClose={() => setShowTasksWelcome(false)}
-          onComplete={() => localStorage.setItem('hasCompletedOnboarding_tasks', '1')}
+          onComplete={() => localStorage.setItem(STORAGE_KEYS.tasksWelcome, '1')}
         />
       )}
 

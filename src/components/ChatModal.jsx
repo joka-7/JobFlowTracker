@@ -279,7 +279,7 @@ function ChatModalInner({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" data-testid="chat-modal">
       <div className="bg-white w-full sm:max-w-lg sm:rounded-2xl shadow-2xl flex flex-col h-[90vh] sm:h-[600px] overflow-hidden">
 
         <div className={`bg-gradient-to-r px-4 py-3 flex items-center justify-between flex-shrink-0 ${
@@ -351,6 +351,7 @@ function ChatModalInner({
           ) : (
             <div className="flex gap-2 items-end">
               <textarea
+                data-testid="chat-input"
                 ref={inputRef}
                 value={input}
                 onChange={e => setInput(e.target.value)}

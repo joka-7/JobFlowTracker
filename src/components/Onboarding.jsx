@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Layout, List, Activity, BarChart2, Lightbulb, ChevronRight, ChevronLeft, Upload, Plus } from 'lucide-react';
 import AppBrandMark from './AppBrandMark';
+import { STORAGE_KEYS } from '../storageKeys.js';
 
 const STEPS = [
   {
@@ -182,7 +183,7 @@ export default function Onboarding({ t, i18n, isRTL, onClose, openNewForm, trigg
   const Next = isRTL ? ChevronLeft : ChevronRight;
 
   const handleClose = () => {
-    localStorage.setItem('hasCompletedOnboarding', '1');
+    localStorage.setItem(STORAGE_KEYS.jobSeekerOnboarding, '1');
     onClose();
   };
 
