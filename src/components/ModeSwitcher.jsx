@@ -3,9 +3,9 @@ import { Briefcase, Users, ClipboardList } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const MODES = [
-  { id: 'jobseeker', Icon: Briefcase, labelKey: 'recruiter.modeSelection.jobSeekerTitle', shortKey: 'recruiter.modeSelection.jobSeekerShort', short: 'Jobs' },
-  { id: 'recruiter', Icon: Users, labelKey: 'recruiter.modeSelection.recruiterTitle', shortKey: 'recruiter.modeSelection.recruiterShort', short: 'Recruit' },
-  { id: 'tasks', Icon: ClipboardList, labelKey: 'tasks.modeSelection.title', shortKey: 'tasks.modeSelection.short', short: 'Tasks' },
+  { id: 'jobseeker', Icon: Briefcase, labelKey: 'recruiter.modeSelection.jobSeekerTitle', short: 'Jobs' },
+  { id: 'recruiter', Icon: Users, labelKey: 'recruiter.modeSelection.recruiterTitle', short: 'Recruit' },
+  { id: 'tasks', Icon: ClipboardList, labelKey: 'tasks.modeSelection.title', short: 'Tasks' },
 ];
 
 export default function ModeSwitcher({ currentMode, onModeChange }) {
@@ -19,31 +19,30 @@ export default function ModeSwitcher({ currentMode, onModeChange }) {
 
   return (
     <div
-      className="flex items-center gap-0.5 bg-black/20 rounded-lg p-0.5 w-max max-w-full shrink-0"
+      className="flex items-center gap-0.5 bg-black/20 rounded-lg p-0.5 w-max max-w-full min-w-0"
       role="tablist"
       aria-label="App mode"
     >
-      {MODES.map(({ id, Icon, labelKey, shortKey, short }) => {
+      {MODES.map(({ id, Icon, labelKey, short }) => {
         const active = id === currentMode;
-        const fullLabel = t(labelKey, short);
-        const compactLabel = t(shortKey, short);
+        const label = t(labelKey, short);
         return (
           <button
             key={id}
             type="button"
             role="tab"
             aria-selected={active}
+            aria-label={label}
             onClick={() => handleSwitch(id)}
-            title={fullLabel}
-            className={`flex items-center justify-center gap-1 px-2.5 sm:px-3 py-2 rounded-md text-xs font-bold transition-all min-h-[44px] touch-manipulation ${
+            title={label}
+            className={`flex shrink-0 items-center justify-center gap-1 px-2 sm:px-3 py-2 rounded-md text-xs font-bold transition-all min-h-[44px] touch-manipulation ${
               active
                 ? 'bg-white text-gray-800 shadow-sm'
                 : 'text-white/90 hover:text-white hover:bg-white/15 active:bg-white/25'
             }`}
           >
             <Icon size={14} className="shrink-0" aria-hidden />
-            <span className="sm:hidden whitespace-nowrap">{compactLabel}</span>
-            <span className="hidden sm:inline whitespace-nowrap">{fullLabel}</span>
+            <span className="shrink-0 whitespace-nowrap">{label}</span>
           </button>
         );
       })}
