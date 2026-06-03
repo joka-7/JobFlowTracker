@@ -112,17 +112,3 @@ export async function saveUserData(uid, companies) {
   return batchSaveCompanies(uid, companies);
 }
 
-export async function publishShare(uid, companies) {
-  const ref = doc(db, 'shares', uid);
-  await setDoc(ref, {
-    companies,
-    sharedAt: new Date().toISOString(),
-  });
-}
-
-export async function loadSharedData(uid) {
-  const ref = doc(db, 'shares', uid);
-  const snap = await getDoc(ref);
-  if (snap.exists()) return snap.data();
-  return null;
-}

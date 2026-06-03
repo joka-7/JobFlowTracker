@@ -6,7 +6,7 @@ import {
   ArrowLeft, ArrowRight, Download, Upload, Filter, Layout, List, Activity, AlertTriangle,
   Cloud, CloudOff, Languages, BarChart2, Settings, MoreVertical
 } from 'lucide-react';
-import { signInWithGoogle, signOut, onAuthChange, loadAllItems, updateItem, deleteItem, batchSaveItems, loadUserProfile, saveUserProfile, publishShare, loadSharedData } from './firebase';
+import { signInWithGoogle, signOut, onAuthChange, loadAllItems, updateItem, deleteItem, batchSaveItems, loadUserProfile, saveUserProfile } from './firebase';
 import { initAI } from './services/aiAssistant';
 import {
   getStatuses, getTerminalStatuses, getRejectedStatuses, getFunnelOrder,
@@ -37,6 +37,17 @@ const safeStr = (val) => {
     try { return JSON.stringify(val); } catch { return ''; }
   }
   return String(val);
+};
+
+const safeUrl = (val) => {
+  try {
+    const str = safeStr(val).trim();
+    if (!str) return null;
+    const withScheme = /^https?:\/\//i.test(str) ? str : `https://${str}`;
+    const parsed = new URL(withScheme);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    return parsed.href;
+  } catch { return null; }
 };
 
 const PRIORITIES = [
@@ -160,8 +171,6 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
   const [showTemplates, setShowTemplates] = useState(false);
   const [simulationData, setSimulationData] = useState(null); // { systemPrompt, title }
   const [rejectionCompany, setRejectionCompany] = useState(null);
-  const [shareMode, setShareMode] = useState(false);
-  const [shareCopied, setShareCopied] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -174,14 +183,6 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
       setShowOnboarding(true);
     }
 
-    const params = new URLSearchParams(window.location.search);
-    const shareUid = params.get('share');
-    if (shareUid) {
-      setShareMode(true);
-      loadSharedData(shareUid).then(data => {
-        if (data?.companies?.length) setCompanies(data.companies);
-      }).catch(console.error);
-    }
   }, [isRecruiter, autoOnboarding]);
 
   const initialFormState = makeInitialFormState(isRecruiter);
@@ -429,14 +430,34 @@ Rules:
             const potentialArray = Object.values(importedRaw).find(val => Array.isArray(val));
             importedArray = potentialArray ? potentialArray : [importedRaw];
           }
-          if (importedArray.length > 0) {
+          if (importedArray.length > 0 && importedArray.length <= 10000) {
             const sanitizedData = importedArray.map((c, idx) => ({
-              ...c,
+              id: c.id ? String(c.id).slice(0, 64) : Date.now().toString() + idx,
               name: safeStr(c.name || c.company || tMode('alert.unnamedCompany')),
               role: safeStr(c.role || c.position || ''),
-              interviews: Array.isArray(c.interviews) ? c.interviews.map(inv => ({ ...inv, type: safeStr(inv.type || inv.round || '') })) : [],
-              rejection: c.rejection || { date: '', method: '', notes: '' },
-              id: c.id ? String(c.id) : Date.now().toString() + idx,
+              status: safeStr(c.status || ''),
+              location: safeStr(c.location || ''),
+              website: safeStr(c.website || ''),
+              linkedinCompany: safeStr(c.linkedinCompany || ''),
+              linkedinCandidate: safeStr(c.linkedinCandidate || ''),
+              description: safeStr(c.description || ''),
+              products: safeStr(c.products || ''),
+              currentRole: safeStr(c.currentRole || ''),
+              expectedSalary: safeStr(c.expectedSalary || ''),
+              source: safeStr(c.source || ''),
+              generalNotes: safeStr(c.generalNotes || ''),
+              priority: safeStr(c.priority || 'medium'),
+              interviews: Array.isArray(c.interviews) ? c.interviews.slice(0, 100).map(inv => ({
+                type: safeStr(inv.type || inv.round || ''),
+                date: safeStr(inv.date || ''),
+                interviewer: safeStr(inv.interviewer || ''),
+                summary: safeStr(inv.summary || ''),
+              })) : [],
+              rejection: c.rejection && typeof c.rejection === 'object' ? {
+                date: safeStr(c.rejection.date || ''),
+                method: safeStr(c.rejection.method || ''),
+                notes: safeStr(c.rejection.notes || ''),
+              } : { date: '', method: '', notes: '' },
             }));
             setCompanies(sanitizedData);
             showToast(tMode('toast.imported'));
@@ -851,11 +872,9 @@ Rules:
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            {!shareMode && (
-              <button onClick={openNewForm} className="flex items-center gap-2 bg-white text-indigo-700 hover:bg-blue-50 active:bg-blue-100 px-3 sm:px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-sm min-h-[40px]">
-                <Plus size={18} /> <span className="hidden sm:inline">{tMode('header.addCompany')}</span>
-              </button>
-            )}
+            <button onClick={openNewForm} className="flex items-center gap-2 bg-white text-indigo-700 hover:bg-blue-50 active:bg-blue-100 px-3 sm:px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-sm min-h-[40px]">
+              <Plus size={18} /> <span className="hidden sm:inline">{tMode('header.addCompany')}</span>
+            </button>
 
             {user ? (
               <button
@@ -909,25 +928,6 @@ Rules:
               >
                 📚
               </button>
-              {user && !shareMode && (
-                <button
-                  onClick={async () => {
-                    const url = `${window.location.origin}${window.location.pathname}?share=${user.uid}`;
-                    publishShare(user.uid, companies).catch(console.error);
-                    try {
-                      await navigator.clipboard.writeText(url);
-                    } catch {
-                      window.prompt('Copy this share link:', url);
-                    }
-                    setShareCopied(true);
-                    setTimeout(() => setShareCopied(false), 3000);
-                  }}
-                  title={t('header.shareTooltip', 'Share read-only link')}
-                  className="p-2 hover:bg-white/20 rounded text-white transition-colors"
-                >
-                  {shareCopied ? '✓' : '🔗'}
-                </button>
-              )}
               <button
                 onClick={() => setShowAISettings(true)}
                 title={t('header.aiSettings', 'AI Settings')}
@@ -973,21 +973,6 @@ Rules:
                     <button onClick={() => { setShowTemplates(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <span>📚</span> {t('templates.title', 'Interview Templates')}
                     </button>
-                    {user && !shareMode && (
-                      <button
-                        onClick={async () => {
-                          const url = `${window.location.origin}${window.location.pathname}?share=${user.uid}`;
-                          publishShare(user.uid, companies).catch(console.error);
-                          try { await navigator.clipboard.writeText(url); } catch { window.prompt('Copy this share link:', url); }
-                          setShareCopied(true);
-                          setTimeout(() => setShareCopied(false), 3000);
-                          setMobileMenuOpen(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100"
-                      >
-                        <span>{shareCopied ? '✓' : '🔗'}</span> {t('header.shareTooltip', 'Share read-only link')}
-                      </button>
-                    )}
                     <button onClick={() => { setShowAISettings(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <Settings size={16} className="text-gray-500" /> {t('header.aiSettings', 'AI Settings')}
                     </button>
@@ -1016,13 +1001,6 @@ Rules:
         </div>
       </header>
 
-      {shareMode && (
-        <div className="bg-amber-50 border-b border-amber-200 px-6 py-2 flex items-center gap-2 text-amber-800 text-sm">
-          <span>👁️</span>
-          <span className="font-medium">{t('header.viewOnly', 'View only')} —</span>
-          <span>{t('header.viewOnlyDesc', 'You are viewing a shared read-only snapshot.')}</span>
-        </div>
-      )}
 
       {activeTab === 'board' && renderBoard()}
       {activeTab === 'timeline' && renderTimeline()}
@@ -1325,18 +1303,18 @@ Rules:
                           </div>
                         </div>
                         <div className="mt-6 flex flex-wrap gap-4">
-                          {!isRecruiter && company.website && typeof company.website === 'string' && (
-                            <a href={company.website.startsWith('http') ? company.website : `https://${company.website}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
+                          {!isRecruiter && safeUrl(company.website) && (
+                            <a href={safeUrl(company.website)} target="_blank" rel="noreferrer noopener" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
                               <Globe size={14} /> {tMode('detail.companyWebsite')}
                             </a>
                           )}
-                          {!isRecruiter && company.linkedinCompany && typeof company.linkedinCompany === 'string' && (
-                            <a href={company.linkedinCompany.startsWith('http') ? company.linkedinCompany : `https://${company.linkedinCompany}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
+                          {!isRecruiter && safeUrl(company.linkedinCompany) && (
+                            <a href={safeUrl(company.linkedinCompany)} target="_blank" rel="noreferrer noopener" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
                               <Linkedin size={14} /> {tMode('detail.companyLinkedin')}
                             </a>
                           )}
-                          {isRecruiter && company.linkedinCandidate && typeof company.linkedinCandidate === 'string' && (
-                            <a href={company.linkedinCandidate.startsWith('http') ? company.linkedinCandidate : `https://${company.linkedinCandidate}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
+                          {isRecruiter && safeUrl(company.linkedinCandidate) && (
+                            <a href={safeUrl(company.linkedinCandidate)} target="_blank" rel="noreferrer noopener" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
                               <Linkedin size={14} /> {tMode('detail.candidateLinkedin')}
                             </a>
                           )}
