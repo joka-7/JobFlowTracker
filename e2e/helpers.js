@@ -1,3 +1,4 @@
+import { expect } from '@playwright/test';
 import { applyModeInit } from './modeInit.js';
 
 /** Clear app state before each test so mode selection appears. */
@@ -88,14 +89,20 @@ export async function mockGeminiChatStream(page, replyText = 'Mock AI reply for 
   const chunk = JSON.stringify({
     candidates: [{ content: { parts: [{ text: replyText }] } }],
   });
-  const sseBody = `data: ${chunk}\n\n`;
-  await page.route('**/generativelanguage.googleapis.com/**', async (route) => {
+  const sseBody = `data: ${chunk}\n\ndata: ${chunk}\n\n`;
+  const handler = async (route) => {
     await route.fulfill({
       status: 200,
-      headers: { 'Content-Type': 'text/event-stream' },
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+      },
       body: sseBody,
     });
-  });
+  };
+  await page.route('**/generativelanguage.googleapis.com/**', handler);
+  await page.route('**/v1beta/models/**', handler);
 }
 
 /** Dismiss onboarding, welcome, or other full-screen overlays that block header clicks. */
@@ -131,16 +138,10 @@ export async function dismissBlockingOverlays(page) {
 
 export async function openTemplateLibrary(page) {
   await dismissBlockingOverlays(page);
-
-  const byTitle = page.getByTitle(/Interview Template|Task Planning|Candidate Interview/i);
-  if (await byTitle.first().isVisible().catch(() => false)) {
-    await byTitle.first().click();
-  } else {
-    await page.locator('header .md\\:hidden.relative > button').first().click();
-    await page.getByRole('button', { name: /Interview Template|Task Planning|Candidate Interview/i }).click();
-  }
-
-  await page.getByRole('heading', { name: /Template Library|Task Planning|Interview Guide/i }).waitFor();
+  const openBtn = page.getByTestId('open-templates');
+  await openBtn.first().waitFor({ state: 'visible', timeout: 15_000 });
+  await openBtn.first().click();
+  await templateLibraryPanel(page).waitFor({ state: 'visible', timeout: 15_000 });
 }
 
 export function templateLibraryPanel(page) {
@@ -149,9 +150,14 @@ export function templateLibraryPanel(page) {
   });
 }
 
-export async function startMockInterview(page, buttonPattern = /Mock interview/i) {
+export async function startMockInterview(page) {
   await openTemplateLibrary(page);
-  await templateLibraryPanel(page).getByRole('button', { name: buttonPattern }).first().click();
+  await templateLibraryPanel(page).getByTestId('template-start-simulation').first().click();
+}
+
+/** Wait until mock interview chat finishes streaming (textarea enabled). */
+export async function waitForChatReady(chat) {
+  await expect(chat.getByRole('textbox')).toBeEnabled({ timeout: 30_000 });
 }
 
 export function chatModalPanel(page, titlePattern = /Mock Interview|AI Coaching|AI Chat/) {

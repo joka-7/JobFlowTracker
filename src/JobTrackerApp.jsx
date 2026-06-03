@@ -1009,6 +1009,9 @@ Rules:
                 <input id="main-file-upload" type="file" accept=".json" onChange={handleImport} className="hidden" />
               </label>
               <button
+                type="button"
+                data-testid="open-templates"
+                aria-label={t('templates.title', 'Interview Templates')}
                 onClick={() => setShowTemplates(true)}
                 title={t('templates.title', 'Interview Templates')}
                 className="p-2 hover:bg-white/20 rounded text-white transition-colors"
@@ -1066,7 +1069,7 @@ Rules:
                       <Upload size={16} className="text-blue-600" /> {t('header.uploadTooltip')}
                       <input type="file" accept=".json" onChange={e => { handleImport(e); setMobileMenuOpen(false); }} className="hidden" />
                     </label>
-                    <button onClick={() => { setShowTemplates(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                    <button type="button" data-testid="open-templates" onClick={() => { setShowTemplates(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <span>📚</span> {t('templates.title', 'Interview Templates')}
                     </button>
                     <button onClick={() => { setShowAISettings(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">

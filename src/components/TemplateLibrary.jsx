@@ -149,6 +149,8 @@ export default function TemplateLibrary({ t: tProp, onClose, onStartSimulation, 
                     </button>
                     {isActive && onStartSimulation && (
                       <button
+                        type="button"
+                        data-testid="template-start-simulation"
                         onClick={() => onStartSimulation(key)}
                         className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all text-white flex items-center gap-1.5 ${
                           isTasks
@@ -206,6 +208,8 @@ export default function TemplateLibrary({ t: tProp, onClose, onStartSimulation, 
                   </p>
                   {onStartSimulation && (
                     <button
+                      type="button"
+                      data-testid="template-start-simulation"
                       onClick={() => onStartSimulation(activeCategory)}
                       className={`flex items-center gap-1.5 px-3 py-1.5 text-white text-xs font-bold rounded-lg transition-colors ${
                         isTasks

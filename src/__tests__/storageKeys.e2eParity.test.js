@@ -30,5 +30,6 @@ describe('E2E storage key parity', () => {
     expect(helpers).toContain("applyModeInit(page, 'recruiter')");
     expect(helpers).toContain('dismissBlockingOverlays');
     expect(helpers).toContain('startMockInterview');
+    expect(helpers).toContain("getByTestId('open-templates')");
   });
 });

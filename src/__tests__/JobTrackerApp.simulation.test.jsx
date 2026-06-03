@@ -52,8 +52,8 @@ describe('JobTrackerApp mock interview', () => {
     const user = userEvent.setup();
     render(<JobTrackerApp mode="jobseeker" onModeChange={vi.fn()} autoOnboarding={false} />);
 
-    await user.click(screen.getByTitle(/Interview Template/i));
-    await user.click(screen.getAllByRole('button', { name: /Mock interview/i })[0]);
+    await user.click(screen.getByTestId('open-templates'));
+    await user.click(screen.getAllByTestId('template-start-simulation')[0]);
 
     await waitFor(() => {
       expect(screen.getByText('Mock Interview', { exact: true })).toBeInTheDocument();
@@ -76,8 +76,8 @@ describe('JobTrackerApp mock interview', () => {
 
     render(<JobTrackerApp mode="jobseeker" onModeChange={vi.fn()} autoOnboarding={false} />);
 
-    await user.click(screen.getByTitle(/Interview Template/i));
-    await user.click(screen.getAllByRole('button', { name: /Mock interview/i })[0]);
+    await user.click(screen.getByTestId('open-templates'));
+    await user.click(screen.getAllByTestId('template-start-simulation')[0]);
 
     expect(screen.getByText('Mock Interview', { exact: true })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Set API key to enable AI/i }));

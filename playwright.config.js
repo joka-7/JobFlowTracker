@@ -13,13 +13,15 @@ export default defineConfig({
   use: {
     baseURL: 'http://127.0.0.1:5199',
     trace: 'on-first-retry',
-    actionTimeout: 20_000,
+    actionTimeout: process.env.CI ? 30_000 : 20_000,
     ...devices['Desktop Chrome'],
   },
   webServer: {
-    command: 'npm run dev -- --host 127.0.0.1 --port 5199 --strictPort',
+    command: process.env.CI
+      ? 'npm run build && npm run preview -- --host 127.0.0.1 --port 5199 --strictPort'
+      : 'npm run dev -- --host 127.0.0.1 --port 5199 --strictPort',
     url: 'http://127.0.0.1:5199',
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    timeout: process.env.CI ? 180_000 : 120_000,
   },
 });
