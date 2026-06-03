@@ -102,11 +102,24 @@ export async function initTasksApp(page) {
   await page.addInitScript(() => {
     localStorage.clear();
     localStorage.setItem('appMode', 'tasks');
-    localStorage.setItem('hasCompletedOnboarding', '1');
+    localStorage.setItem('hasCompletedOnboarding_tasks', '1');
   });
 }
 
+export async function dismissWelcomeModal(page) {
+  const skip = page.getByRole('button', { name: /Skip/i });
+  if (await skip.isVisible().catch(() => false)) {
+    await skip.click();
+    return;
+  }
+  const start = page.getByRole('button', { name: /Get started/i });
+  if (await start.isVisible().catch(() => false)) {
+    await start.click();
+  }
+}
+
 export async function openTemplateLibrary(page) {
+  await dismissWelcomeModal(page);
   await page.getByTitle(/Interview Template|Task Planning|Candidate Interview/i).click();
   await page.getByRole('heading', { name: /Template Library|Task Planning|Interview Guide/i }).waitFor();
 }
