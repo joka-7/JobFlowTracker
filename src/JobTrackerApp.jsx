@@ -18,6 +18,7 @@ import APIKeySettings from './components/APIKeySettings';
 import RejectionAnalysis from './components/RejectionAnalysis';
 import TemplateLibrary from './components/TemplateLibrary';
 import Tooltip from './components/Tooltip';
+import ModeSwitcher from './components/ModeSwitcher';
 import { TEMPLATES } from './data/interviewTemplates';
 
 const Linkedin = ({ size = 16, ...p }) => (
@@ -107,7 +108,7 @@ const makeInitialFormState = (isRecruiter) => ({
   ...(isRecruiter ? {} : {}),
 });
 
-export default function JobTrackerApp({ mode = 'jobseeker' }) {
+export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'he';
   const isRecruiter = mode === 'recruiter';
@@ -872,6 +873,10 @@ Rules:
               >
                 <CloudOff size={16} /> {t('header.connectDrive')}
               </button>
+            )}
+
+            {onModeChange && (
+              <ModeSwitcher currentMode={mode} onModeChange={onModeChange} />
             )}
 
             <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-white/10 border border-white/20">

@@ -11,6 +11,7 @@ import {
   updateItem, deleteItem, batchSaveItems, loadUserProfile, saveUserProfile,
 } from './firebase';
 import { getStorageKey, STATUSES_TASKS } from './statuses';
+import ModeSwitcher from './components/ModeSwitcher';
 
 const MODE = 'tasks';
 
@@ -81,7 +82,7 @@ const getAvatarColor = (name) => {
   return colors[idx % colors.length];
 };
 
-export default function TasksApp() {
+export default function TasksApp({ onModeChange }) {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'he';
   const lang = i18n.language;
@@ -916,6 +917,9 @@ export default function TasksApp() {
             <Upload size={16} />
           </button>
           <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
+          {onModeChange && (
+            <ModeSwitcher currentMode={MODE} onModeChange={onModeChange} />
+          )}
           {user ? (
             <button onClick={() => signOut()} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors" title={user.email}>
               {syncing ? <Cloud size={16} className="animate-pulse" /> : <Cloud size={16} />}
