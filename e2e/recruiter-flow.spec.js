@@ -73,9 +73,9 @@ test.describe('Recruiter mode flows', () => {
     await goToBoardTab(page);
     await dragCardToColumn(page, 'Alice Drag', /^Initial Screening \(\d+\)$/);
 
-    const screeningCol = page.locator('.w-80').filter({ has: page.getByText(/^Initial Screening \(\d+\)$/) });
+    const screeningCol = page.locator('.board-column').filter({ has: page.getByText(/^Initial Screening \(\d+\)$/) });
     await expect(screeningCol.getByText('Alice Drag')).toBeVisible();
-    await expect(page.locator('.w-80').filter({ has: page.getByText(/^Application Received \(\d+\)$/) }).getByText('Alice Drag')).toHaveCount(0);
+    await expect(page.locator('.board-column').filter({ has: page.getByText(/^Application Received \(\d+\)$/) }).getByText('Alice Drag')).toHaveCount(0);
   });
 
   test('edit candidate updates name on board', async ({ page }) => {
