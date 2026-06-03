@@ -235,7 +235,10 @@
     "changeSettings": "Modifier les paramètres IA",
     "scheduleButton": "Planning de préparation entretien",
     "scheduleNoDate": "Ajoutez d'abord une date d'entretien",
-    "resumeButton": "Adapter le CV pour ce poste"
+    "resumeButton": "Adapter le CV pour ce poste",
+    "findJobs": "Trouver des emplois avec l'IA",
+    "findCandidates": "Trouver des candidats avec l'IA",
+    "goalsAndTasks": "Objectifs et tâches IA"
   },
   "resume": {
     "title": "Adaptation du CV",
