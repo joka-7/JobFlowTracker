@@ -923,13 +923,14 @@ Rules:
           ? (isRTL ? 'from-yellow-600 to-amber-500' : 'from-amber-500 to-yellow-600')
           : (isRTL ? 'from-indigo-800 to-blue-700' : 'from-blue-700 to-indigo-800')
       } text-white shadow-md flex-shrink-0`}>
-        <div className="px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="bg-white/20 p-1.5 rounded-lg backdrop-blur-sm">
+        <div className="px-3 sm:px-6 py-3 sm:py-4 flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-2 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+            <div className="bg-white/20 p-1.5 rounded-lg backdrop-blur-sm shrink-0">
               <AppBrandMark size={28} />
             </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-xl font-bold tracking-tight flex items-center gap-2 flex-wrap">
                 {tMode('header.title')}
                 {companies.length > 0 && (
                   <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 transition-all ${isSaved ? 'bg-green-500/20 text-green-100' : 'bg-yellow-500/50 text-yellow-50'}`}>
@@ -938,11 +939,11 @@ Rules:
                   </span>
                 )}
               </h1>
-              <p className={`${isRecruiter ? 'text-yellow-100' : 'text-blue-200'} text-sm`}>{tMode('header.subtitle')}</p>
+              <p className={`${isRecruiter ? 'text-yellow-100' : 'text-blue-200'} text-xs sm:text-sm truncate hidden sm:block`}>{tMode('header.subtitle')}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
             <button onClick={openNewForm} className={`flex items-center gap-2 bg-white ${isRecruiter ? 'text-yellow-600 hover:bg-yellow-50 active:bg-yellow-100' : 'text-indigo-700 hover:bg-blue-50 active:bg-blue-100'} px-3 sm:px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-sm min-h-[40px]`}>
               <Plus size={18} /> <span className="hidden sm:inline">{tMode('header.addCompany')}</span>
             </button>
@@ -964,10 +965,6 @@ Rules:
               >
                 <CloudOff size={16} /> <span className="hidden sm:inline">{t('header.connectDrive')}</span>
               </button>
-            )}
-
-            {onModeChange && (
-              <ModeSwitcher currentMode={mode} onModeChange={onModeChange} />
             )}
 
             {canInstall && (
@@ -1087,6 +1084,13 @@ Rules:
               )}
             </div>
           </div>
+          </div>
+
+          {onModeChange && (
+            <div className="w-full overflow-x-auto scrollbar-none -mx-1 px-1">
+              <ModeSwitcher currentMode={mode} onModeChange={onModeChange} />
+            </div>
+          )}
         </div>
 
         <div className="flex px-2 sm:px-6 gap-0.5 sm:gap-2 mt-2 overflow-x-auto scrollbar-none">
@@ -1100,7 +1104,7 @@ Rules:
             <button
               key={key}
               onClick={() => navigateTo(key)}
-              className={`px-3 sm:px-4 py-2 rounded-t-lg font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap flex-shrink-0 text-sm ${activeTab === key ? 'bg-gray-50 text-indigo-800' : 'bg-white/10 text-blue-100 hover:bg-white/20'}`}
+              className={`px-3 sm:px-4 py-2.5 rounded-t-lg font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap flex-shrink-0 text-sm min-h-[44px] touch-manipulation ${activeTab === key ? 'bg-gray-50 text-indigo-800' : 'bg-white/10 text-blue-100 hover:bg-white/20 active:bg-white/25'}`}
             >
               {icon} {t(`tabs.${key}`, key)}
             </button>
@@ -1113,7 +1117,7 @@ Rules:
       {activeTab === 'timeline' && renderTimeline()}
       {activeTab === 'stats' && renderStats()}
       {activeTab === 'calendar' && (
-        <div className="flex-1 overflow-auto bg-gray-50">
+        <div className="flex-1 overflow-auto bg-gray-50 min-h-0">
           <CalendarView
             events={calendarEvents}
             isRTL={isRTL}

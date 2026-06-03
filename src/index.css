@@ -40,6 +40,10 @@ body {
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 transparent;
 }
+
+.touch-manipulation {
+  touch-action: manipulation;
+}
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }
