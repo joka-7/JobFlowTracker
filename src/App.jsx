@@ -16,5 +16,5 @@ export default function App() {
     return <TasksApp onModeChange={setMode} />;
   }
 
-  return <JobTrackerApp mode={mode} onModeChange={setMode} autoOnboarding={autoOnboarding} />;
+  return <JobTrackerApp key={mode} mode={mode} onModeChange={setMode} autoOnboarding={autoOnboarding} />;
 }
