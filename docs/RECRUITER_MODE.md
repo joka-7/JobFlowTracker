@@ -1,23 +1,24 @@
-# Recruiter Mode
+# Modes Reference
 
-JobFlowTracker supports two fixed roles chosen once at first launch. There is no runtime toggle.
+JobFlowTracker supports three modes that can be switched freely at any time using the header mode switcher. Each mode stores its data in a separate localStorage key and Firestore subcollection — switching modes never affects other modes' data.
 
 | Mode | `appMode` value | Primary entity | Firestore path | localStorage key |
 |------|-----------------|----------------|----------------|------------------|
 | Job seeker | `jobseeker` | Company / application | `users/{uid}/companies/{id}` | `jobTrackerAppV2Data_jobseeker` |
 | Recruiter | `recruiter` | Candidate | `users/{uid}/candidates/{id}` | `jobTrackerAppV2Data_recruiter` |
-
-The same kanban UI is reused; labels, statuses, and form fields change per mode.
+| Task manager | `tasks` | Task (with steps) | `users/{uid}/tasks/{id}` | `jobTrackerAppV2Data_tasks` |
 
 ---
 
-## First launch
+## First launch & switching
 
-1. If `localStorage.appMode` is set → load that mode.
-2. Else if legacy `jobTrackerAppV2Data` exists → auto-set `jobseeker` (no mode screen).
-3. Else → show [`ModeSelection`](../src/components/ModeSelection.jsx) full-screen picker.
+1. If `localStorage.appMode` is set → load that mode directly (no picker shown).
+2. Else if legacy `jobTrackerAppV2Data` exists → auto-set `jobseeker`.
+3. Else → show [`ModeSelection`](../src/components/ModeSelection.jsx) full-screen picker (3 options).
 
-On Google sign-in, `appMode` is written to the user profile document `users/{uid}` and the matching subcollection is loaded.
+**Switching at any time:** The `ModeSwitcher` component in every app header (3 icon buttons) updates `localStorage.appMode` and triggers an immediate re-render. The onboarding wizard is only shown on the very first visit ever, not when switching modes.
+
+On Google sign-in, `appMode` is written to `users/{uid}` and the matching subcollection is loaded.
 
 ---
 
@@ -56,9 +57,21 @@ Hidden in recruiter mode: `website`, `linkedinCompany`, `description`, `products
 
 ---
 
+## Task manager statuses & steps
+
+**Task statuses (4):** `active`, `on_hold`, `completed`, `cancelled`
+
+**Step statuses (4, cycled by clicking the icon):** `todo → in_progress → done → blocked → todo`
+
+See [LLD.md](LLD.md) for the full `Task` and `Step` object schemas.
+
+---
+
 ## Translations
 
-All recruiter-specific copy lives under the `recruiter.*` namespace in `src/locales/en.json`, `he.json`, and `fr.json`. The app uses a `tMode(key)` helper that prefixes keys with `recruiter.` when `appMode === 'recruiter'`.
+All recruiter-specific copy lives under the `recruiter.*` namespace in `src/locales/{en,he,fr}.json`. The app uses a `tMode(key)` helper that prefixes keys with `recruiter.` when `appMode === 'recruiter'`.
+
+All task manager copy lives under the `tasks.*` namespace.
 
 ---
 
@@ -73,14 +86,16 @@ match /users/{userId} {
 }
 ```
 
-This covers `companies`, `candidates`, and the profile doc. Publish in Firebase Console → Firestore → Rules.
+This covers `companies`, `candidates`, `tasks`, and the profile doc. Publish in Firebase Console → Firestore → Rules.
 
 ---
 
 ## Export / import
 
-- Job seeker backup filename: `job-tracker-backup-YYYY-MM-DD.json`
-- Recruiter backup filename: `recruiter-tracker-backup-YYYY-MM-DD.json`
+Each mode exports only its own data. Backup filenames:
+- Job seeker: `job-tracker-backup-*.json`
+- Recruiter: `recruiter-tracker-backup-*.json`
+- Task manager: `tasks-backup-*.json`
 
 Import always writes to the current mode's storage path only.
 
@@ -88,4 +103,5 @@ Import always writes to the current mode's storage path only.
 
 ## Configuration source
 
-Status lists and helpers: [`src/statuses.js`](../src/statuses.js)
+Status lists and helpers: [`src/statuses.js`](../src/statuses.js)  
+Mode switcher: [`src/components/ModeSwitcher.jsx`](../src/components/ModeSwitcher.jsx)
