@@ -1618,8 +1618,10 @@ Rules:
 
       {simulationData && (
         <ChatModal
+          key={`sim-${simulationData.title}`}
           t={t}
           language={i18n.language}
+          sessionKey={simulationData.title}
           systemPromptOverride={simulationData.systemPrompt}
           simulationTitle={simulationData.title}
           autoStart={true}

@@ -201,6 +201,31 @@ describe('ChatModal', () => {
     expect(apiMessages[0].content).toBe('begin');
   });
 
+  it('reopens simulation with fresh state when sessionKey changes', async () => {
+    const { rerender } = render(
+      <ChatModal
+        {...defaultProps}
+        autoStart
+        sessionKey="hr"
+        simulationTitle="HR"
+        systemPromptOverride="Mock HR"
+      />,
+    );
+    await waitFor(() => expect(screen.getByText('Test response')).toBeInTheDocument());
+    mockStreamChat.mockClear();
+    rerender(
+      <ChatModal
+        {...defaultProps}
+        autoStart
+        sessionKey="tech"
+        simulationTitle="Tech"
+        systemPromptOverride="Mock Tech"
+      />,
+    );
+    await waitFor(() => expect(mockStreamChat).toHaveBeenCalled());
+    expect(screen.getByText('Test response')).toBeInTheDocument();
+  });
+
   it('follow-up after simulation prepends begin when history starts with assistant', async () => {
     const user = userEvent.setup();
     mockStreamChat

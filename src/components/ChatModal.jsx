@@ -2,6 +2,13 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Send, Loader2, Save, MessageSquare } from 'lucide-react';
 import { streamChat, isAIReady, buildApiMessages } from '../services/aiAssistant';
 
+const SIM_TRIGGER = '__sim_start__';
+
+function safeTranslate(t, key, fallback) {
+  if (typeof t === 'function') return t(key, fallback);
+  return fallback ?? key;
+}
+
 function MarkdownText({ text }) {
   const safe = String(text ?? '');
   if (!safe) return null;
@@ -49,7 +56,9 @@ function Message({ msg, onSave, t }) {
             }`}
           >
             <Save size={11} />
-            {saved ? t('chat.saved', 'Saved ✓') : t('chat.saveToNotes', 'Save to notes')}
+            {saved
+              ? safeTranslate(t, 'chat.saved', 'Saved ✓')
+              : safeTranslate(t, 'chat.saveToNotes', 'Save to notes')}
           </button>
         )}
       </div>
@@ -65,6 +74,12 @@ class ChatErrorBoundary extends React.Component {
 
   static getDerivedStateFromError(error) {
     return { error };
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.resetKey !== this.props.resetKey && this.state.error) {
+      this.setState({ error: null });
+    }
   }
 
   render() {
@@ -88,9 +103,6 @@ class ChatErrorBoundary extends React.Component {
   }
 }
 
-// sentinel value used to trigger AI-first simulation without showing a user bubble
-const SIM_TRIGGER = '__sim_start__';
-
 const buildTaskCoachPrompt = (task) => {
   if (!task) {
     return 'You are a helpful task management coach. Help the user plan, break down, and complete their work. Be concise and practical.';
@@ -111,6 +123,7 @@ function ChatModalInner({
   simulationTitle,
   autoStart,
   variant = 'job',
+  sessionKey = '',
 }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -118,9 +131,9 @@ function ChatModalInner({
   const [error, setError] = useState('');
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
-  const autoStarted = useRef(false);
   const sendingRef = useRef(false);
   const mountedRef = useRef(true);
+  const autoStartGen = useRef(0);
 
   const aiReady = isAIReady();
 
@@ -134,12 +147,16 @@ function ChatModalInner({
   const subtitle = simulationTitle
     ? String(simulationTitle)
     : isTaskMode
-      ? (task?.name ? String(task.name) : t('chat.taskGeneral', 'General coaching'))
+      ? (task?.name ? String(task.name) : safeTranslate(t, 'chat.taskGeneral', 'General coaching'))
       : (company ? `${company.name || ''}${company.role ? ` — ${company.role}` : ''}` : '');
 
   const headerTitle = simulationTitle
-    ? (isTaskMode ? t('chat.coachingTitle', 'AI Coaching') : t('chat.simulationTitle', 'Mock Interview'))
-    : (isTaskMode ? t('chat.titleTasks', 'Task Coach') : t('chat.title', 'AI Chat'));
+    ? (isTaskMode
+      ? safeTranslate(t, 'chat.coachingTitle', 'AI Coaching')
+      : safeTranslate(t, 'chat.simulationTitle', 'Mock Interview'))
+    : (isTaskMode
+      ? safeTranslate(t, 'chat.titleTasks', 'Task Coach')
+      : safeTranslate(t, 'chat.title', 'AI Chat'));
 
   const saveHandler = onSaveToTask || onSaveToCompany;
   const saveTarget = task || company;
@@ -150,6 +167,15 @@ function ChatModalInner({
   }, []);
 
   useEffect(() => {
+    setMessages([]);
+    setInput('');
+    setError('');
+    setLoading(false);
+    sendingRef.current = false;
+    autoStartGen.current += 1;
+  }, [sessionKey]);
+
+  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
@@ -158,10 +184,12 @@ function ChatModalInner({
   }, [loading]);
 
   const patchStreamingAssistant = useCallback((content, streaming) => {
+    if (!mountedRef.current) return;
     setMessages(prev => {
       if (!prev.length) return prev;
       const updated = [...prev];
       const idx = updated.length - 1;
+      if (updated[idx]?.role !== 'assistant') return prev;
       updated[idx] = { role: 'assistant', content: String(content ?? ''), streaming: !!streaming };
       return updated;
     });
@@ -172,7 +200,10 @@ function ChatModalInner({
     const isTrigger = explicit === SIM_TRIGGER;
     const text = isTrigger ? SIM_TRIGGER : (explicit || input).trim();
     if ((!isTrigger && !text) || sendingRef.current) return;
-    if (!aiReady) { onOpenSettings(); return; }
+    if (!aiReady) {
+      onOpenSettings?.();
+      return;
+    }
 
     sendingRef.current = true;
     const visibleUserMsg = isTrigger ? null : { role: 'user', content: text };
@@ -189,15 +220,13 @@ function ChatModalInner({
       await streamChat(
         apiMessages,
         systemPrompt,
-        (partial) => {
-          if (mountedRef.current) patchStreamingAssistant(partial, true);
-        },
+        (partial) => patchStreamingAssistant(partial, true),
       );
       if (mountedRef.current) {
         setMessages(prev => {
-          if (!prev.length) return prev;
           const updated = [...prev];
           const idx = updated.length - 1;
+          if (idx < 0 || updated[idx]?.role !== 'assistant') return prev;
           updated[idx] = { ...updated[idx], streaming: false };
           return updated;
         });
@@ -213,18 +242,24 @@ function ChatModalInner({
     }
   }, [aiReady, input, messages, onOpenSettings, patchStreamingAssistant, systemPrompt]);
 
+  const sendRef = useRef(send);
+  sendRef.current = send;
+
   useEffect(() => {
-    if (!autoStart || !aiReady || autoStarted.current) return;
-    autoStarted.current = true;
+    if (!autoStart || !aiReady) return;
+    const gen = autoStartGen.current;
     let cancelled = false;
     const timer = setTimeout(() => {
-      if (!cancelled) send(SIM_TRIGGER);
+      if (cancelled || gen !== autoStartGen.current) return;
+      Promise.resolve(sendRef.current(SIM_TRIGGER)).catch(() => {
+        if (mountedRef.current) setError('Failed to start session');
+      });
     }, 150);
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [autoStart, aiReady, send]);
+  }, [autoStart, aiReady, sessionKey]);
 
   const handleSave = (content) => {
     if (saveHandler && saveTarget?.id) {
@@ -259,18 +294,18 @@ function ChatModalInner({
               <p className="text-sm">
                 {simulationTitle
                   ? (isTaskMode
-                    ? t('chat.coachingEmpty', 'Starting your coaching session...')
-                    : t('chat.simulationEmpty', 'Starting your mock interview...'))
-                  : t('chat.empty', 'Start the conversation...')}
+                    ? safeTranslate(t, 'chat.coachingEmpty', 'Starting your coaching session...')
+                    : safeTranslate(t, 'chat.simulationEmpty', 'Starting your mock interview...'))
+                  : safeTranslate(t, 'chat.empty', 'Start the conversation...')}
               </p>
               {!simulationTitle && saveTarget?.name && (
                 <p className="text-xs mt-1 text-gray-300">
-                  {t('chat.context', 'Context')}: {saveTarget.name}
+                  {safeTranslate(t, 'chat.context', 'Context')}: {saveTarget.name}
                 </p>
               )}
               {!simulationTitle && (
                 <p className="text-[11px] text-amber-500 mt-3">
-                  ⚠️ {t('chat.privacy', 'Avoid writing personal names')}
+                  ⚠️ {safeTranslate(t, 'chat.privacy', 'Avoid writing personal names')}
                 </p>
               )}
             </div>
@@ -287,7 +322,7 @@ function ChatModalInner({
             <div className="text-center mt-2 space-y-1">
               <p className="text-red-500 text-xs">{error}</p>
               <button onClick={onOpenSettings} className="text-xs text-purple-600 underline">
-                ⚙️ {t('ai.changeSettings', 'Change AI settings')}
+                ⚙️ {safeTranslate(t, 'ai.changeSettings', 'Change AI settings')}
               </button>
             </div>
           )}
@@ -300,7 +335,7 @@ function ChatModalInner({
               onClick={onOpenSettings}
               className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold rounded-xl transition-colors"
             >
-              ⚙️ {t('ai.noKey', 'Set API key to enable AI →')}
+              ⚙️ {safeTranslate(t, 'ai.noKey', 'Set API key to enable AI →')}
             </button>
           ) : (
             <div className="flex gap-2 items-end">
@@ -309,7 +344,7 @@ function ChatModalInner({
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
-                placeholder={t('chat.placeholder', 'Type a message... (Enter to send)')}
+                placeholder={safeTranslate(t, 'chat.placeholder', 'Type a message... (Enter to send)')}
                 rows={1}
                 disabled={loading}
                 className="flex-1 resize-none p-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none max-h-28 overflow-y-auto disabled:opacity-60"
@@ -336,9 +371,11 @@ function ChatModalInner({
 }
 
 export default function ChatModal(props) {
+  const sessionKey = props.sessionKey
+    || `${props.variant || 'job'}-${props.simulationTitle || ''}-${props.systemPromptOverride?.length || 0}`;
   return (
-    <ChatErrorBoundary onClose={props.onClose}>
-      <ChatModalInner {...props} />
+    <ChatErrorBoundary onClose={props.onClose} resetKey={sessionKey}>
+      <ChatModalInner {...props} sessionKey={sessionKey} />
     </ChatErrorBoundary>
   );
 }

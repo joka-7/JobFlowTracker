@@ -1208,10 +1208,12 @@ Rules:
 
       {chatOpen && !simulationData && (
         <ChatModal
+          key={`task-chat-${selectedTask?.id || 'general'}`}
           t={t}
           variant="tasks"
           task={selectedTask}
           language={lang}
+          sessionKey={`task-chat-${selectedTask?.id || 'general'}`}
           onClose={() => setChatOpen(false)}
           onOpenSettings={() => { setChatOpen(false); setShowAISettings(true); }}
           onSaveToTask={selectedTask ? handleSaveToTask : null}
@@ -1220,10 +1222,12 @@ Rules:
 
       {simulationData && (
         <ChatModal
+          key={`task-sim-${simulationData.title}`}
           t={t}
           variant="tasks"
           task={selectedTask}
           language={lang}
+          sessionKey={simulationData.title}
           systemPromptOverride={simulationData.systemPrompt}
           simulationTitle={simulationData.title}
           autoStart={true}
