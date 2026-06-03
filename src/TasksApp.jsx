@@ -12,6 +12,7 @@ import {
 } from './firebase';
 import { getStorageKey, STATUSES_TASKS } from './statuses';
 import ModeSwitcher from './components/ModeSwitcher';
+import CalendarView from './components/CalendarView';
 
 const MODE = 'tasks';
 
@@ -343,6 +344,15 @@ export default function TasksApp({ onModeChange }) {
     STATUSES_TASKS.forEach(s => { byStatus[s.id] = tasks.filter(t => t.status === s.id).length; });
     return { total, active, completed, totalSteps, doneSteps, byStatus };
   }, [tasks]);
+
+  const calendarEvents = useMemo(() =>
+    tasks.filter(t => t.dueDate).map(t => ({
+      date: t.dueDate,
+      title: t.name,
+      type: 'task',
+      parentId: t.id,
+    }))
+  , [tasks]);
 
   const renderStepStatusBadge = (status) => {
     const cfg = STEP_STATUS_CONFIG[status] || STEP_STATUS_CONFIG.todo;
@@ -887,6 +897,7 @@ export default function TasksApp({ onModeChange }) {
   const TABS = [
     { id: 'board', icon: Layout, label: t('tabs.board', 'Board') },
     { id: 'list', icon: List, label: t('tabs.list', 'List & Edit') },
+    { id: 'calendar', icon: Calendar, label: t('tabs.calendar', 'Calendar') },
     { id: 'stats', icon: BarChart2, label: t('tabs.stats', 'Statistics') },
   ];
 
@@ -959,6 +970,15 @@ export default function TasksApp({ onModeChange }) {
         {activeTab === 'board' && renderBoard()}
         {activeTab === 'list' && renderList()}
         {activeTab === 'stats' && renderStats()}
+        {activeTab === 'calendar' && (
+          <div className="flex-1 overflow-auto bg-gray-50">
+            <CalendarView
+              events={calendarEvents}
+              isRTL={isRTL}
+              onEventClick={ev => { setSelectedId(ev.parentId); setActiveTab('list'); setIsEditing(false); }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Toast */}

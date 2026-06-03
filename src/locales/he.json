@@ -50,7 +50,18 @@
     "board": "לוח סטטוסים",
     "list": "רשימה ועריכה",
     "timeline": "ציר זמן",
+    "calendar": "לוח שנה",
     "stats": "סטטיסטיקות"
+  },
+  "calendar": {
+    "today": "היום",
+    "noEvents": "אין אירועים ביום זה.",
+    "selectDay": "לחץ על יום כדי לראות אירועים",
+    "type": {
+      "interview": "ראיון",
+      "assignment": "מטלה",
+      "task": "משימה"
+    }
   },
   "board": {
     "emptyTitle": "ברוך הבא למעקב חיפוש עבודה",

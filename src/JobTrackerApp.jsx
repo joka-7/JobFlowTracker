@@ -19,6 +19,7 @@ import RejectionAnalysis from './components/RejectionAnalysis';
 import TemplateLibrary from './components/TemplateLibrary';
 import Tooltip from './components/Tooltip';
 import ModeSwitcher from './components/ModeSwitcher';
+import CalendarView from './components/CalendarView';
 import { TEMPLATES } from './data/interviewTemplates';
 
 const Linkedin = ({ size = 16, ...p }) => (
@@ -287,6 +288,26 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
     });
     return events.sort((a, b) => new Date(safeStr(b.date)) - new Date(safeStr(a.date)));
   }, [companies, i18n.language]);
+
+  const calendarEvents = useMemo(() => {
+    const evs = [];
+    companies.forEach(company => {
+      const cName = safeStr(company.name || company.company || t('alert.noName'));
+      if (Array.isArray(company.interviews)) {
+        company.interviews.forEach(iv => {
+          if (iv && iv.date)
+            evs.push({ date: iv.date, title: `${cName} – ${iv.type || ''}`, type: 'interview', parentId: company.id });
+        });
+      }
+      if (Array.isArray(company.homeworks)) {
+        company.homeworks.forEach(hw => {
+          if (hw && hw.deadline)
+            evs.push({ date: hw.deadline, title: `${cName} – ${hw.title || t('timeline.assignmentSubmission')}`, type: 'assignment', parentId: company.id });
+        });
+      }
+    });
+    return evs;
+  }, [companies]);
 
   const stats = useMemo(() => {
     const total = companies.length;
@@ -988,6 +1009,7 @@ Rules:
             { key: 'board', icon: <Layout size={16} /> },
             { key: 'list', icon: <List size={16} /> },
             { key: 'timeline', icon: <Calendar size={16} /> },
+            { key: 'calendar', icon: <Calendar size={16} /> },
             { key: 'stats', icon: <BarChart2 size={16} /> },
           ].map(({ key, icon }) => (
             <button
@@ -1005,6 +1027,15 @@ Rules:
       {activeTab === 'board' && renderBoard()}
       {activeTab === 'timeline' && renderTimeline()}
       {activeTab === 'stats' && renderStats()}
+      {activeTab === 'calendar' && (
+        <div className="flex-1 overflow-auto bg-gray-50">
+          <CalendarView
+            events={calendarEvents}
+            isRTL={isRTL}
+            onEventClick={ev => { selectCompany({ id: ev.parentId }); setActiveTab('list'); }}
+          />
+        </div>
+      )}
 
       {activeTab === 'list' && (
         <div className="flex flex-1 overflow-hidden">
