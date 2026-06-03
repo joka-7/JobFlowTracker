@@ -2,9 +2,9 @@ import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next';
 import {
   Plus, Search, Download, Upload, Layout, List, BarChart2,
-  Trash2, Edit2, ArrowLeft, ArrowRight, CheckCircle2, Circle,
+  Trash2, Edit2, ArrowLeft, ArrowRight, CheckCircle2, CheckCircle, Circle,
   Clock, AlertCircle, ChevronDown, Calendar, Cloud, CloudOff,
-  ClipboardList, X, GripVertical,
+  ClipboardList, X, GripVertical, Languages, MoreVertical, Settings,
 } from 'lucide-react';
 import {
   signInWithGoogle, signOut, onAuthChange, loadAllItems,
@@ -113,6 +113,7 @@ export default function TasksApp({ onModeChange }) {
   const [syncing, setSyncing] = useState(false);
   const [newStepTitle, setNewStepTitle] = useState('');
   const [visibleCount, setVisibleCount] = useState(25);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const dragTaskId = useRef(null);
   const fileInputRef = useRef(null);
@@ -927,66 +928,131 @@ export default function TasksApp({ onModeChange }) {
   return (
     <div className="flex flex-col h-screen bg-white" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
-      <header className="bg-gradient-to-r from-emerald-700 to-teal-800 text-white px-4 py-3 flex items-center gap-3 shrink-0 shadow-md">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <ClipboardList size={22} className="text-emerald-200 shrink-0" />
-          <span className="font-black text-lg tracking-tight truncate">{tt('header.title', 'Task Manager')}</span>
-          <span className="hidden sm:inline text-xs text-emerald-300 font-medium">
-            {isSaved ? tt('header.savedInBrowser', 'Saved') : tt('header.saving', 'Saving...')}
-          </span>
+      <header className={`bg-gradient-to-r ${isRTL ? 'from-indigo-800 to-blue-700' : 'from-blue-700 to-indigo-800'} text-white shadow-md flex-shrink-0`}>
+        <div className="px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+              <ClipboardList size={24} className="text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
+                {tt('header.title', 'Task Manager')}
+                {tasks.length > 0 && (
+                  <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 transition-all ${isSaved ? 'bg-green-500/20 text-green-100' : 'bg-yellow-500/50 text-yellow-50'}`}>
+                    {isSaved ? <CheckCircle size={12} /> : <Clock size={12} />}
+                    {isSaved ? tt('header.savedInBrowser', 'Saved') : tt('header.saving', 'Saving...')}
+                  </span>
+                )}
+              </h1>
+              <p className="text-blue-200 text-sm">{tt('header.subtitle', 'Manage your tasks and track progress')}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button onClick={openNewForm} className="flex items-center gap-2 bg-white text-indigo-700 hover:bg-blue-50 active:bg-blue-100 px-3 sm:px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-sm min-h-[40px]">
+              <Plus size={18} /> <span className="hidden sm:inline">{tt('header.addTask', 'Add Task')}</span>
+            </button>
+
+            {user ? (
+              <button
+                onClick={() => signOut()}
+                title={user.email}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-colors border min-h-[40px] ${syncing ? 'bg-yellow-500/20 border-yellow-400/30 text-yellow-100' : 'bg-green-500/20 border-green-400/30 text-green-100 hover:bg-red-500/20 hover:border-red-400/30 hover:text-red-100'}`}
+              >
+                <Cloud size={16} className={syncing ? 'animate-pulse' : ''} />
+                <span className="hidden sm:inline">{syncing ? t('header.driveSyncing') : user.displayName?.split(' ')[0] || t('header.driveOn')}</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => signInWithGoogle().catch(() => {})}
+                title={t('header.connectDriveTooltip')}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-blue-100 transition-colors min-h-[40px]"
+              >
+                <CloudOff size={16} /> <span className="hidden sm:inline">{t('header.connectDrive')}</span>
+              </button>
+            )}
+
+            {onModeChange && (
+              <ModeSwitcher currentMode={MODE} onModeChange={onModeChange} />
+            )}
+
+            {/* Desktop controls */}
+            <div className="hidden md:flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-white/10 border border-white/20">
+              <Languages size={16} className="text-blue-100 flex-shrink-0" />
+              <select
+                value={i18n.language}
+                onChange={e => { i18n.changeLanguage(e.target.value); localStorage.setItem('appLanguage', e.target.value); }}
+                className="bg-transparent text-blue-100 text-sm font-bold border-none outline-none cursor-pointer"
+              >
+                <option value="en" className="text-gray-800">English</option>
+                <option value="he" className="text-gray-800">עברית</option>
+                <option value="fr" className="text-gray-800">Français</option>
+              </select>
+            </div>
+
+            <div className="hidden md:flex bg-white/10 rounded-lg p-1">
+              <button onClick={handleExport} title={t('header.downloadTooltip')} className="p-2 bg-green-500/20 hover:bg-green-500/40 rounded text-white transition-colors border border-green-400/30">
+                <Download size={18} />
+              </button>
+              <label className="p-2 hover:bg-white/20 rounded text-white transition-colors cursor-pointer" title={t('header.uploadTooltip')}>
+                <Upload size={18} />
+                <input ref={fileInputRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
+              </label>
+            </div>
+
+            {/* Mobile overflow menu */}
+            <div className="md:hidden relative">
+              <button
+                onClick={() => setMobileMenuOpen(o => !o)}
+                className="p-2 bg-white/10 hover:bg-white/20 active:bg-white/30 rounded-lg text-white transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center"
+              >
+                <MoreVertical size={20} />
+              </button>
+              {mobileMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setMobileMenuOpen(false)} />
+                  <div className={`absolute ${isRTL ? 'left-0' : 'right-0'} top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-100 z-50 min-w-[200px] py-2`}>
+                    <div className="px-3 py-2 border-b border-gray-100">
+                      <div className="flex items-center gap-1.5">
+                        <Languages size={14} className="text-gray-400" />
+                        <select
+                          value={i18n.language}
+                          onChange={e => { i18n.changeLanguage(e.target.value); localStorage.setItem('appLanguage', e.target.value); setMobileMenuOpen(false); }}
+                          className="text-gray-700 text-sm font-bold border-none outline-none cursor-pointer bg-transparent flex-1"
+                        >
+                          <option value="en">English</option>
+                          <option value="he">עברית</option>
+                          <option value="fr">Français</option>
+                        </select>
+                      </div>
+                    </div>
+                    <button onClick={() => { handleExport(); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                      <Download size={16} className="text-green-600" /> {t('header.downloadTooltip')}
+                    </button>
+                    <label className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100 cursor-pointer">
+                      <Upload size={16} className="text-blue-600" /> {t('header.uploadTooltip')}
+                      <input type="file" accept=".json" onChange={e => { handleImport(e); setMobileMenuOpen(false); }} className="hidden" />
+                    </label>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={openNewForm}
-            className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors"
-          >
-            <Plus size={16} />
-            <span className="hidden sm:inline">{tt('header.addTask', 'Add Task')}</span>
-          </button>
-          <button onClick={handleExport} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors" title="Export">
-            <Download size={16} />
-          </button>
-          <button onClick={() => fileInputRef.current?.click()} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors" title="Import">
-            <Upload size={16} />
-          </button>
-          <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
-          {onModeChange && (
-            <ModeSwitcher currentMode={MODE} onModeChange={onModeChange} />
-          )}
-          {user ? (
-            <button onClick={() => signOut()} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors" title={user.email}>
-              {syncing ? <Cloud size={16} className="animate-pulse" /> : <Cloud size={16} />}
+        {/* Tab bar */}
+        <div className="flex px-6 gap-2 mt-2">
+          {TABS.map(({ id, icon: Icon, label }) => (
+            <button
+              key={id}
+              onClick={() => navigateTo(id)}
+              className={`px-4 py-2 rounded-t-lg font-medium flex items-center gap-2 transition-colors ${activeTab === id ? 'bg-gray-50 text-indigo-800' : 'bg-white/10 text-blue-100 hover:bg-white/20'}`}
+            >
+              <Icon size={16} /> {label}
             </button>
-          ) : (
-            <button onClick={() => signInWithGoogle().catch(() => {})} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors" title="Sign in">
-              <CloudOff size={16} />
-            </button>
-          )}
+          ))}
         </div>
       </header>
-
-      {/* Tab bar */}
-      <div className="bg-white border-b border-gray-200 px-4 flex gap-0 shrink-0">
-        {TABS.map(tab => {
-          const Icon = tab.icon;
-          const active = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => navigateTo(tab.id)}
-              className={`flex items-center gap-1.5 px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${
-                active
-                  ? 'border-emerald-600 text-emerald-700'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <Icon size={15} />
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
 
       {/* Content */}
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
