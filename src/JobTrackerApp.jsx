@@ -149,7 +149,14 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
       const saved = window.localStorage.getItem(getStorageKey(mode));
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
+        // Tagged format: { _appMode, items } — verify the mode matches
+        if (parsed && !Array.isArray(parsed) && parsed._appMode === mode && Array.isArray(parsed.items)) {
+          return parsed.items;
+        }
+        // Legacy plain-array format: only trust for jobseeker (recruiter never wrote valid plain-array data)
+        if (Array.isArray(parsed) && mode === 'jobseeker') {
+          return parsed;
+        }
       }
       return [];
     } catch { return []; }
@@ -201,7 +208,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
     try {
       if (companies.length > 0) {
         setIsSaved(false);
-        window.localStorage.setItem(getStorageKey(mode), JSON.stringify(companies));
+        window.localStorage.setItem(getStorageKey(mode), JSON.stringify({ _appMode: mode, items: companies }));
         const timer = setTimeout(() => setIsSaved(true), 800);
         return () => clearTimeout(timer);
       }
@@ -224,6 +231,8 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
             setCompanies(data);
             showToast(tMode('toast.driveConnectedWithData'));
           } else {
+            // For recruiter mode: Firebase is source of truth — no data means start fresh
+            if (mode === 'recruiter') setCompanies([]);
             showToast(tMode('toast.driveConnectedEmpty'));
           }
         } catch (e) { console.error(e); }
