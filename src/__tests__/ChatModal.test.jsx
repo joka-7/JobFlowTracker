@@ -179,3 +179,59 @@ describe('ChatModal', () => {
     expect(screen.getAllByText(/BestCorp/).length).toBeGreaterThan(0);
   });
 });
+
+describe('ChatModal simulation (mock interview)', () => {
+  it('renders in simulation mode with correct title', () => {
+    render(<ChatModal {...defaultProps} simulationTitle="👤 HR / Screening" autoStart={false} />);
+    expect(screen.getByText('Mock Interview')).toBeInTheDocument();
+    expect(screen.getByText('👤 HR / Screening')).toBeInTheDocument();
+  });
+
+  it('shows simulation empty state with theatre emoji', () => {
+    render(<ChatModal {...defaultProps} simulationTitle="👤 HR" autoStart={false} />);
+    expect(screen.getAllByText('🎭').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Starting your mock interview...')).toBeInTheDocument();
+  });
+
+  it('autoStart fires AI greeting and displays it', async () => {
+    mockStreamChat.mockImplementationOnce(async (_messages, _system, onChunk) => {
+      onChunk('Hello! I am the interviewer. Let us begin.');
+      return 'Hello! I am the interviewer. Let us begin.';
+    });
+    render(<ChatModal {...defaultProps} simulationTitle="👤 HR" autoStart={true} systemPromptOverride="You are an interviewer." />);
+    await waitFor(() => {
+      expect(screen.getByText('Hello! I am the interviewer. Let us begin.')).toBeInTheDocument();
+    }, { timeout: 1000 });
+  });
+
+  it('follow-up message prepends hidden user turn so API gets valid sequence', async () => {
+    const user = userEvent.setup();
+    // First call: AI greeting
+    mockStreamChat.mockImplementationOnce(async (_msgs, _sys, onChunk) => {
+      onChunk('Welcome! Ask me anything.'); return 'Welcome! Ask me anything.';
+    });
+    // Second call: user follow-up
+    mockStreamChat.mockImplementationOnce(async (msgs, _sys, onChunk) => {
+      // Verify messages array starts with 'user' role (our fix)
+      expect(msgs[0].role).toBe('user');
+      onChunk('Great question!'); return 'Great question!';
+    });
+
+    render(<ChatModal {...defaultProps} simulationTitle="👤 HR" autoStart={true} systemPromptOverride="You are an interviewer." />);
+    await waitFor(() => expect(screen.getByText('Welcome! Ask me anything.')).toBeInTheDocument(), { timeout: 1000 });
+
+    const textarea = screen.getByRole('textbox');
+    await user.type(textarea, 'Tell me about yourself');
+    fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+    await waitFor(() => expect(screen.getByText('Great question!')).toBeInTheDocument(), { timeout: 1000 });
+  });
+
+  it('does not crash if a message content is undefined (error boundary catches it)', () => {
+    // Simulate a message with undefined content — should render via error boundary, not crash
+    mockStreamChat.mockImplementationOnce(async (_msgs, _sys, onChunk) => {
+      onChunk(undefined); // pathological case
+      return undefined;
+    });
+    expect(() => render(<ChatModal {...defaultProps} simulationTitle="👤 HR" autoStart={true} />)).not.toThrow();
+  });
+});
