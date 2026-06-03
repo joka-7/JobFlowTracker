@@ -490,7 +490,7 @@ Rules:
         return (
           <div
             key={statusObj.id}
-            className="w-full sm:w-80 sm:flex-shrink-0 flex flex-col sm:h-full"
+            className="board-column w-full sm:w-80 sm:flex-shrink-0 flex flex-col sm:h-full"
             onDragOver={handleDragOver}
             onDrop={e => handleDrop(e, statusObj.id)}
           >
