@@ -20,14 +20,15 @@ test.describe('Chat and mock interview (browser e2e)', () => {
 
     await startMockInterview(page);
 
-    const chat = chatModalPanel(page, /Mock Interview/);
+    const chat = chatModalPanel(page);
     await expect(chat).toBeVisible();
-    await expect(chat.getByText(MOCK_REPLY)).toBeVisible({ timeout: 30_000 });
+    await expect(chat.getByText('Mock Interview', { exact: true })).toBeVisible();
+    await expect(chat.getByText(MOCK_REPLY)).toBeVisible({ timeout: 15_000 });
     await expect(chat.getByText('Something went wrong')).toHaveCount(0);
     await waitForChatReady(chat);
 
-    await chat.getByRole('textbox').fill('My answer here');
-    await chat.getByRole('textbox').press('Enter');
+    await chat.getByTestId('chat-input').fill('My answer here');
+    await chat.getByTestId('chat-input').press('Enter');
     await expect(chat.getByText('My answer here')).toBeVisible();
     await expect(chat.getByText('Something went wrong')).toHaveCount(0);
 
@@ -43,8 +44,8 @@ test.describe('Chat and mock interview (browser e2e)', () => {
 
     await startMockInterview(page);
 
-    const chat = chatModalPanel(page, /Mock Interview/);
-    await expect(chat.getByText(MOCK_REPLY)).toBeVisible({ timeout: 30_000 });
+    const chat = chatModalPanel(page);
+    await expect(chat.getByText(MOCK_REPLY)).toBeVisible({ timeout: 15_000 });
     await expect(chat.getByText('Something went wrong')).toHaveCount(0);
 
     await closeChatModal(page);
@@ -57,10 +58,11 @@ test.describe('Chat and mock interview (browser e2e)', () => {
     await page.getByRole('heading', { name: 'Task Manager', exact: true }).waitFor();
     await dismissBlockingOverlays(page);
 
-    await startMockInterview(page, /Practice with AI coach/i);
+    await startMockInterview(page);
 
-    const chat = chatModalPanel(page, /AI Coaching/);
-    await expect(chat.getByText(MOCK_REPLY)).toBeVisible({ timeout: 20_000 });
+    const chat = chatModalPanel(page);
+    await expect(chat.getByText('AI Coaching', { exact: true })).toBeVisible();
+    await expect(chat.getByText(MOCK_REPLY)).toBeVisible({ timeout: 15_000 });
     await expect(chat.getByText('Something went wrong')).toHaveCount(0);
 
     await closeChatModal(page);
@@ -76,13 +78,13 @@ test.describe('Chat and mock interview (browser e2e)', () => {
     await page.getByTitle(/AI Assistant/i).click();
     await page.getByRole('button', { name: /Open AI chat/i }).click();
 
-    const chat = chatModalPanel(page, /AI Chat/);
+    const chat = chatModalPanel(page);
     await expect(chat).toBeVisible();
-    await chat.getByRole('textbox').fill('Hello coach');
-    await chat.getByRole('textbox').press('Enter');
+    await chat.getByTestId('chat-input').fill('Hello coach');
+    await chat.getByTestId('chat-input').press('Enter');
 
     await expect(chat.getByText('Hello coach')).toBeVisible();
-    await expect(chat.getByText(MOCK_REPLY)).toBeVisible({ timeout: 30_000 });
+    await expect(chat.getByText(MOCK_REPLY)).toBeVisible({ timeout: 15_000 });
     await expect(chat.getByText('Something went wrong')).toHaveCount(0);
   });
 
@@ -98,7 +100,7 @@ test.describe('Chat and mock interview (browser e2e)', () => {
     await dismissBlockingOverlays(page);
 
     await startMockInterview(page);
-    const chat = chatModalPanel(page, /Mock Interview/);
+    const chat = chatModalPanel(page);
     await expect(chat.getByText(/Set API key to enable AI/i)).toBeVisible();
 
     await chat.getByRole('button', { name: /Set API key to enable AI/i }).click();
@@ -107,10 +109,10 @@ test.describe('Chat and mock interview (browser e2e)', () => {
     await page.getByRole('button', { name: /Save & Enable AI/i }).click();
     await expect(page.getByText('AI Settings')).toHaveCount(0, { timeout: 5_000 });
 
-    await expect(chat.getByRole('textbox')).toBeVisible({ timeout: 5_000 });
+    await expect(chat.getByTestId('chat-input')).toBeVisible({ timeout: 5_000 });
     await expect(chat.getByText(/Set API key to enable AI/i)).toHaveCount(0);
 
-    await expect(chat.getByText(MOCK_REPLY)).toBeVisible({ timeout: 30_000 });
+    await expect(chat.getByText(MOCK_REPLY)).toBeVisible({ timeout: 15_000 });
     await expect(chat.getByText('Something went wrong')).toHaveCount(0);
   });
 
@@ -121,15 +123,15 @@ test.describe('Chat and mock interview (browser e2e)', () => {
     await dismissBlockingOverlays(page);
 
     await startMockInterview(page);
-    const chat = chatModalPanel(page, /Mock Interview/);
-    await expect(chat.getByText(MOCK_REPLY)).toBeVisible({ timeout: 20_000 });
+    const chat = chatModalPanel(page);
+    await expect(chat.getByText(MOCK_REPLY)).toBeVisible({ timeout: 15_000 });
 
     await closeChatModal(page);
     await openTemplateLibrary(page);
     await templateLibraryPanel(page).getByRole('button', { name: /Technical/i }).click();
     await templateLibraryPanel(page).getByTestId('template-start-simulation').first().click();
 
-    await expect(chatModalPanel(page, /Mock Interview/).getByText(MOCK_REPLY)).toBeVisible({ timeout: 30_000 });
+    await expect(chatModalPanel(page).getByText(MOCK_REPLY)).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText('Something went wrong')).toHaveCount(0);
   });
 });

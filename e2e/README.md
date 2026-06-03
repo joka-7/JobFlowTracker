@@ -27,6 +27,10 @@ When adding a new mode or welcome flow:
 5. Chat tests: AI keys live in `E2E_AI_STORAGE` inside each preset (one init script).
 6. Call `dismissBlockingOverlays()` before header clicks if a modal might appear.
 
+## CI web server
+
+E2E uses **`npm run dev`** (Vite), not `npm run build && preview`. A production build pulls in `@anthropic-ai/sdk` Node modules and floods CI logs with “externalized for browser compatibility” warnings; dev matches how earlier PRs ran and is enough for Playwright.
+
 ## CI timeouts
 
 CI uses Playwright `globalTimeout` and limited retries so a stuck test cannot run for an hour. Fix flakes in code; do not rely on many retries.

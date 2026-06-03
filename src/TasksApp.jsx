@@ -1124,7 +1124,7 @@ Rules:
 
             {onModeChange && (
               <div className="hidden md:block shrink-0">
-                <ModeSwitcher currentMode={MODE} onModeChange={onModeChange} />
+                <ModeSwitcher currentMode={MODE} onModeChange={onModeChange} labelSize="compact" />
               </div>
             )}
 
@@ -1249,7 +1249,7 @@ Rules:
 
           {onModeChange && (
             <div className="md:hidden w-full overflow-x-auto scrollbar-none -mx-1 px-1">
-              <ModeSwitcher currentMode={MODE} onModeChange={onModeChange} />
+              <ModeSwitcher currentMode={MODE} onModeChange={onModeChange} labelSize="full" />
             </div>
           )}
         </div>

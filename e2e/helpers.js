@@ -84,25 +84,32 @@ export async function initMockAI(page) {
   });
 }
 
-/** Mock Gemini streaming API — avoids real network and API keys in e2e. */
+/** Mock Gemini streaming API — in-page fetch stub closes the stream (reliable in CI). */
 export async function mockGeminiChatStream(page, replyText = 'Mock AI reply for e2e.') {
-  const chunk = JSON.stringify({
-    candidates: [{ content: { parts: [{ text: replyText }] } }],
-  });
-  const sseBody = `data: ${chunk}\n\ndata: ${chunk}\n\n`;
-  const handler = async (route) => {
-    await route.fulfill({
-      status: 200,
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
-      },
-      body: sseBody,
-    });
-  };
-  await page.route('**/generativelanguage.googleapis.com/**', handler);
-  await page.route('**/v1beta/models/**', handler);
+  await page.addInitScript((reply) => {
+    const origFetch = window.fetch.bind(window);
+    window.fetch = async (input, init) => {
+      const url = String(typeof input === 'string' ? input : input?.url || '');
+      if (!url.includes('generativelanguage.googleapis.com')) {
+        return origFetch(input, init);
+      }
+      const chunk = JSON.stringify({
+        candidates: [{ content: { parts: [{ text: reply }] } }],
+      });
+      const sse = `data: ${chunk}\n\n`;
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(encoder.encode(sse));
+          controller.close();
+        },
+      });
+      return new Response(stream, {
+        status: 200,
+        headers: { 'Content-Type': 'text/event-stream' },
+      });
+    };
+  }, replyText);
 }
 
 /** Dismiss onboarding, welcome, or other full-screen overlays that block header clicks. */
@@ -138,9 +145,9 @@ export async function dismissBlockingOverlays(page) {
 
 export async function openTemplateLibrary(page) {
   await dismissBlockingOverlays(page);
-  const openBtn = page.getByTestId('open-templates');
-  await openBtn.first().waitFor({ state: 'visible', timeout: 15_000 });
-  await openBtn.first().click();
+  const openBtn = page.locator('[data-testid="open-templates"]:visible').first();
+  await openBtn.waitFor({ state: 'visible', timeout: 15_000 });
+  await openBtn.click();
   await templateLibraryPanel(page).waitFor({ state: 'visible', timeout: 15_000 });
 }
 
@@ -157,17 +164,15 @@ export async function startMockInterview(page) {
 
 /** Wait until mock interview chat finishes streaming (textarea enabled). */
 export async function waitForChatReady(chat) {
-  await expect(chat.getByRole('textbox')).toBeEnabled({ timeout: 30_000 });
+  await expect(chat.getByTestId('chat-input')).toBeEnabled({ timeout: 15_000 });
 }
 
-export function chatModalPanel(page, titlePattern = /Mock Interview|AI Coaching|AI Chat/) {
-  return page.locator('div.fixed.inset-0').filter({
-    has: page.getByText(titlePattern),
-  });
+export function chatModalPanel(page) {
+  return page.getByTestId('chat-modal');
 }
 
 export async function closeChatModal(page) {
   const modal = chatModalPanel(page);
   await modal.getByRole('button', { name: 'Close' }).click();
-  await modal.waitFor({ state: 'hidden', timeout: 10_000 });
+  await expect(modal).toBeHidden({ timeout: 10_000 });
 }
