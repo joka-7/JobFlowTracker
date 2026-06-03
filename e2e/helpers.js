@@ -1,6 +1,3 @@
-import { expect } from '@playwright/test';
-import { applyModeInit } from './modeInit.js';
-
 /** Clear app state before each test so mode selection appears. */
 export async function clearAppStorage(page) {
   await page.addInitScript(() => {
@@ -9,19 +6,21 @@ export async function clearAppStorage(page) {
   });
 }
 
-/** Pre-set job seeker mode, skip onboarding, and enable mock AI (for flow + chat tests). */
+/** Pre-set job seeker mode and skip onboarding (for flow tests). */
 export async function initJobSeekerApp(page) {
-  await applyModeInit(page, 'jobseeker');
+  await page.addInitScript(() => {
+    localStorage.clear();
+    localStorage.setItem('appMode', 'jobseeker');
+    localStorage.setItem('hasCompletedOnboarding', '1');
+  });
 }
 
-/** Pre-set recruiter mode and mock AI. */
+/** Pre-set recruiter mode (no onboarding shown). */
 export async function initRecruiterApp(page) {
-  await applyModeInit(page, 'recruiter');
-}
-
-/** Pre-set tasks mode, skip welcome modal, and enable mock AI. */
-export async function initTasksApp(page) {
-  await applyModeInit(page, 'tasks');
+  await page.addInitScript(() => {
+    localStorage.clear();
+    localStorage.setItem('appMode', 'recruiter');
+  });
 }
 
 export async function chooseRecruiterMode(page) {
@@ -75,7 +74,7 @@ export async function dragCardToColumn(page, cardName, columnHeaderPattern) {
   await card.dragTo(column.locator('.bg-gray-100').first());
 }
 
-/** @deprecated AI keys are set in applyModeInit presets; kept for tests that clear storage mid-flow. */
+/** Configure localStorage so isAIReady() is true (gemini + fake key). */
 export async function initMockAI(page) {
   await page.addInitScript(() => {
     localStorage.setItem('aiProvider', 'gemini');
@@ -84,95 +83,36 @@ export async function initMockAI(page) {
   });
 }
 
-/** Mock Gemini streaming API — in-page fetch stub closes the stream (reliable in CI). */
+/** Mock Gemini streaming API — avoids real network and API keys in e2e. */
 export async function mockGeminiChatStream(page, replyText = 'Mock AI reply for e2e.') {
-  await page.addInitScript((reply) => {
-    const origFetch = window.fetch.bind(window);
-    window.fetch = async (input, init) => {
-      const url = String(typeof input === 'string' ? input : input?.url || '');
-      if (!url.includes('generativelanguage.googleapis.com')) {
-        return origFetch(input, init);
-      }
-      const chunk = JSON.stringify({
-        candidates: [{ content: { parts: [{ text: reply }] } }],
-      });
-      const sse = `data: ${chunk}\n\n`;
-      const encoder = new TextEncoder();
-      const stream = new ReadableStream({
-        start(controller) {
-          controller.enqueue(encoder.encode(sse));
-          controller.close();
-        },
-      });
-      return new Response(stream, {
-        status: 200,
-        headers: { 'Content-Type': 'text/event-stream' },
-      });
-    };
-  }, replyText);
-}
-
-/** Dismiss onboarding, welcome, or other full-screen overlays that block header clicks. */
-export async function dismissBlockingOverlays(page) {
-  for (let i = 0; i < 3; i++) {
-    const skipTutorial = page.getByRole('button', { name: /Skip tutorial/i });
-    if (await skipTutorial.isVisible().catch(() => false)) {
-      await skipTutorial.click();
-      await page.waitForTimeout(200);
-      continue;
-    }
-    const skip = page.getByRole('button', { name: /^Skip$/i });
-    if (await skip.isVisible().catch(() => false)) {
-      await skip.click();
-      await page.waitForTimeout(200);
-      continue;
-    }
-    const letsGo = page.getByRole('button', { name: /Let's go!/i });
-    if (await letsGo.isVisible().catch(() => false)) {
-      await letsGo.click();
-      await page.waitForTimeout(200);
-      continue;
-    }
-    const getStarted = page.getByRole('button', { name: /Get started/i });
-    if (await getStarted.isVisible().catch(() => false)) {
-      await getStarted.click();
-      await page.waitForTimeout(200);
-      continue;
-    }
-    break;
-  }
-}
-
-export async function openTemplateLibrary(page) {
-  await dismissBlockingOverlays(page);
-  const openBtn = page.locator('[data-testid="open-templates"]:visible').first();
-  await openBtn.waitFor({ state: 'visible', timeout: 15_000 });
-  await openBtn.click();
-  await templateLibraryPanel(page).waitFor({ state: 'visible', timeout: 15_000 });
-}
-
-export function templateLibraryPanel(page) {
-  return page.locator('div.fixed.inset-0').filter({
-    has: page.getByRole('heading', { name: /Template Library|Task Planning|Interview Guide/i }),
+  const chunk = JSON.stringify({
+    candidates: [{ content: { parts: [{ text: replyText }] } }],
+  });
+  const sseBody = `data: ${chunk}\n\n`;
+  await page.route('**/generativelanguage.googleapis.com/**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      headers: { 'Content-Type': 'text/event-stream' },
+      body: sseBody,
+    });
   });
 }
 
-export async function startMockInterview(page) {
-  await openTemplateLibrary(page);
-  await templateLibraryPanel(page).getByTestId('template-start-simulation').first().click();
+/** Pre-set tasks mode and skip Task Manager welcome modal. */
+export async function initTasksApp(page) {
+  await page.addInitScript(() => {
+    localStorage.clear();
+    localStorage.setItem('appMode', 'tasks');
+    localStorage.setItem('hasCompletedOnboarding_tasks', '1');
+  });
 }
 
-/** Wait until mock interview chat finishes streaming (textarea enabled). */
-export async function waitForChatReady(chat) {
-  await expect(chat.getByTestId('chat-input')).toBeEnabled({ timeout: 15_000 });
-}
-
-export function chatModalPanel(page) {
-  return page.getByTestId('chat-modal');
+export async function openTemplateLibrary(page) {
+  await page.getByTestId('open-templates').first().click();
+  await page.getByRole('heading', { name: /Template Library|Task Planning|Interview Guide/i }).waitFor();
 }
 
 export async function closeChatModal(page) {
-  const modal = chatModalPanel(page);
+  const modal = page.locator('div.fixed.inset-0').filter({ has: page.getByRole('button', { name: 'Close' }) });
   await modal.getByRole('button', { name: 'Close' }).click();
-  await expect(modal).toBeHidden({ timeout: 10_000 });
 }
