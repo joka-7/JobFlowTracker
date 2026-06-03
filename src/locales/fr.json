@@ -52,10 +52,15 @@
   },
   "tabs": {
     "board": "Tableau",
+    "boardShort": "Tableau",
     "list": "Liste & Édition",
+    "listShort": "Liste",
     "timeline": "Chronologie",
+    "timelineShort": "Chrono",
     "calendar": "Calendrier",
-    "stats": "Statistiques"
+    "calendarShort": "Calendrier",
+    "stats": "Statistiques",
+    "statsShort": "Stats"
   },
   "calendar": {
     "today": "Aujourd'hui",

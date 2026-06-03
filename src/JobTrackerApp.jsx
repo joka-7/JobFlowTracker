@@ -1078,18 +1078,20 @@ Rules:
 
         <div className="flex px-2 sm:px-6 gap-0.5 sm:gap-2 mt-2 overflow-x-auto scrollbar-none">
           {[
-            { key: 'board', icon: <Layout size={15} /> },
-            { key: 'list', icon: <List size={15} /> },
-            { key: 'timeline', icon: <Calendar size={15} /> },
+            { key: 'board',    icon: <Layout size={15} /> },
+            { key: 'list',     icon: <List size={15} /> },
+            { key: 'timeline', icon: <Clock size={15} /> },
             { key: 'calendar', icon: <Calendar size={15} /> },
-            { key: 'stats', icon: <BarChart2 size={15} /> },
+            { key: 'stats',    icon: <BarChart2 size={15} /> },
           ].map(({ key, icon }) => (
             <button
               key={key}
               onClick={() => navigateTo(key)}
-              className={`px-3 sm:px-4 py-2 rounded-t-lg font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap flex-shrink-0 text-sm ${activeTab === key ? 'bg-gray-50 text-indigo-800' : 'bg-white/10 text-blue-100 hover:bg-white/20'}`}
+              className={`px-2.5 sm:px-4 py-2 rounded-t-lg font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap flex-shrink-0 text-sm ${activeTab === key ? 'bg-gray-50 text-indigo-800' : 'bg-white/10 text-blue-100 hover:bg-white/20'}`}
             >
-              {icon} {t(`tabs.${key}`, key)}
+              {icon}
+              <span className="sm:hidden">{t(`tabs.${key}Short`, t(`tabs.${key}`, key))}</span>
+              <span className="hidden sm:inline">{t(`tabs.${key}`, key)}</span>
             </button>
           ))}
         </div>

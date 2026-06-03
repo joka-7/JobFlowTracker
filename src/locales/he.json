@@ -52,10 +52,15 @@
   },
   "tabs": {
     "board": "לוח סטטוסים",
+    "boardShort": "לוח",
     "list": "רשימה ועריכה",
+    "listShort": "רשימה",
     "timeline": "ציר זמן",
+    "timelineShort": "ציר",
     "calendar": "לוח שנה",
-    "stats": "סטטיסטיקות"
+    "calendarShort": "יומן",
+    "stats": "סטטיסטיקות",
+    "statsShort": "סטטיסטיקה"
   },
   "calendar": {
     "today": "היום",

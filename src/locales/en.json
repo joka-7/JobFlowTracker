@@ -52,10 +52,15 @@
   },
   "tabs": {
     "board": "Status Board",
+    "boardShort": "Board",
     "list": "List & Edit",
+    "listShort": "List",
     "timeline": "Timeline",
+    "timelineShort": "Timeline",
     "calendar": "Calendar",
-    "stats": "Statistics"
+    "calendarShort": "Calendar",
+    "stats": "Statistics",
+    "statsShort": "Stats"
   },
   "calendar": {
     "today": "Today",
