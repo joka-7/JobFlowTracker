@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/joka-7/JobFlowTracker/main/public/github-repo-icon.png" alt="JobFlow Tracker" width="128" height="128" />
+</p>
+
 # JobFlowTracker
 
 Personal **job search**, **recruiter pipeline**, and **task management** tracker with AI assistance, kanban board, multi-language (EN/עב/FR), Firebase sync, and offline backup.
