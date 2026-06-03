@@ -213,10 +213,6 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
       if (firebaseUser) {
         setSyncing(true);
         try {
-          const profile = await loadUserProfile(firebaseUser.uid);
-          if (profile.appMode && profile.appMode !== mode) {
-            localStorage.setItem('appMode', profile.appMode);
-          }
           await saveUserProfile(firebaseUser.uid, { appMode: mode });
           const data = await loadAllItems(firebaseUser.uid, mode);
           if (data && data.length > 0) {
