@@ -13,10 +13,14 @@ const { mockIsAIReady, mockStreamChat } = vi.hoisted(() => ({
   }),
 }));
 
-vi.mock('../services/aiAssistant', () => ({
-  isAIReady: mockIsAIReady,
-  streamChat: mockStreamChat,
-}));
+vi.mock('../services/aiAssistant', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    isAIReady: mockIsAIReady,
+    streamChat: mockStreamChat,
+  };
+});
 
 const t = (key, fallback) => fallback || key;
 

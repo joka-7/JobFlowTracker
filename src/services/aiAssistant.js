@@ -184,13 +184,52 @@ async function streamAnthropic(apiKey, model, prompt, onChunk) {
   return full;
 }
 
+/**
+ * Build a provider-safe chat history from UI messages.
+ * Ensures user-first ordering (required by Anthropic/Gemini) and strict alternation.
+ */
+export function buildApiMessages(uiMessages, { appendSimBegin = false } = {}) {
+  let msgs = (Array.isArray(uiMessages) ? uiMessages : [])
+    .map(({ role, content }) => ({
+      role: role === 'assistant' ? 'assistant' : 'user',
+      content: String(content ?? '').trim(),
+    }))
+    .filter(m => m.content.length > 0);
+
+  if (appendSimBegin) {
+    msgs = [...msgs, { role: 'user', content: 'begin' }];
+  } else if (msgs.length > 0 && msgs[0].role === 'assistant') {
+    msgs = [{ role: 'user', content: 'begin' }, ...msgs];
+  }
+
+  const out = [];
+  for (const msg of msgs) {
+    const last = out[out.length - 1];
+    if (last && last.role === msg.role) {
+      last.content = `${last.content}\n\n${msg.content}`;
+    } else {
+      out.push({ ...msg });
+    }
+  }
+  return out.length > 0 ? out : [{ role: 'user', content: 'begin' }];
+}
+
 // Multi-turn chat streaming
 export async function streamChat(messages, systemPrompt, onChunk) {
   const { provider, apiKey, model, ollamaUrl } = config;
+  const apiMessages = buildApiMessages(messages);
+  const emit = (text) => onChunk(String(text ?? ''));
+
+  if (!provider || !PROVIDERS[provider]) {
+    throw new Error(`Unknown AI provider: ${provider || '(not set)'}`);
+  }
+  if (!apiKey && provider !== 'ollama') {
+    throw new Error('API key is not configured');
+  }
 
   if (provider === 'gemini') {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
-    const contents = messages.map(m => ({
+    const contents = apiMessages.map(m => ({
       role: m.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: m.content }],
     }));
@@ -212,7 +251,7 @@ export async function streamChat(messages, systemPrompt, onChunk) {
       const lines = buf.split('\n'); buf = lines.pop();
       for (const line of lines) {
         if (!line.startsWith('data: ')) continue;
-        try { const t = JSON.parse(line.slice(6)).candidates?.[0]?.content?.parts?.[0]?.text; if (t) { full += t; onChunk(full); } } catch { /* skip */ }
+        try { const t = JSON.parse(line.slice(6)).candidates?.[0]?.content?.parts?.[0]?.text; if (t) { full += t; emit(full); } } catch { /* skip */ }
       }
     }
     return full;
@@ -223,12 +262,12 @@ export async function streamChat(messages, systemPrompt, onChunk) {
     const stream = await client.messages.stream({
       model, max_tokens: 1024,
       ...(systemPrompt ? { system: systemPrompt } : {}),
-      messages,
+      messages: apiMessages,
     });
     let full = '';
     for await (const chunk of stream) {
       if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-        full += chunk.delta.text; onChunk(full);
+        full += chunk.delta.text; emit(full);
       }
     }
     return full;
@@ -240,7 +279,7 @@ export async function streamChat(messages, systemPrompt, onChunk) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model,
-        messages: systemPrompt ? [{ role: 'system', content: systemPrompt }, ...messages] : messages,
+        messages: systemPrompt ? [{ role: 'system', content: systemPrompt }, ...apiMessages] : apiMessages,
         stream: true,
       }),
     });
@@ -255,7 +294,7 @@ export async function streamChat(messages, systemPrompt, onChunk) {
       const lines = buf.split('\n'); buf = lines.pop();
       for (const line of lines) {
         if (!line.trim()) continue;
-        try { const t = JSON.parse(line).message?.content; if (t) { full += t; onChunk(full); } } catch { /* skip */ }
+        try { const t = JSON.parse(line).message?.content; if (t) { full += t; emit(full); } } catch { /* skip */ }
       }
     }
     return full;
@@ -266,8 +305,8 @@ export async function streamChat(messages, systemPrompt, onChunk) {
   return streamOpenAICompat(
     urls[provider],
     apiKey,
-    { model, messages: systemPrompt ? [{ role: 'system', content: systemPrompt }, ...messages] : messages },
-    onChunk,
+    { model, messages: systemPrompt ? [{ role: 'system', content: systemPrompt }, ...apiMessages] : apiMessages },
+    emit,
   );
 }
 

@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Search, Copy, Check } from 'lucide-react';
 import { TEMPLATES } from '../data/interviewTemplates';
 import { TASK_TEMPLATES } from '../data/taskTemplates';
+import { getLocalizedQuestions, getLocalizedCategoryLabel } from '../utils/templateQuestions';
 
 const COLOR_MAP = {
   blue:   { pill: 'bg-blue-100 text-blue-800 border-blue-200',   active: 'bg-blue-600 text-white border-blue-600'   },
@@ -38,12 +40,27 @@ function CopyButton({ text, label, copiedLabel }) {
   );
 }
 
-export default function TemplateLibrary({ t, onClose, onStartSimulation, isRecruiter, libraryMode }) {
+export default function TemplateLibrary({ t: tProp, onClose, onStartSimulation, isRecruiter, libraryMode }) {
+  const { t: tI18n, i18n } = useTranslation();
+  const t = tProp || tI18n;
   const isTasks = libraryMode === 'tasks';
   const templates = isTasks ? TASK_TEMPLATES : TEMPLATES;
   const categoryKeys = Object.keys(templates);
   const [activeCategory, setActiveCategory] = useState(categoryKeys[0]);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const localizedTemplates = useMemo(() => {
+    const out = {};
+    categoryKeys.forEach((key) => {
+      const cat = templates[key];
+      out[key] = {
+        ...cat,
+        label: getLocalizedCategoryLabel(t, isTasks, key, cat.label),
+        questions: getLocalizedQuestions(t, isTasks, key, cat.questions),
+      };
+    });
+    return out;
+  }, [t, i18n.language, isTasks, templates, categoryKeys]);
 
   const isSearching = searchQuery.trim().length > 0;
 
@@ -52,17 +69,23 @@ export default function TemplateLibrary({ t, onClose, onStartSimulation, isRecru
     const q = searchQuery.trim().toLowerCase();
     const results = [];
     categoryKeys.forEach((key) => {
-      const cat = templates[key];
+      const cat = localizedTemplates[key];
       cat.questions.forEach((question) => {
         if (question.toLowerCase().includes(q)) {
-          results.push({ question, categoryKey: key, categoryLabel: cat.label, categoryIcon: cat.icon, color: cat.color });
+          results.push({
+            question,
+            categoryKey: key,
+            categoryLabel: cat.label,
+            categoryIcon: cat.icon,
+            color: cat.color,
+          });
         }
       });
     });
     return results;
-  }, [searchQuery]);
+  }, [searchQuery, localizedTemplates, categoryKeys, isSearching]);
 
-  const activeTemplate = templates[activeCategory];
+  const activeTemplate = localizedTemplates[activeCategory];
 
   const copyLabel = t('templates.copy', 'Copy');
   const copiedLabel = t('templates.copied', 'Copied!');
@@ -110,7 +133,7 @@ export default function TemplateLibrary({ t, onClose, onStartSimulation, isRecru
           {!isSearching && (
             <aside className="w-44 flex-shrink-0 border-r border-gray-100 py-4 px-3 overflow-y-auto bg-gray-50 space-y-1">
               {categoryKeys.map((key) => {
-                const cat = templates[key];
+                const cat = localizedTemplates[key];
                 const colors = COLOR_MAP[cat.color] || COLOR_MAP.indigo;
                 const isActive = activeCategory === key;
                 return (
@@ -122,21 +145,24 @@ export default function TemplateLibrary({ t, onClose, onStartSimulation, isRecru
                       }`}
                     >
                       <span>{cat.icon}</span>
-                      <span className="leading-tight">{t(
-                        isTasks ? `templates.taskCategories.${key}` : `templates.categories.${key}`,
-                        cat.label,
-                      )}</span>
+                      <span className="leading-tight">{cat.label}</span>
                     </button>
-                    {isActive && onStartSimulation && !isTasks && (
+                    {isActive && onStartSimulation && (
                       <button
                         onClick={() => onStartSimulation(key)}
                         className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all text-white flex items-center gap-1.5 ${
-                          isRecruiter
-                            ? 'bg-amber-500 hover:bg-amber-600 border-amber-500'
-                            : 'bg-indigo-600 hover:bg-indigo-700 border-indigo-600'
+                          isTasks
+                            ? 'bg-emerald-600 hover:bg-emerald-700 border-emerald-600'
+                            : isRecruiter
+                              ? 'bg-amber-500 hover:bg-amber-600 border-amber-500'
+                              : 'bg-indigo-600 hover:bg-indigo-700 border-indigo-600'
                         }`}
                       >
-                        🎭 {isRecruiter ? t('templates.practiceButtonRecruiter', 'Practice conducting') : t('templates.practiceButton', 'Mock interview')}
+                        🎭 {isTasks
+                          ? t('templates.practiceButtonTasks', 'Practice with AI coach')
+                          : isRecruiter
+                            ? t('templates.practiceButtonRecruiter', 'Practice conducting')
+                            : t('templates.practiceButton', 'Mock interview')}
                       </button>
                     )}
                   </div>
@@ -149,7 +175,9 @@ export default function TemplateLibrary({ t, onClose, onStartSimulation, isRecru
           <main className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
             {isSearching ? (
               searchResults.length === 0 ? (
-                <div className="text-center text-gray-400 py-12 text-sm">No questions match your search.</div>
+                <div className="text-center text-gray-400 py-12 text-sm">
+                  {t('templates.noSearchResults', 'No questions match your search.')}
+                </div>
               ) : (
                 searchResults.map(({ question, categoryKey, categoryLabel, categoryIcon, color }, i) => {
                   const colors = COLOR_MAP[color] || COLOR_MAP.indigo;
@@ -161,10 +189,7 @@ export default function TemplateLibrary({ t, onClose, onStartSimulation, isRecru
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-gray-800 leading-snug">{question}</p>
                         <span className={`inline-block mt-1.5 text-[11px] px-2 py-0.5 rounded-full font-semibold border ${colors.pill}`}>
-                          {categoryIcon} {t(
-                            isTasks ? `templates.taskCategories.${categoryKey}` : `templates.categories.${categoryKey}`,
-                            categoryLabel,
-                          )}
+                          {categoryIcon} {categoryLabel}
                         </span>
                       </div>
                       <CopyButton text={question} label={copyLabel} copiedLabel={copiedLabel} />
@@ -176,18 +201,25 @@ export default function TemplateLibrary({ t, onClose, onStartSimulation, isRecru
               <>
                 <div className="flex items-center justify-between mb-3 px-1">
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                    {activeTemplate.icon} {t(
-                      isTasks ? `templates.taskCategories.${activeCategory}` : `templates.categories.${activeCategory}`,
-                      activeTemplate.label,
-                    )}
+                    {activeTemplate.icon} {activeTemplate.label}
                     <span className="ml-2 font-normal normal-case">({activeTemplate.questions.length})</span>
                   </p>
                   {onStartSimulation && (
                     <button
                       onClick={() => onStartSimulation(activeCategory)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors"
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-white text-xs font-bold rounded-lg transition-colors ${
+                        isTasks
+                          ? 'bg-emerald-600 hover:bg-emerald-700'
+                          : isRecruiter
+                            ? 'bg-amber-500 hover:bg-amber-600'
+                            : 'bg-indigo-600 hover:bg-indigo-700'
+                      }`}
                     >
-                      🎭 {isRecruiter ? t('templates.practiceButtonRecruiter', 'Practice conducting') : t('templates.practiceButton', 'Mock interview')}
+                      🎭 {isTasks
+                        ? t('templates.practiceButtonTasks', 'Practice with AI coach')
+                        : isRecruiter
+                          ? t('templates.practiceButtonRecruiter', 'Practice conducting')
+                          : t('templates.practiceButton', 'Mock interview')}
                     </button>
                   )}
                 </div>

@@ -4,8 +4,14 @@ import {
   Plus, Search, Download, Upload, Layout, List, BarChart2,
   Trash2, Edit2, ArrowLeft, ArrowRight, CheckCircle2, CheckCircle, Circle,
   Clock, AlertCircle, ChevronDown, Calendar, Cloud, CloudOff,
-  ClipboardList, X, GripVertical, Languages, MoreVertical, Settings, Smartphone,
+  ClipboardList, X, GripVertical, Languages, MoreVertical, Settings, Smartphone, Sparkles,
 } from 'lucide-react';
+import { initAI } from './services/aiAssistant';
+import { TASK_TEMPLATES } from './data/taskTemplates';
+import {
+  getLocalizedQuestions, getLocalizedCategoryLabel, formatQuestionList,
+} from './utils/templateQuestions';
+import ChatModal from './components/ChatModal';
 import {
   signInWithGoogle, signOut, onAuthChange, loadAllItems,
   updateItem, deleteItem, batchSaveItems, loadUserProfile, saveUserProfile,
@@ -15,6 +21,7 @@ import ModeSwitcher from './components/ModeSwitcher';
 import CalendarView from './components/CalendarView';
 import TemplateLibrary from './components/TemplateLibrary';
 import APIKeySettings from './components/APIKeySettings';
+import { usePwaInstall } from './usePwaInstall';
 
 const MODE = 'tasks';
 
@@ -91,6 +98,7 @@ export default function TasksApp({ onModeChange }) {
   const lang = i18n.language;
 
   const tt = (key, fb) => t(`tasks.${key}`, fb);
+  const BackArrow = isRTL ? ArrowRight : ArrowLeft;
 
   const [tasks, setTasks] = useState(() => {
     try {
@@ -118,8 +126,9 @@ export default function TasksApp({ onModeChange }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showAISettings, setShowAISettings] = useState(false);
-  const [installPrompt, setInstallPrompt] = useState(null);
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [simulationData, setSimulationData] = useState(null);
+  const { canInstall, runInstall } = usePwaInstall();
 
   const dragTaskId = useRef(null);
   const fileInputRef = useRef(null);
@@ -141,9 +150,11 @@ export default function TasksApp({ onModeChange }) {
   }, [tasks]);
 
   useEffect(() => {
-    const handler = (e) => { e.preventDefault(); setInstallPrompt(e); };
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    const provider = localStorage.getItem('aiProvider') || 'gemini';
+    const apiKey = localStorage.getItem('aiApiKey') || localStorage.getItem('anthropicApiKey') || '';
+    const model = localStorage.getItem('aiModel') || '';
+    const ollamaUrl = localStorage.getItem('ollamaUrl') || 'http://localhost:11434';
+    initAI(provider, apiKey, model, ollamaUrl);
   }, []);
 
   useEffect(() => {
@@ -356,6 +367,41 @@ export default function TasksApp({ onModeChange }) {
 
   const selectedTask = selectedId ? tasks.find(t => t.id === selectedId) : null;
 
+  const handleSaveToTask = useCallback((taskId, text) => {
+    setTasks(prev => prev.map(t => {
+      if (t.id !== taskId) return t;
+      const merged = { ...t, notes: t.notes ? `${t.notes}\n\n---\n${text}` : text };
+      if (user) updateItem(user.uid, MODE, merged).catch(() => {});
+      return merged;
+    }));
+  }, [user]);
+
+  const handleStartSimulation = useCallback((categoryKey) => {
+    const cat = TASK_TEMPLATES[categoryKey];
+    if (!cat) return;
+    const label = getLocalizedCategoryLabel(t, true, categoryKey, cat.label);
+    const questions = getLocalizedQuestions(t, true, categoryKey, cat.questions);
+    const questionList = formatQuestionList(questions);
+    const taskCtx = selectedTask
+      ? `The user is working on task "${selectedTask.name}" (status: ${selectedTask.status}${selectedTask.dueDate ? `, due ${selectedTask.dueDate}` : ''}).`
+      : 'No specific task is selected — general task-management practice.';
+    const systemPrompt = `You are a supportive productivity coach running a ${label} coaching session.
+${taskCtx}
+
+Work through these prompts one at a time:
+${questionList}
+
+Rules:
+- Ask ONE prompt at a time
+- After the user responds, reflect in 2-3 sentences and suggest one concrete next action
+- Then move to the next prompt
+- Keep tone practical and encouraging
+- When the user says "begin", welcome them briefly and ask prompt 1`;
+
+    setSimulationData({ systemPrompt, title: `${cat.icon} ${label}` });
+    setShowTemplates(false);
+  }, [selectedTask, t]);
+
   const filteredTasks = useMemo(() => {
     let result = tasks;
     if (statusFilter !== 'all') result = result.filter(t => t.status === statusFilter);
@@ -422,13 +468,13 @@ export default function TasksApp({ onModeChange }) {
   };
 
   const renderBoard = () => (
-    <div className="flex-1 overflow-x-auto overflow-y-hidden p-4 bg-slate-50 min-h-0">
+    <div className="flex-1 overflow-y-auto overflow-x-hidden sm:overflow-x-auto sm:overflow-y-hidden p-3 sm:p-4 bg-slate-50 min-h-0 flex flex-col sm:flex-row gap-3 sm:gap-4">
       {tasks.length === 0 ? (
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center max-w-sm">
-            <ClipboardList className="mx-auto text-gray-300 mb-4" size={64} />
-            <h2 className="text-2xl font-bold text-gray-700 mb-2">{tt('board.emptyTitle', 'Welcome to Task Manager')}</h2>
-            <p className="text-gray-500 mb-6">{tt('board.emptyDesc', 'Add your first task to get started.')}</p>
+        <div className="flex items-center justify-center flex-1 min-h-[200px]">
+          <div className="text-center max-w-sm px-4">
+            <ClipboardList className="mx-auto text-gray-300 mb-4" size={48} />
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-700 mb-2">{tt('board.emptyTitle', 'Welcome to Task Manager')}</h2>
+            <p className="text-sm text-gray-500 mb-6">{tt('board.emptyDesc', 'Add your first task to get started.')}</p>
             <button
               onClick={openNewForm}
               className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-emerald-700 transition-colors"
@@ -438,25 +484,26 @@ export default function TasksApp({ onModeChange }) {
           </div>
         </div>
       ) : (
-        <div className="flex gap-4 h-full min-w-max pb-4">
+        <>
           {STATUSES_TASKS.map(status => {
             const columnTasks = tasks.filter(t => t.status === status.id);
+            if (columnTasks.length === 0) return null;
             return (
               <div
                 key={status.id}
-                className="flex flex-col w-72 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+                className="board-column w-full sm:w-72 sm:flex-shrink-0 flex flex-col sm:h-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
                 onDragOver={handleDragOver}
                 onDrop={() => handleDrop(status.id)}
               >
-                <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-b border-gray-100 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-2">
                     <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold border ${status.color}`}>
                       {tt(`status.${status.id}`, status.id)}
                     </span>
-                    <span className="text-gray-400 text-sm font-medium">{columnTasks.length}</span>
+                    <span className="text-gray-400 text-xs sm:text-sm font-medium">{columnTasks.length}</span>
                   </div>
                 </div>
-                <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scrollbar">
+                <div className="p-2 sm:p-3 space-y-2 sm:space-y-3 sm:flex-1 sm:overflow-y-auto sm:custom-scrollbar">
                   {columnTasks.map(task => {
                     const prog = getProgress(task);
                     const next = getNextPendingStep(task);
@@ -466,11 +513,11 @@ export default function TasksApp({ onModeChange }) {
                         draggable
                         onDragStart={() => handleDragStart(task.id)}
                         onClick={() => navigateTo('list', task.id)}
-                        className="bg-white border border-gray-200 rounded-xl p-3 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all group"
+                        className="bg-white border border-gray-200 rounded-xl p-2.5 sm:p-3 cursor-pointer hover:shadow-md hover:border-emerald-300 active:bg-emerald-50/50 transition-all group"
                       >
                         <div className="flex items-start justify-between gap-2 mb-1">
-                          <p className="font-semibold text-gray-800 text-sm leading-snug flex-1">{safeStr(task.name)}</p>
-                          <GripVertical size={14} className="text-gray-300 shrink-0 mt-0.5 group-hover:text-gray-400" />
+                          <p className="font-semibold text-gray-800 text-xs sm:text-sm leading-snug flex-1">{safeStr(task.name)}</p>
+                          <GripVertical size={14} className="text-gray-300 shrink-0 mt-0.5 group-hover:text-gray-400 hidden sm:block" />
                         </div>
                         {task.priority && (
                           <span className={`inline-block text-xs px-1.5 py-0.5 rounded border font-medium ${PRIORITY_COLORS[task.priority]}`}>
@@ -497,7 +544,7 @@ export default function TasksApp({ onModeChange }) {
               </div>
             );
           })}
-        </div>
+        </>
       )}
     </div>
   );
@@ -564,8 +611,8 @@ export default function TasksApp({ onModeChange }) {
     if (isEditing) {
       const steps = formData.steps || [];
       return (
-        <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
-          <h2 className="text-lg font-bold text-gray-800 mb-5">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-5 custom-scrollbar">
+          <h2 className="text-base sm:text-lg font-bold text-gray-800 mb-4 sm:mb-5">
             {formData.id ? tt('form.editTitle', 'Edit Task') : tt('form.addTitle', 'Add New Task')}
           </h2>
           <div className="space-y-4">
@@ -714,10 +761,10 @@ export default function TasksApp({ onModeChange }) {
     const statusDef = STATUSES_TASKS.find(s => s.id === task.status);
 
     return (
-      <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
-        <div className="flex items-start justify-between gap-3 mb-4">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-5 custom-scrollbar">
+        <div className="flex items-start justify-between gap-2 sm:gap-3 mb-3 sm:mb-4">
           <div className="flex-1 min-w-0">
-            <h2 className="text-xl font-bold text-gray-800 leading-tight">{safeStr(task.name)}</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-gray-800 leading-tight">{safeStr(task.name)}</h2>
             <div className="flex flex-wrap items-center gap-2 mt-2">
               {statusDef && (
                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${statusDef.color}`}>
@@ -790,11 +837,12 @@ export default function TasksApp({ onModeChange }) {
   const renderList = () => {
     const visible = filteredTasks.slice(0, visibleCount);
     const remaining = filteredTasks.length - visible.length;
+    const showDetailOnMobile = selectedId || isEditing;
 
     return (
       <div className="flex-1 flex min-h-0 overflow-hidden">
-        <div className={`w-72 shrink-0 flex flex-col border-gray-200 ${isRTL ? 'border-l' : 'border-r'} bg-white`}>
-          <div className="p-3 border-b border-gray-100 space-y-2">
+        <div className={`w-full md:w-72 shrink-0 flex flex-col border-gray-200 ${isRTL ? 'border-l' : 'border-r'} bg-white ${showDetailOnMobile ? 'hidden md:flex' : 'flex'}`}>
+          <div className="p-2 sm:p-3 border-b border-gray-100 space-y-2">
             <div className="relative">
               <Search size={14} className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-gray-400`} />
               <input
@@ -830,9 +878,9 @@ export default function TasksApp({ onModeChange }) {
                     <button
                       key={task.id}
                       onClick={() => { setSelectedId(task.id); setIsEditing(false); }}
-                      className={`w-full text-left px-4 py-3 border-b border-gray-50 hover:bg-emerald-50 transition-colors ${isSelected ? 'bg-emerald-50 border-r-2 border-r-emerald-500' : ''}`}
+                      className={`w-full text-left px-3 sm:px-4 py-3 min-h-[52px] border-b border-gray-50 hover:bg-emerald-50 active:bg-emerald-100 transition-colors ${isSelected ? 'bg-emerald-50 border-r-2 border-r-emerald-500' : ''}`}
                     >
-                      <p className="font-semibold text-gray-800 text-sm truncate">{safeStr(task.name)}</p>
+                      <p className="font-semibold text-gray-800 text-xs sm:text-sm truncate">{safeStr(task.name)}</p>
                       <div className="flex items-center gap-2 mt-1">
                         {statusDef && (
                           <span className={`text-xs px-1.5 py-0.5 rounded border font-medium ${statusDef.color}`}>
@@ -858,15 +906,28 @@ export default function TasksApp({ onModeChange }) {
             )}
           </div>
         </div>
-        {renderDetailPanel()}
+        <div className={`flex-1 flex flex-col min-h-0 bg-slate-50 ${!showDetailOnMobile ? 'hidden md:flex' : 'flex'}`}>
+          {showDetailOnMobile && (
+            <div className="md:hidden sticky top-0 bg-white/90 backdrop-blur-sm p-2.5 border-b border-gray-200 z-10 shrink-0">
+              <button
+                type="button"
+                onClick={() => { setSelectedId(null); setIsEditing(false); }}
+                className="flex items-center gap-2 text-emerald-700 font-bold text-sm"
+              >
+                <BackArrow size={18} /> {tt('list.backToList', 'Back to List')}
+              </button>
+            </div>
+          )}
+          {renderDetailPanel()}
+        </div>
       </div>
     );
   };
 
   const renderStats = () => (
-    <div className="flex-1 overflow-y-auto p-6 bg-slate-50 min-h-0 custom-scrollbar">
-      <div className="max-w-3xl mx-auto space-y-6">
-        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+    <div className="flex-1 overflow-y-auto p-3 sm:p-6 bg-slate-50 min-h-0 custom-scrollbar">
+      <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
           <BarChart2 className="text-emerald-600" /> {tt('stats.title', 'Statistics')}
         </h2>
 
@@ -877,9 +938,9 @@ export default function TasksApp({ onModeChange }) {
             { label: tt('stats.completed', 'Completed'), value: stats.completed, color: 'text-green-600' },
             { label: tt('stats.doneSteps', 'Steps Done'), value: `${stats.doneSteps}/${stats.totalSteps}`, color: 'text-purple-600' },
           ].map(card => (
-            <div key={card.label} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 text-center">
-              <div className={`text-3xl font-black mb-1 ${card.color}`}>{card.value}</div>
-              <div className="text-sm text-gray-500 font-medium">{card.label}</div>
+            <div key={card.label} className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-5 text-center">
+              <div className={`text-2xl sm:text-3xl font-black mb-1 ${card.color}`}>{card.value}</div>
+              <div className="text-xs sm:text-sm text-gray-500 font-medium">{card.label}</div>
             </div>
           ))}
         </div>
@@ -941,13 +1002,13 @@ export default function TasksApp({ onModeChange }) {
     <div className="flex flex-col h-screen bg-white" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
       <header className={`bg-gradient-to-r ${isRTL ? 'from-emerald-700 to-green-600' : 'from-green-600 to-emerald-700'} text-white shadow-md flex-shrink-0`}>
-        <div className="px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
-              <ClipboardList size={24} className="text-white" />
+        <div className="px-3 sm:px-6 py-3 sm:py-4 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+            <div className="bg-white/20 p-1.5 sm:p-2 rounded-lg backdrop-blur-sm shrink-0">
+              <ClipboardList size={20} className="text-white sm:w-6 sm:h-6" />
             </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-xl font-bold tracking-tight flex items-center gap-2 flex-wrap">
                 {tt('header.title', 'Task Manager')}
                 {tasks.length > 0 && (
                   <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 transition-all ${isSaved ? 'bg-green-500/20 text-green-100' : 'bg-yellow-500/50 text-yellow-50'}`}>
@@ -956,7 +1017,7 @@ export default function TasksApp({ onModeChange }) {
                   </span>
                 )}
               </h1>
-              <p className="text-green-100 text-sm">{tt('header.subtitle', 'Manage your tasks and track progress')}</p>
+              <p className="text-green-100 text-xs sm:text-sm truncate hidden sm:block">{tt('header.subtitle', 'Manage your tasks and track progress')}</p>
             </div>
           </div>
 
@@ -986,6 +1047,18 @@ export default function TasksApp({ onModeChange }) {
 
             {onModeChange && (
               <ModeSwitcher currentMode={MODE} onModeChange={onModeChange} />
+            )}
+
+            {canInstall && (
+              <button
+                type="button"
+                onClick={() => runInstall(t)}
+                className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs sm:text-sm font-bold bg-white text-emerald-700 shadow-sm min-h-[40px] transition-colors hover:bg-green-50 active:bg-green-100 shrink-0"
+                title={t('header.installApp')}
+              >
+                <Smartphone size={16} className="shrink-0" />
+                <span className="hidden sm:inline">{t('header.installApp')}</span>
+              </button>
             )}
 
             {/* Desktop controls */}
@@ -1065,25 +1138,13 @@ export default function TasksApp({ onModeChange }) {
                     <button onClick={() => { setShowAISettings(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <Settings size={16} className="text-gray-500" /> {t('header.aiSettings', 'AI Settings')}
                     </button>
-                    {installPrompt && (
+                    {canInstall && (
                       <button
-                        onClick={async () => {
-                          installPrompt.prompt();
-                          const { outcome } = await installPrompt.userChoice;
-                          if (outcome === 'accepted') setInstallPrompt(null);
-                          setMobileMenuOpen(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-indigo-700 hover:bg-indigo-50 active:bg-indigo-100 border-t border-gray-100"
+                        type="button"
+                        onClick={() => { runInstall(t); setMobileMenuOpen(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-emerald-700 hover:bg-emerald-50 active:bg-emerald-100 border-t border-gray-100"
                       >
-                        <Smartphone size={16} className="text-indigo-600" /> {t('header.installApp', 'Install App')}
-                      </button>
-                    )}
-                    {isIOS && !installPrompt && (
-                      <button
-                        onClick={() => { alert(t('header.iosInstallHint', 'Tap the Share button (□↑) in Safari, then "Add to Home Screen"')); setMobileMenuOpen(false); }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-indigo-700 hover:bg-indigo-50 active:bg-indigo-100 border-t border-gray-100"
-                      >
-                        <Smartphone size={16} className="text-indigo-600" /> {t('header.installApp', 'Install App')}
+                        <Smartphone size={16} className="text-emerald-600" /> {t('header.installApp')}
                       </button>
                     )}
                   </div>
@@ -1094,14 +1155,16 @@ export default function TasksApp({ onModeChange }) {
         </div>
 
         {/* Tab bar */}
-        <div className="flex px-6 gap-2 mt-2">
+        <div className="flex px-2 sm:px-6 gap-0.5 sm:gap-2 mt-2 overflow-x-auto scrollbar-none">
           {TABS.map(({ id, icon: Icon, label }) => (
             <button
               key={id}
+              type="button"
               onClick={() => navigateTo(id)}
-              className={`px-4 py-2 rounded-t-lg font-medium flex items-center gap-2 transition-colors ${activeTab === id ? 'bg-gray-50 text-emerald-800' : 'bg-white/10 text-green-100 hover:bg-white/20'}`}
+              className={`px-2.5 sm:px-4 py-2 rounded-t-lg font-medium flex items-center gap-1 sm:gap-2 transition-colors whitespace-nowrap flex-shrink-0 text-xs sm:text-sm ${activeTab === id ? 'bg-gray-50 text-emerald-800' : 'bg-white/10 text-green-100 hover:bg-white/20'}`}
             >
-              <Icon size={16} /> {label}
+              <Icon size={15} className="shrink-0" />
+              <span className="hidden min-[380px]:inline">{label}</span>
             </button>
           ))}
         </div>
@@ -1139,7 +1202,46 @@ export default function TasksApp({ onModeChange }) {
           t={t}
           libraryMode="tasks"
           onClose={() => setShowTemplates(false)}
+          onStartSimulation={handleStartSimulation}
         />
+      )}
+
+      {chatOpen && !simulationData && (
+        <ChatModal
+          t={t}
+          variant="tasks"
+          task={selectedTask}
+          language={lang}
+          onClose={() => setChatOpen(false)}
+          onOpenSettings={() => { setChatOpen(false); setShowAISettings(true); }}
+          onSaveToTask={selectedTask ? handleSaveToTask : null}
+        />
+      )}
+
+      {simulationData && (
+        <ChatModal
+          t={t}
+          variant="tasks"
+          task={selectedTask}
+          language={lang}
+          systemPromptOverride={simulationData.systemPrompt}
+          simulationTitle={simulationData.title}
+          autoStart={true}
+          onClose={() => setSimulationData(null)}
+          onOpenSettings={() => { setSimulationData(null); setShowAISettings(true); }}
+          onSaveToTask={selectedTask ? handleSaveToTask : null}
+        />
+      )}
+
+      {!chatOpen && !simulationData && (
+        <button
+          type="button"
+          onClick={() => setChatOpen(true)}
+          title={t('chat.titleTasks', 'Task Coach')}
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 w-11 h-11 sm:w-12 sm:h-12 rounded-full shadow-lg flex items-center justify-center bg-gradient-to-br from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white hover:scale-110 transition-all"
+        >
+          <Sparkles size={20} />
+        </button>
       )}
     </div>
   );

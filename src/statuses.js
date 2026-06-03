@@ -101,7 +101,7 @@ const looksLikeJobseekerRecord = (item) => Boolean(
   item.linkedinHR || (Array.isArray(item.homeworks) && item.homeworks.length > 0),
 );
 
-/** Drop records that belong to another mode (e.g. after legacy storage bleed). */
+/** Hide job-search rows that bled into recruiter storage (e.g. shared "applied" status). */
 export function filterItemsForMode(items, mode) {
   if (!Array.isArray(items)) return [];
 
@@ -119,24 +119,23 @@ export function filterItemsForMode(items, mode) {
   return items.filter((item) => {
     if (!item || typeof item !== 'object') return false;
     const status = item.status;
+    const jobseekerShape = looksLikeJobseekerRecord(item);
+    const recruiterShape = looksLikeRecruiterRecord(item);
 
     if (mode === 'recruiter') {
       if (JOBSEEKER_ONLY_STATUSES.has(status)) return false;
+      if (jobseekerShape && !recruiterShape) return false;
       if (RECRUITER_ONLY_STATUSES.has(status)) return true;
-      if (SHARED_PIPELINE_STATUSES.has(status)) {
-        if (looksLikeJobseekerRecord(item) && !looksLikeRecruiterRecord(item)) return false;
-        return true;
-      }
-      return looksLikeRecruiterRecord(item);
+      // applied / rejected / withdrawn exist in both modes — require recruiter fields
+      if (SHARED_PIPELINE_STATUSES.has(status)) return recruiterShape;
+      return recruiterShape;
     }
 
     if (RECRUITER_ONLY_STATUSES.has(status)) return false;
+    if (recruiterShape && !jobseekerShape) return false;
     if (JOBSEEKER_ONLY_STATUSES.has(status)) return true;
-    if (SHARED_PIPELINE_STATUSES.has(status)) {
-      if (looksLikeRecruiterRecord(item) && !looksLikeJobseekerRecord(item)) return false;
-      return true;
-    }
-    return looksLikeJobseekerRecord(item) || !looksLikeRecruiterRecord(item);
+    if (SHARED_PIPELINE_STATUSES.has(status)) return jobseekerShape || !recruiterShape;
+    return jobseekerShape || !recruiterShape;
   });
 }
 

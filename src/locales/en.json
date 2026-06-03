@@ -44,7 +44,11 @@
     "aiSettings": "AI Settings",
     "shareTooltip": "Share read-only link",
     "viewOnly": "View only",
-    "viewOnlyDesc": "You are viewing a shared read-only snapshot."
+    "viewOnlyDesc": "You are viewing a shared read-only snapshot.",
+    "installApp": "Install App",
+    "iosInstallHint": "On iPhone/iPad: tap Share (□↑) in Safari, then \"Add to Home Screen\".",
+    "androidInstallHint": "Install works in Chrome on the live site (HTTPS). Open the ⋮ menu → \"Install app\" or \"Add to Home screen\".",
+    "chromeInstallHint": "In Chrome: tap ⋮ (top-right) → \"Install app\" or \"Add to Home screen\". Use the published https:// link (not localhost). If you don't see it, refresh once — the site must finish loading."
   },
   "tabs": {
     "board": "Status Board",
@@ -257,7 +261,11 @@
     "saveToNotes": "Save to notes",
     "saved": "Saved ✓",
     "simulationTitle": "Mock Interview",
-    "simulationEmpty": "Starting your mock interview..."
+    "simulationEmpty": "Starting your mock interview...",
+    "titleTasks": "Task Coach",
+    "coachingTitle": "AI Coaching",
+    "coachingEmpty": "Starting your coaching session...",
+    "taskGeneral": "General coaching"
   },
   "settings": {
     "title": "AI Settings",
@@ -297,6 +305,7 @@
     "footerTasks": "Use these prompts when planning, breaking down, or reviewing tasks.",
     "practiceButton": "Mock interview",
     "practiceButtonRecruiter": "Practice conducting",
+    "practiceButtonTasks": "Practice with AI coach",
     "categories": {
       "hr": "HR / Screening",
       "technical": "Technical",

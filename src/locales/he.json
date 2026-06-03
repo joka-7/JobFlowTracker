@@ -44,7 +44,11 @@
     "aiSettings": "הגדרות AI",
     "shareTooltip": "שתף קישור לצפייה בלבד",
     "viewOnly": "צפייה בלבד",
-    "viewOnlyDesc": "אתה צופה בתמונת מצב משותפת לקריאה בלבד."
+    "viewOnlyDesc": "אתה צופה בתמונת מצב משותפת לקריאה בלבד.",
+    "installApp": "התקנת אפליקציה",
+    "iosInstallHint": "ב-iPhone/iPad: הקש Share (□↑) ב-Safari, ואז «הוסף למסך הבית».",
+    "androidInstallHint": "התקנה עובדת ב-Chrome באתר החי (HTTPS). תפריט ⋮ → «התקן אפליקציה» או «הוסף למסך הבית».",
+    "chromeInstallHint": "ב-Chrome: ⋮ (למעלה מימין) → «התקן אפליקציה» או «הוסף למסך הבית». השתמשו בקישור https:// המפורסם (לא localhost). אם לא מופיע — רעננו את הדף."
   },
   "tabs": {
     "board": "לוח סטטוסים",
@@ -257,7 +261,11 @@
     "saveToNotes": "שמור להערות",
     "saved": "נשמר ✓",
     "simulationTitle": "ראיון מדומה",
-    "simulationEmpty": "מתחיל את הראיון המדומה..."
+    "simulationEmpty": "מתחיל את הראיון המדומה...",
+    "titleTasks": "מאמן משימות",
+    "coachingTitle": "אימון AI",
+    "coachingEmpty": "מתחיל את מפגש האימון...",
+    "taskGeneral": "אימון כללי"
   },
   "settings": {
     "title": "הגדרות AI",
@@ -297,6 +305,7 @@
     "footerTasks": "השתמש בשאלות אלה בעת תכנון, פירוק או סקירת משימות.",
     "practiceButton": "ראיון מדומה",
     "practiceButtonRecruiter": "תרגול ניהול ראיון",
+    "practiceButtonTasks": "תרגול עם מאמן AI",
     "categories": {
       "hr": "משאבי אנוש / סינון",
       "technical": "טכני",
