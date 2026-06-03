@@ -33,7 +33,7 @@ export default function ModeSwitcher({ currentMode, onModeChange }) {
             }`}
           >
             <Icon size={13} />
-            <span className="hidden sm:inline">{t(labelKey, short)}</span>
+            <span>{t(labelKey, short)}</span>
           </button>
         );
       })}

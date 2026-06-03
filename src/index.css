@@ -22,3 +22,25 @@ body {
   min-height: 100dvh;
   height: 100%;
 }
+
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 2px;
+}
