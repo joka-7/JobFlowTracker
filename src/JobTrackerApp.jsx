@@ -919,7 +919,13 @@ Rules:
         </div>
       )}
 
-      <header className={`bg-gradient-to-r ${isRecruiter ? (isRTL ? 'from-yellow-600 to-amber-500' : 'from-amber-500 to-yellow-600') : (isRTL ? 'from-indigo-800 to-blue-700' : 'from-blue-700 to-indigo-800')} text-white shadow-md flex-shrink-0`}>
+      <header className={`bg-gradient-to-r ${
+        mode === 'tasks'
+          ? (isRTL ? 'from-emerald-700 to-green-600' : 'from-green-600 to-emerald-700')
+          : isRecruiter
+            ? (isRTL ? 'from-yellow-600 to-amber-500' : 'from-amber-500 to-yellow-600')
+            : (isRTL ? 'from-indigo-800 to-blue-700' : 'from-blue-700 to-indigo-800')
+      } text-white shadow-md flex-shrink-0`}>
         <div className="px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
