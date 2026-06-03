@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { X, Search, Copy, Check } from 'lucide-react';
 import { TEMPLATES } from '../data/interviewTemplates';
+import { TASK_TEMPLATES } from '../data/taskTemplates';
 
 const COLOR_MAP = {
   blue:   { pill: 'bg-blue-100 text-blue-800 border-blue-200',   active: 'bg-blue-600 text-white border-blue-600'   },
@@ -37,8 +38,10 @@ function CopyButton({ text, label, copiedLabel }) {
   );
 }
 
-export default function TemplateLibrary({ t, onClose, onStartSimulation, isRecruiter }) {
-  const categoryKeys = Object.keys(TEMPLATES);
+export default function TemplateLibrary({ t, onClose, onStartSimulation, isRecruiter, libraryMode }) {
+  const isTasks = libraryMode === 'tasks';
+  const templates = isTasks ? TASK_TEMPLATES : TEMPLATES;
+  const categoryKeys = Object.keys(templates);
   const [activeCategory, setActiveCategory] = useState(categoryKeys[0]);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -49,7 +52,7 @@ export default function TemplateLibrary({ t, onClose, onStartSimulation, isRecru
     const q = searchQuery.trim().toLowerCase();
     const results = [];
     categoryKeys.forEach((key) => {
-      const cat = TEMPLATES[key];
+      const cat = templates[key];
       cat.questions.forEach((question) => {
         if (question.toLowerCase().includes(q)) {
           results.push({ question, categoryKey: key, categoryLabel: cat.label, categoryIcon: cat.icon, color: cat.color });
@@ -59,7 +62,7 @@ export default function TemplateLibrary({ t, onClose, onStartSimulation, isRecru
     return results;
   }, [searchQuery]);
 
-  const activeTemplate = TEMPLATES[activeCategory];
+  const activeTemplate = templates[activeCategory];
 
   const copyLabel = t('templates.copy', 'Copy');
   const copiedLabel = t('templates.copied', 'Copied!');
@@ -69,11 +72,15 @@ export default function TemplateLibrary({ t, onClose, onStartSimulation, isRecru
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden max-h-[90vh]">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-indigo-600 to-blue-600 text-white flex-shrink-0">
+        <div className={`flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r text-white flex-shrink-0 ${
+          isTasks ? 'from-emerald-600 to-green-600' : isRecruiter ? 'from-amber-500 to-yellow-500' : 'from-indigo-600 to-blue-600'
+        }`}>
           <h2 className="text-lg font-bold tracking-tight flex items-center gap-2">
-            📚 {isRecruiter
-              ? t('templates.titleRecruiter', 'Candidate Interview Guide')
-              : t('templates.title', 'Interview Template Library')}
+            📚 {isTasks
+              ? t('templates.titleTasks', 'Task Planning Prompts')
+              : isRecruiter
+                ? t('templates.titleRecruiter', 'Candidate Interview Guide')
+                : t('templates.title', 'Interview Template Library')}
           </h2>
           <button
             onClick={onClose}
@@ -103,7 +110,7 @@ export default function TemplateLibrary({ t, onClose, onStartSimulation, isRecru
           {!isSearching && (
             <aside className="w-44 flex-shrink-0 border-r border-gray-100 py-4 px-3 overflow-y-auto bg-gray-50 space-y-1">
               {categoryKeys.map((key) => {
-                const cat = TEMPLATES[key];
+                const cat = templates[key];
                 const colors = COLOR_MAP[cat.color] || COLOR_MAP.indigo;
                 const isActive = activeCategory === key;
                 return (
@@ -115,12 +122,19 @@ export default function TemplateLibrary({ t, onClose, onStartSimulation, isRecru
                       }`}
                     >
                       <span>{cat.icon}</span>
-                      <span className="leading-tight">{t(`templates.categories.${key}`, cat.label)}</span>
+                      <span className="leading-tight">{t(
+                        isTasks ? `templates.taskCategories.${key}` : `templates.categories.${key}`,
+                        cat.label,
+                      )}</span>
                     </button>
-                    {isActive && onStartSimulation && (
+                    {isActive && onStartSimulation && !isTasks && (
                       <button
                         onClick={() => onStartSimulation(key)}
-                        className="w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-600 flex items-center gap-1.5"
+                        className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all text-white flex items-center gap-1.5 ${
+                          isRecruiter
+                            ? 'bg-amber-500 hover:bg-amber-600 border-amber-500'
+                            : 'bg-indigo-600 hover:bg-indigo-700 border-indigo-600'
+                        }`}
                       >
                         🎭 {isRecruiter ? t('templates.practiceButtonRecruiter', 'Practice conducting') : t('templates.practiceButton', 'Mock interview')}
                       </button>
@@ -147,7 +161,10 @@ export default function TemplateLibrary({ t, onClose, onStartSimulation, isRecru
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-gray-800 leading-snug">{question}</p>
                         <span className={`inline-block mt-1.5 text-[11px] px-2 py-0.5 rounded-full font-semibold border ${colors.pill}`}>
-                          {categoryIcon} {t(`templates.categories.${categoryKey}`, categoryLabel)}
+                          {categoryIcon} {t(
+                            isTasks ? `templates.taskCategories.${categoryKey}` : `templates.categories.${categoryKey}`,
+                            categoryLabel,
+                          )}
                         </span>
                       </div>
                       <CopyButton text={question} label={copyLabel} copiedLabel={copiedLabel} />
@@ -159,7 +176,10 @@ export default function TemplateLibrary({ t, onClose, onStartSimulation, isRecru
               <>
                 <div className="flex items-center justify-between mb-3 px-1">
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                    {activeTemplate.icon} {t(`templates.categories.${activeCategory}`, activeTemplate.label)}
+                    {activeTemplate.icon} {t(
+                      isTasks ? `templates.taskCategories.${activeCategory}` : `templates.categories.${activeCategory}`,
+                      activeTemplate.label,
+                    )}
                     <span className="ml-2 font-normal normal-case">({activeTemplate.questions.length})</span>
                   </p>
                   {onStartSimulation && (
@@ -188,7 +208,9 @@ export default function TemplateLibrary({ t, onClose, onStartSimulation, isRecru
         {/* Footer */}
         <div className="px-6 py-3 border-t border-gray-100 bg-gray-50 flex-shrink-0">
           <p className="text-xs text-gray-500 text-center">
-            {t('templates.footer', 'Use these to practice. Behavioral answers should follow the STAR format.')}
+            {isTasks
+              ? t('templates.footerTasks', 'Use these prompts when planning, breaking down, or reviewing tasks.')
+              : t('templates.footer', 'Use these to practice. Behavioral answers should follow the STAR format.')}
           </p>
         </div>
       </div>

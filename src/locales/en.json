@@ -288,11 +288,15 @@
   },
   "templates": {
     "title": "Interview Template Library",
+    "titleRecruiter": "Candidate Interview Guide",
+    "titleTasks": "Task Planning Prompts",
     "search": "Search questions...",
     "copy": "Copy",
     "copied": "Copied!",
     "footer": "Use these to practice. Behavioral answers should follow the STAR format.",
+    "footerTasks": "Use these prompts when planning, breaking down, or reviewing tasks.",
     "practiceButton": "Mock interview",
+    "practiceButtonRecruiter": "Practice conducting",
     "categories": {
       "hr": "HR / Screening",
       "technical": "Technical",
@@ -300,6 +304,14 @@
       "manager": "Manager",
       "culture": "Culture Fit",
       "questions_to_ask": "Questions to Ask"
+    },
+    "taskCategories": {
+      "planning": "Planning & Scoping",
+      "breakdown": "Step Breakdown",
+      "execution": "Execution Check-ins",
+      "review": "Review & Wrap-up",
+      "collaboration": "Collaboration & Handoffs",
+      "retrospective": "Retrospective Prompts"
     }
   },
   "tasks": {

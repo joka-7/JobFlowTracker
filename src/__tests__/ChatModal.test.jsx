@@ -178,4 +178,50 @@ describe('ChatModal', () => {
     render(<ChatModal {...defaultProps} company={company} />);
     expect(screen.getAllByText(/BestCorp/).length).toBeGreaterThan(0);
   });
+
+  it('autoStart simulation renders assistant reply without crashing', async () => {
+    render(
+      <ChatModal
+        {...defaultProps}
+        autoStart
+        simulationTitle="HR / Screening"
+        systemPromptOverride="You are a mock interviewer."
+      />,
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Test response')).toBeInTheDocument();
+    });
+    expect(mockStreamChat).toHaveBeenCalled();
+    const [apiMessages] = mockStreamChat.mock.calls[0];
+    expect(apiMessages[0].role).toBe('user');
+    expect(apiMessages[0].content).toBe('begin');
+  });
+
+  it('follow-up after simulation prepends begin when history starts with assistant', async () => {
+    const user = userEvent.setup();
+    mockStreamChat
+      .mockImplementationOnce(async (_messages, _system, onChunk) => {
+        onChunk('Opening question');
+        return 'Opening question';
+      })
+      .mockImplementationOnce(async (_messages, _system, onChunk) => {
+        onChunk('Follow-up answer');
+        return 'Follow-up answer';
+      });
+    render(
+      <ChatModal
+        {...defaultProps}
+        autoStart
+        simulationTitle="Tech"
+        systemPromptOverride="Mock interviewer"
+      />,
+    );
+    await waitFor(() => expect(screen.getByText('Opening question')).toBeInTheDocument());
+    const textarea = screen.getByRole('textbox');
+    await user.type(textarea, 'My answer');
+    fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+    await waitFor(() => expect(screen.getByText('Follow-up answer')).toBeInTheDocument());
+    const lastCall = mockStreamChat.mock.calls[mockStreamChat.mock.calls.length - 1][0];
+    expect(lastCall[0]).toEqual({ role: 'user', content: 'begin' });
+  });
 });

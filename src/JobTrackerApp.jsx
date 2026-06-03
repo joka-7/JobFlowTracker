@@ -10,7 +10,7 @@ import { signInWithGoogle, signOut, onAuthChange, loadAllItems, updateItem, dele
 import { initAI } from './services/aiAssistant';
 import {
   getStatuses, getTerminalStatuses, getRejectedStatuses, getFunnelOrder,
-  getStorageKey, INTERVIEW_TYPE_KEYS,
+  getStorageKey, INTERVIEW_TYPE_KEYS, filterItemsForMode,
 } from './statuses';
 import Onboarding from './components/Onboarding';
 import AIAssistant from './components/AIAssistant';
@@ -149,7 +149,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
       const saved = window.localStorage.getItem(getStorageKey(mode));
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed)) return filterItemsForMode(parsed, mode);
       }
       return [];
     } catch { return []; }
@@ -217,7 +217,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
           await saveUserProfile(firebaseUser.uid, { appMode: mode });
           const data = await loadAllItems(firebaseUser.uid, mode);
           if (data && data.length > 0) {
-            setCompanies(data);
+            setCompanies(filterItemsForMode(data, mode));
             showToast(tMode('toast.driveConnectedWithData'));
           } else {
             showToast(tMode('toast.driveConnectedEmpty'));
@@ -522,7 +522,7 @@ Rules:
                 notes: safeStr(c.rejection.notes || ''),
               } : { date: '', method: '', notes: '' },
             }));
-            setCompanies(sanitizedData);
+            setCompanies(filterItemsForMode(sanitizedData, mode));
             showToast(tMode('toast.imported'));
             if (user) batchSaveItems(user.uid, mode, sanitizedData).catch(console.error);
           } else {
@@ -920,11 +920,9 @@ Rules:
       )}
 
       <header className={`bg-gradient-to-r ${
-        mode === 'tasks'
-          ? (isRTL ? 'from-emerald-700 to-green-600' : 'from-green-600 to-emerald-700')
-          : isRecruiter
-            ? (isRTL ? 'from-yellow-600 to-amber-500' : 'from-amber-500 to-yellow-600')
-            : (isRTL ? 'from-indigo-800 to-blue-700' : 'from-blue-700 to-indigo-800')
+        isRecruiter
+          ? (isRTL ? 'from-yellow-600 to-amber-500' : 'from-amber-500 to-yellow-600')
+          : (isRTL ? 'from-indigo-800 to-blue-700' : 'from-blue-700 to-indigo-800')
       } text-white shadow-md flex-shrink-0`}>
         <div className="px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
