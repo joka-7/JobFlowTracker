@@ -17,6 +17,7 @@ import AIAssistant from './components/AIAssistant';
 import APIKeySettings from './components/APIKeySettings';
 import RejectionAnalysis from './components/RejectionAnalysis';
 import TemplateLibrary from './components/TemplateLibrary';
+import ChatModal from './components/ChatModal';
 import Tooltip from './components/Tooltip';
 import ModeSwitcher from './components/ModeSwitcher';
 import CalendarView from './components/CalendarView';

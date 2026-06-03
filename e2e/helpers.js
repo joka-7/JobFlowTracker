@@ -73,3 +73,45 @@ export async function dragCardToColumn(page, cardName, columnHeaderPattern) {
   const column = page.locator('.board-column').filter({ has: page.getByText(columnHeaderPattern) });
   await card.dragTo(column.locator('.bg-gray-100').first());
 }
+
+/** Configure localStorage so isAIReady() is true (gemini + fake key). */
+export async function initMockAI(page) {
+  await page.addInitScript(() => {
+    localStorage.setItem('aiProvider', 'gemini');
+    localStorage.setItem('aiApiKey', 'e2e-test-key');
+    localStorage.setItem('aiModel', 'gemini-2.0-flash');
+  });
+}
+
+/** Mock Gemini streaming API — avoids real network and API keys in e2e. */
+export async function mockGeminiChatStream(page, replyText = 'Mock AI reply for e2e.') {
+  const chunk = JSON.stringify({
+    candidates: [{ content: { parts: [{ text: replyText }] } }],
+  });
+  const sseBody = `data: ${chunk}\n\n`;
+  await page.route('**/generativelanguage.googleapis.com/**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      headers: { 'Content-Type': 'text/event-stream' },
+      body: sseBody,
+    });
+  });
+}
+
+export async function initTasksApp(page) {
+  await page.addInitScript(() => {
+    localStorage.clear();
+    localStorage.setItem('appMode', 'tasks');
+    localStorage.setItem('hasCompletedOnboarding', '1');
+  });
+}
+
+export async function openTemplateLibrary(page) {
+  await page.getByTitle(/Interview Template|Task Planning|Candidate Interview/i).click();
+  await page.getByRole('heading', { name: /Template Library|Task Planning|Interview Guide/i }).waitFor();
+}
+
+export async function closeChatModal(page) {
+  const modal = page.locator('div.fixed.inset-0').filter({ has: page.getByRole('button', { name: 'Close' }) });
+  await modal.getByRole('button', { name: 'Close' }).click();
+}

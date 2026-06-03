@@ -281,7 +281,7 @@ function ChatModalInner({
               {subtitle && <p className="text-indigo-200 text-xs">{subtitle}</p>}
             </div>
           </div>
-          <button onClick={onClose} className="text-white/70 hover:text-white"><X size={20} /></button>
+          <button type="button" onClick={onClose} aria-label="Close" className="text-white/70 hover:text-white"><X size={20} /></button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-4">
