@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Send, Loader2, Save, MessageSquare } from 'lucide-react';
-import { streamChat, isAIReady, buildApiMessages } from '../services/aiAssistant';
+import {
+  streamChat, buildApiMessages, loadAIConfigFromStorage, isAIReady, getCurrentProvider,
+  PROVIDERS, AI_CONFIG_UPDATED,
+} from '../services/aiAssistant';
 
 const SIM_TRIGGER = '__sim_start__';
 
@@ -135,7 +138,7 @@ function ChatModalInner({
   const mountedRef = useRef(true);
   const autoStartGen = useRef(0);
 
-  const aiReady = isAIReady();
+  const [aiReady, setAiReady] = useState(() => loadAIConfigFromStorage());
 
   const isTaskMode = variant === 'tasks';
   const systemPrompt = systemPromptOverride || (isTaskMode
@@ -173,7 +176,14 @@ function ChatModalInner({
     setLoading(false);
     sendingRef.current = false;
     autoStartGen.current += 1;
+    setAiReady(loadAIConfigFromStorage());
   }, [sessionKey]);
+
+  useEffect(() => {
+    const onConfigUpdated = () => setAiReady(isAIReady());
+    window.addEventListener(AI_CONFIG_UPDATED, onConfigUpdated);
+    return () => window.removeEventListener(AI_CONFIG_UPDATED, onConfigUpdated);
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -234,7 +244,8 @@ function ChatModalInner({
     } catch (e) {
       if (mountedRef.current) {
         setMessages(prev => prev.filter(m => !m.streaming));
-        setError(e?.message || 'Error');
+        const providerName = PROVIDERS[getCurrentProvider()]?.name || 'AI';
+        setError(e?.message || `Request failed (${providerName}). Check your API key and provider in settings.`);
       }
     } finally {
       sendingRef.current = false;

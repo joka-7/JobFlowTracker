@@ -94,33 +94,39 @@ export default function CalendarView({ events = [], onEventClick, isRTL = false 
   }
 
   return (
-    <div className="flex flex-col md:flex-row gap-4 p-4" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div
+      className="flex flex-col md:flex-row gap-4 p-4 bg-white text-gray-900 rounded-xl [color-scheme:light]"
+      dir={isRTL ? 'rtl' : 'ltr'}
+    >
       {/* Calendar grid */}
       <div className="flex-1 min-w-0">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+        {/* Header — explicit light-theme colors for OS dark mode / smart invert */}
+        <div className="flex items-center justify-between mb-4 gap-2">
           <button
             onClick={isRTL ? nextMonth : prevMonth}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-100 text-gray-800 transition-colors shrink-0 touch-manipulation"
             aria-label="Previous month"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-5 h-5 text-gray-800" />
           </button>
-          <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white capitalize">{monthLabel}</h2>
+          <div className="flex flex-col sm:flex-row items-center gap-2 min-w-0 flex-1 justify-center">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900 capitalize text-center leading-tight">
+              {monthLabel}
+            </h2>
             <button
+              type="button"
               onClick={goToday}
-              className="text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors"
+              className="text-xs px-2.5 py-1 rounded-md border border-gray-400 bg-white hover:bg-gray-50 text-gray-800 font-medium transition-colors shrink-0"
             >
               {t('calendar.today')}
             </button>
           </div>
           <button
             onClick={isRTL ? prevMonth : nextMonth}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-100 text-gray-800 transition-colors shrink-0 touch-manipulation"
             aria-label="Next month"
           >
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="w-5 h-5 text-gray-800" />
           </button>
         </div>
 
@@ -134,10 +140,10 @@ export default function CalendarView({ events = [], onEventClick, isRTL = false 
         </div>
 
         {/* Day cells */}
-        <div className="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+        <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-hidden border border-gray-300">
           {cells.map((date, idx) => {
             if (!date) {
-              return <div key={`empty-${idx}`} className="bg-gray-50 dark:bg-gray-800/50 min-h-[72px]" />;
+              return <div key={`empty-${idx}`} className="bg-gray-50 min-h-[72px]" />;
             }
             const key = toLocalDateStr(date);
             const dayEvents = eventsByDay[key] || [];
@@ -150,12 +156,12 @@ export default function CalendarView({ events = [], onEventClick, isRTL = false 
               <div
                 key={key}
                 onClick={() => setSelectedDay(isSelected ? null : key)}
-                className={`bg-white dark:bg-gray-800 min-h-[72px] p-1 cursor-pointer transition-colors
-                  ${isSelected ? 'ring-2 ring-inset ring-blue-500' : 'hover:bg-blue-50 dark:hover:bg-gray-700/50'}
+                className={`bg-white min-h-[72px] p-1 cursor-pointer transition-colors
+                  ${isSelected ? 'ring-2 ring-inset ring-blue-500' : 'hover:bg-blue-50'}
                 `}
               >
                 <div className={`text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full mb-1
-                  ${isToday ? 'bg-blue-600 text-white' : 'text-gray-700 dark:text-gray-300'}
+                  ${isToday ? 'bg-blue-600 text-white' : 'text-gray-800'}
                 `}>
                   {date.getDate()}
                 </div>
@@ -173,7 +179,7 @@ export default function CalendarView({ events = [], onEventClick, isRTL = false 
                     );
                   })}
                   {overflow > 0 && (
-                    <div className="text-xs text-gray-500 dark:text-gray-400 px-1">+{overflow} more</div>
+                    <div className="text-xs text-gray-600 px-1">+{overflow} more</div>
                   )}
                 </div>
               </div>
@@ -186,7 +192,7 @@ export default function CalendarView({ events = [], onEventClick, isRTL = false 
           {Object.entries(TYPE_STYLES).map(([type, style]) => {
             const Icon = style.icon;
             return (
-              <div key={type} className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
+              <div key={type} className="flex items-center gap-1 text-xs text-gray-700">
                 <span className={`w-2 h-2 rounded-full ${style.bg}`} />
                 <span className="capitalize">{t(`calendar.type.${type}`)}</span>
               </div>
@@ -197,7 +203,7 @@ export default function CalendarView({ events = [], onEventClick, isRTL = false 
 
       {/* Day detail panel */}
       <div className={`md:w-72 transition-all ${selectedDay ? 'block' : 'hidden md:block'}`}>
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 h-full">
+        <div className="bg-white rounded-lg border border-gray-300 text-gray-900 h-full [color-scheme:light]">
           {selectedDay ? (
             <>
               <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700">

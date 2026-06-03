@@ -85,6 +85,28 @@ test.describe('Chat and mock interview (browser e2e)', () => {
     await expect(page.getByText('Something went wrong')).toHaveCount(0);
   });
 
+  test('mock interview enables after saving API key from settings (no preloaded initAI)', async ({ page }) => {
+    await initJobSeekerApp(page);
+    await page.goto('/');
+    await page.getByRole('heading', { name: 'Job Search Tracker', exact: true }).waitFor();
+
+    await openTemplateLibrary(page);
+    await page.getByRole('button', { name: /Mock interview/i }).first().click();
+    await expect(page.getByText(/Set API key to enable AI/i)).toBeVisible();
+
+    await page.getByRole('button', { name: /Set API key to enable AI/i }).click();
+    await expect(page.getByText('AI Settings')).toBeVisible();
+    await page.locator('input[type="password"]').fill('e2e-test-key-saved-in-ui');
+    await page.getByRole('button', { name: /Save & Enable AI/i }).click();
+    await expect(page.getByText('AI Settings')).toHaveCount(0, { timeout: 5_000 });
+
+    await expect(page.getByRole('textbox')).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByText(/Set API key to enable AI/i)).toHaveCount(0);
+
+    await expect(page.getByText(MOCK_REPLY)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText('Something went wrong')).toHaveCount(0);
+  });
+
   test('switching mock interview category remounts chat cleanly', async ({ page }) => {
     await initJobSeekerApp(page);
     await initMockAI(page);

@@ -221,6 +221,7 @@
     "finalTip": "You're all set! Add rejection notes to every rejection — the AI can spot patterns to help you improve.",
     "back": "Back",
     "next": "Next",
+    "skip": "Skip tutorial",
     "getStarted": "Let's go!"
   },
   "ai": {
@@ -346,9 +347,17 @@
       "done": "Done",
       "blocked": "Blocked"
     },
+    "welcome": {
+      "title": "Welcome to Task Manager",
+      "subtitle": "Plan work in steps and track progress",
+      "desc": "Create tasks with checklists, use AI coaching templates, and keep everything saved in your browser.",
+      "skip": "Skip",
+      "getStarted": "Get started"
+    },
     "board": {
       "emptyTitle": "Welcome to Task Manager",
       "emptyDesc": "Organize your tasks with multiple steps and track progress at a glance.",
+      "viewTutorial": "View welcome",
       "addFirstButton": "Add your first task",
       "signInButton": "Sign in with Google — sync everywhere",
       "loadButton": "Restore from JSON backup"

@@ -22,6 +22,8 @@ import CalendarView from './components/CalendarView';
 import TemplateLibrary from './components/TemplateLibrary';
 import APIKeySettings from './components/APIKeySettings';
 import { usePwaInstall } from './usePwaInstall';
+import AppBrandMark from './components/AppBrandMark';
+import WelcomeModal from './components/WelcomeModal';
 
 const MODE = 'tasks';
 
@@ -128,6 +130,9 @@ export default function TasksApp({ onModeChange }) {
   const [showAISettings, setShowAISettings] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [simulationData, setSimulationData] = useState(null);
+  const [showTasksWelcome, setShowTasksWelcome] = useState(
+    () => !localStorage.getItem('hasCompletedOnboarding_tasks'),
+  );
   const { canInstall, runInstall } = usePwaInstall();
 
   const dragTaskId = useRef(null);
@@ -228,13 +233,15 @@ export default function TasksApp({ onModeChange }) {
 
   // Browser back/forward support
   const navigateTo = useCallback((tab, taskId = null) => {
-    const state = { tab, selectedId: taskId };
-    window.history.pushState(state, '');
     setActiveTab(tab);
     if (taskId) {
       setSelectedId(taskId);
       setIsEditing(false);
+    } else if (tab !== 'list') {
+      setSelectedId(null);
+      setIsEditing(false);
     }
+    window.history.pushState({ tab, selectedId: taskId }, '');
   }, []);
 
   useEffect(() => {
@@ -472,14 +479,23 @@ Rules:
       {tasks.length === 0 ? (
         <div className="flex items-center justify-center flex-1 min-h-[200px]">
           <div className="text-center max-w-sm px-4">
-            <ClipboardList className="mx-auto text-gray-300 mb-4" size={48} />
+            <div className="mx-auto mb-4 w-14 h-14 flex items-center justify-center">
+              <AppBrandMark size={56} />
+            </div>
             <h2 className="text-xl sm:text-2xl font-bold text-gray-700 mb-2">{tt('board.emptyTitle', 'Welcome to Task Manager')}</h2>
             <p className="text-sm text-gray-500 mb-6">{tt('board.emptyDesc', 'Add your first task to get started.')}</p>
             <button
               onClick={openNewForm}
-              className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-emerald-700 transition-colors"
+              className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-emerald-700 transition-colors mb-3"
             >
               {tt('board.addFirstButton', 'Add your first task')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowTasksWelcome(true)}
+              className="text-sm text-emerald-700 hover:text-emerald-900 font-medium"
+            >
+              💡 {tt('board.viewTutorial', 'View welcome')}
             </button>
           </div>
         </div>
@@ -999,30 +1015,31 @@ Rules:
   ];
 
   return (
-    <div className="flex flex-col h-screen bg-white" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="flex flex-col h-dvh bg-white" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
       <header className={`bg-gradient-to-r ${isRTL ? 'from-emerald-700 to-green-600' : 'from-green-600 to-emerald-700'} text-white shadow-md flex-shrink-0`}>
-        <div className="px-3 sm:px-6 py-3 sm:py-4 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
-          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-            <div className="bg-white/20 p-1.5 sm:p-2 rounded-lg backdrop-blur-sm shrink-0">
-              <ClipboardList size={20} className="text-white sm:w-6 sm:h-6" />
+        <div className="px-3 sm:px-6 py-3 sm:py-4 flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-2 min-w-0">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+              <div className="bg-white/20 p-1.5 sm:p-2 rounded-lg backdrop-blur-sm shrink-0">
+                <AppBrandMark size={24} className="sm:w-7 sm:h-7" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-base sm:text-xl font-bold tracking-tight flex items-center gap-2 flex-wrap">
+                  {tt('header.title', 'Task Manager')}
+                  {tasks.length > 0 && (
+                    <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 transition-all ${isSaved ? 'bg-green-500/20 text-green-100' : 'bg-yellow-500/50 text-yellow-50'}`}>
+                      {isSaved ? <CheckCircle size={12} /> : <Clock size={12} />}
+                      {isSaved ? tt('header.savedInBrowser', 'Saved') : tt('header.saving', 'Saving...')}
+                    </span>
+                  )}
+                </h1>
+                <p className="text-green-100 text-xs sm:text-sm truncate hidden sm:block">{tt('header.subtitle', 'Manage your tasks and track progress')}</p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <h1 className="text-base sm:text-xl font-bold tracking-tight flex items-center gap-2 flex-wrap">
-                {tt('header.title', 'Task Manager')}
-                {tasks.length > 0 && (
-                  <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 transition-all ${isSaved ? 'bg-green-500/20 text-green-100' : 'bg-yellow-500/50 text-yellow-50'}`}>
-                    {isSaved ? <CheckCircle size={12} /> : <Clock size={12} />}
-                    {isSaved ? tt('header.savedInBrowser', 'Saved') : tt('header.saving', 'Saving...')}
-                  </span>
-                )}
-              </h1>
-              <p className="text-green-100 text-xs sm:text-sm truncate hidden sm:block">{tt('header.subtitle', 'Manage your tasks and track progress')}</p>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
-            <button onClick={openNewForm} className="flex items-center gap-2 bg-white text-emerald-700 hover:bg-green-50 active:bg-green-100 px-3 sm:px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-sm min-h-[40px]">
+            <div className="flex items-center gap-2 shrink-0">
+            <button onClick={openNewForm} className="flex items-center gap-2 bg-white text-emerald-700 hover:bg-green-50 active:bg-green-100 px-3 sm:px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-sm min-h-[44px] touch-manipulation">
               <Plus size={18} /> <span className="hidden sm:inline">{tt('header.addTask', 'Add Task')}</span>
             </button>
 
@@ -1030,7 +1047,7 @@ Rules:
               <button
                 onClick={() => signOut()}
                 title={user.email}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-colors border min-h-[40px] ${syncing ? 'bg-yellow-500/20 border-yellow-400/30 text-yellow-100' : 'bg-green-500/20 border-green-400/30 text-green-100 hover:bg-red-500/20 hover:border-red-400/30 hover:text-red-100'}`}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-colors border min-h-[44px] touch-manipulation ${syncing ? 'bg-yellow-500/20 border-yellow-400/30 text-yellow-100' : 'bg-green-500/20 border-green-400/30 text-green-100 hover:bg-red-500/20 hover:border-red-400/30 hover:text-red-100'}`}
               >
                 <Cloud size={16} className={syncing ? 'animate-pulse' : ''} />
                 <span className="hidden sm:inline">{syncing ? t('header.driveSyncing') : user.displayName?.split(' ')[0] || t('header.driveOn')}</span>
@@ -1039,14 +1056,10 @@ Rules:
               <button
                 onClick={() => signInWithGoogle().catch(() => {})}
                 title={t('header.connectDriveTooltip')}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-green-100 transition-colors min-h-[40px]"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-green-100 transition-colors min-h-[44px] touch-manipulation"
               >
                 <CloudOff size={16} /> <span className="hidden sm:inline">{t('header.connectDrive')}</span>
               </button>
-            )}
-
-            {onModeChange && (
-              <ModeSwitcher currentMode={MODE} onModeChange={onModeChange} />
             )}
 
             {canInstall && (
@@ -1097,6 +1110,14 @@ Rules:
               >
                 <Settings size={18} />
               </button>
+              <button
+                type="button"
+                onClick={() => setShowTasksWelcome(true)}
+                title={tt('board.viewTutorial', 'View welcome')}
+                className="p-2 hover:bg-white/20 rounded text-white transition-colors"
+              >
+                💡
+              </button>
             </div>
 
             {/* Mobile overflow menu */}
@@ -1138,6 +1159,9 @@ Rules:
                     <button onClick={() => { setShowAISettings(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <Settings size={16} className="text-gray-500" /> {t('header.aiSettings', 'AI Settings')}
                     </button>
+                    <button onClick={() => { setShowTasksWelcome(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                      <span>💡</span> {tt('board.viewTutorial', 'View welcome')}
+                    </button>
                     {canInstall && (
                       <button
                         type="button"
@@ -1151,7 +1175,14 @@ Rules:
                 </>
               )}
             </div>
+            </div>
           </div>
+
+          {onModeChange && (
+            <div className="w-full overflow-x-auto scrollbar-none -mx-1 px-1">
+              <ModeSwitcher currentMode={MODE} onModeChange={onModeChange} />
+            </div>
+          )}
         </div>
 
         {/* Tab bar */}
@@ -1161,7 +1192,7 @@ Rules:
               key={id}
               type="button"
               onClick={() => navigateTo(id)}
-              className={`px-2.5 sm:px-4 py-2 rounded-t-lg font-medium flex items-center gap-1 sm:gap-2 transition-colors whitespace-nowrap flex-shrink-0 text-xs sm:text-sm ${activeTab === id ? 'bg-gray-50 text-emerald-800' : 'bg-white/10 text-green-100 hover:bg-white/20'}`}
+              className={`px-2.5 sm:px-4 py-2.5 rounded-t-lg font-medium flex items-center gap-1 sm:gap-2 transition-colors whitespace-nowrap flex-shrink-0 text-xs sm:text-sm min-h-[44px] touch-manipulation ${activeTab === id ? 'bg-gray-50 text-emerald-800' : 'bg-white/10 text-green-100 hover:bg-white/20 active:bg-white/25'}`}
             >
               <Icon size={15} className="shrink-0" />
               <span className="hidden min-[380px]:inline">{label}</span>
@@ -1176,7 +1207,7 @@ Rules:
         {activeTab === 'list' && renderList()}
         {activeTab === 'stats' && renderStats()}
         {activeTab === 'calendar' && (
-          <div className="flex-1 overflow-auto bg-gray-50">
+          <div className="flex-1 overflow-auto bg-gray-50 min-h-0">
             <CalendarView
               events={calendarEvents}
               isRTL={isRTL}
@@ -1191,6 +1222,18 @@ Rules:
         <div className="fixed bottom-5 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-5 py-2.5 rounded-xl shadow-xl text-sm font-medium z-50 animate-fade-in">
           {toastMessage}
         </div>
+      )}
+
+      {showTasksWelcome && (
+        <WelcomeModal
+          title={tt('welcome.title', 'Welcome to Task Manager')}
+          subtitle={tt('welcome.subtitle', 'Plan work in steps and track progress')}
+          description={tt('welcome.desc', 'Create tasks with checklists and AI coaching.')}
+          skipLabel={tt('welcome.skip', 'Skip')}
+          startLabel={tt('welcome.getStarted', 'Get started')}
+          onClose={() => setShowTasksWelcome(false)}
+          onComplete={() => localStorage.setItem('hasCompletedOnboarding_tasks', '1')}
+        />
       )}
 
       {showAISettings && (
@@ -1232,7 +1275,7 @@ Rules:
           simulationTitle={simulationData.title}
           autoStart={true}
           onClose={() => setSimulationData(null)}
-          onOpenSettings={() => { setSimulationData(null); setShowAISettings(true); }}
+          onOpenSettings={() => setShowAISettings(true)}
           onSaveToTask={selectedTask ? handleSaveToTask : null}
         />
       )}

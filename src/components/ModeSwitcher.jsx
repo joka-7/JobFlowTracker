@@ -18,22 +18,31 @@ export default function ModeSwitcher({ currentMode, onModeChange }) {
   };
 
   return (
-    <div className="flex items-center gap-0.5 bg-black/20 rounded-lg p-0.5">
+    <div
+      className="flex items-center gap-0.5 bg-black/20 rounded-lg p-0.5 w-max max-w-full shrink-0"
+      role="tablist"
+      aria-label="App mode"
+    >
       {MODES.map(({ id, Icon, labelKey, short }) => {
         const active = id === currentMode;
+        const fullLabel = t(labelKey, short);
         return (
           <button
             key={id}
+            type="button"
+            role="tab"
+            aria-selected={active}
             onClick={() => handleSwitch(id)}
-            title={t(labelKey, short)}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-bold transition-all ${
+            title={fullLabel}
+            className={`flex items-center justify-center gap-1 px-2.5 sm:px-3 py-2 rounded-md text-xs font-bold transition-all min-h-[44px] touch-manipulation ${
               active
                 ? 'bg-white text-gray-800 shadow-sm'
-                : 'text-white/70 hover:text-white hover:bg-white/15'
+                : 'text-white/90 hover:text-white hover:bg-white/15 active:bg-white/25'
             }`}
           >
-            <Icon size={13} />
-            <span>{t(labelKey, short)}</span>
+            <Icon size={14} className="shrink-0" aria-hidden />
+            <span className="sm:hidden">{short}</span>
+            <span className="hidden sm:inline whitespace-nowrap">{fullLabel}</span>
           </button>
         );
       })}

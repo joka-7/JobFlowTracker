@@ -13,6 +13,7 @@ import {
   getStorageKey, INTERVIEW_TYPE_KEYS, filterItemsForMode,
 } from './statuses';
 import Onboarding from './components/Onboarding';
+import AppBrandMark from './components/AppBrandMark';
 import AIAssistant from './components/AIAssistant';
 import APIKeySettings from './components/APIKeySettings';
 import RejectionAnalysis from './components/RejectionAnalysis';
@@ -172,7 +173,9 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
   const [syncing, setSyncing] = useState(false);
   const dragCompanyId = useRef(null);
 
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(
+    () => !isRecruiter && !localStorage.getItem('hasCompletedOnboarding'),
+  );
   const [showAISettings, setShowAISettings] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [simulationData, setSimulationData] = useState(null); // { systemPrompt, title }
@@ -186,11 +189,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
     const model = localStorage.getItem('aiModel') || '';
     const ollamaUrl = localStorage.getItem('ollamaUrl') || 'http://localhost:11434';
     initAI(provider, apiKey, model, ollamaUrl);
-    if (autoOnboarding && !localStorage.getItem('hasCompletedOnboarding') && !isRecruiter) {
-      setShowOnboarding(true);
-    }
-
-  }, [isRecruiter, autoOnboarding]);
+  }, [isRecruiter]);
 
   const initialFormState = makeInitialFormState(isRecruiter);
   const [formData, setFormData] = useState(initialFormState);
@@ -633,8 +632,8 @@ Rules:
       {companies.length === 0 && (
         <div className="w-full flex flex-col items-center justify-center p-8">
           <div className="bg-white p-10 rounded-2xl shadow-xl border border-gray-200 text-center max-w-lg w-full">
-            <div className="bg-indigo-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Activity size={40} className="text-indigo-600" />
+            <div className="bg-indigo-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 p-3">
+              <AppBrandMark size={56} />
             </div>
             <h2 className="text-2xl font-black text-gray-800 mb-2">{tMode('board.emptyTitle')}</h2>
             <p className="text-gray-500 mb-8 text-sm">{tMode('board.emptyDesc')}</p>
@@ -924,13 +923,14 @@ Rules:
           ? (isRTL ? 'from-yellow-600 to-amber-500' : 'from-amber-500 to-yellow-600')
           : (isRTL ? 'from-indigo-800 to-blue-700' : 'from-blue-700 to-indigo-800')
       } text-white shadow-md flex-shrink-0`}>
-        <div className="px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
-              <Activity size={24} className="text-white" />
+        <div className="px-3 sm:px-6 py-3 sm:py-4 flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-2 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+            <div className="bg-white/20 p-1.5 rounded-lg backdrop-blur-sm shrink-0">
+              <AppBrandMark size={28} />
             </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-xl font-bold tracking-tight flex items-center gap-2 flex-wrap">
                 {tMode('header.title')}
                 {companies.length > 0 && (
                   <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 transition-all ${isSaved ? 'bg-green-500/20 text-green-100' : 'bg-yellow-500/50 text-yellow-50'}`}>
@@ -939,11 +939,11 @@ Rules:
                   </span>
                 )}
               </h1>
-              <p className={`${isRecruiter ? 'text-yellow-100' : 'text-blue-200'} text-sm`}>{tMode('header.subtitle')}</p>
+              <p className={`${isRecruiter ? 'text-yellow-100' : 'text-blue-200'} text-xs sm:text-sm truncate hidden sm:block`}>{tMode('header.subtitle')}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
             <button onClick={openNewForm} className={`flex items-center gap-2 bg-white ${isRecruiter ? 'text-yellow-600 hover:bg-yellow-50 active:bg-yellow-100' : 'text-indigo-700 hover:bg-blue-50 active:bg-blue-100'} px-3 sm:px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-sm min-h-[40px]`}>
               <Plus size={18} /> <span className="hidden sm:inline">{tMode('header.addCompany')}</span>
             </button>
@@ -965,10 +965,6 @@ Rules:
               >
                 <CloudOff size={16} /> <span className="hidden sm:inline">{t('header.connectDrive')}</span>
               </button>
-            )}
-
-            {onModeChange && (
-              <ModeSwitcher currentMode={mode} onModeChange={onModeChange} />
             )}
 
             {canInstall && (
@@ -1019,6 +1015,15 @@ Rules:
               >
                 <Settings size={18} />
               </button>
+              {!isRecruiter && (
+              <button
+                onClick={() => setShowOnboarding(true)}
+                title={tMode('board.viewTutorial', 'View Tutorial')}
+                className="p-2 hover:bg-white/20 rounded text-white transition-colors"
+              >
+                💡
+              </button>
+              )}
             </div>
 
             {/* Mobile overflow menu */}
@@ -1060,6 +1065,11 @@ Rules:
                     <button onClick={() => { setShowAISettings(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <Settings size={16} className="text-gray-500" /> {t('header.aiSettings', 'AI Settings')}
                     </button>
+                    {!isRecruiter && (
+                    <button onClick={() => { setShowOnboarding(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                      <span>💡</span> {tMode('board.viewTutorial', 'View Tutorial')}
+                    </button>
+                    )}
                     {canInstall && (
                       <button
                         type="button"
@@ -1074,6 +1084,13 @@ Rules:
               )}
             </div>
           </div>
+          </div>
+
+          {onModeChange && (
+            <div className="w-full overflow-x-auto scrollbar-none -mx-1 px-1">
+              <ModeSwitcher currentMode={mode} onModeChange={onModeChange} />
+            </div>
+          )}
         </div>
 
         <div className="flex px-2 sm:px-6 gap-0.5 sm:gap-2 mt-2 overflow-x-auto scrollbar-none">
@@ -1087,7 +1104,7 @@ Rules:
             <button
               key={key}
               onClick={() => navigateTo(key)}
-              className={`px-3 sm:px-4 py-2 rounded-t-lg font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap flex-shrink-0 text-sm ${activeTab === key ? 'bg-gray-50 text-indigo-800' : 'bg-white/10 text-blue-100 hover:bg-white/20'}`}
+              className={`px-3 sm:px-4 py-2.5 rounded-t-lg font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap flex-shrink-0 text-sm min-h-[44px] touch-manipulation ${activeTab === key ? 'bg-gray-50 text-indigo-800' : 'bg-white/10 text-blue-100 hover:bg-white/20 active:bg-white/25'}`}
             >
               {icon} {t(`tabs.${key}`, key)}
             </button>
@@ -1100,7 +1117,7 @@ Rules:
       {activeTab === 'timeline' && renderTimeline()}
       {activeTab === 'stats' && renderStats()}
       {activeTab === 'calendar' && (
-        <div className="flex-1 overflow-auto bg-gray-50">
+        <div className="flex-1 overflow-auto bg-gray-50 min-h-0">
           <CalendarView
             events={calendarEvents}
             isRTL={isRTL}
@@ -1627,7 +1644,7 @@ Rules:
           simulationTitle={simulationData.title}
           autoStart={true}
           onClose={() => setSimulationData(null)}
-          onOpenSettings={() => { setSimulationData(null); setShowAISettings(true); }}
+          onOpenSettings={() => setShowAISettings(true)}
         />
       )}
     </div>

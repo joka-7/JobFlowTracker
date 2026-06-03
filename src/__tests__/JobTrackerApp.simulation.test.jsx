@@ -64,4 +64,24 @@ describe('JobTrackerApp mock interview', () => {
     expect(screen.queryByText('Something went wrong')).not.toBeInTheDocument();
     expect(mockStreamChat).toHaveBeenCalled();
   });
+
+  it('keeps mock interview open when opening AI settings from Set API key', async () => {
+    const user = userEvent.setup();
+    localStorage.removeItem('aiApiKey');
+    const actual = await vi.importActual('../services/aiAssistant');
+    const ai = await import('../services/aiAssistant');
+    ai.initAI.mockImplementation(actual.initAI);
+    ai.isAIReady.mockImplementation(actual.isAIReady);
+    actual.initAI('gemini', '', '', '');
+
+    render(<JobTrackerApp mode="jobseeker" onModeChange={vi.fn()} autoOnboarding={false} />);
+
+    await user.click(screen.getByTitle(/Interview Template/i));
+    await user.click(screen.getAllByRole('button', { name: /Mock interview/i })[0]);
+
+    expect(screen.getByText('Mock Interview', { exact: true })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Set API key to enable AI/i }));
+    expect(screen.getByText('AI Settings')).toBeInTheDocument();
+    expect(screen.getByText('Mock Interview', { exact: true })).toBeInTheDocument();
+  });
 });
