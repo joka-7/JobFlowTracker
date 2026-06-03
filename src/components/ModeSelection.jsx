@@ -26,10 +26,10 @@ export default function ModeSelection({ onSelect }) {
               <button
                 key={code}
                 onClick={() => handleLangChange(code)}
-                className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all ${
+                className={`px-3 py-2 rounded-md text-sm font-bold transition-all min-h-[44px] min-w-[44px] ${
                   i18n.language === code
                     ? 'bg-white text-blue-700 shadow-sm'
-                    : 'text-white/80 hover:text-white hover:bg-white/20'
+                    : 'text-white/80 hover:text-white hover:bg-white/20 active:bg-white/30'
                 }`}
               >
                 {label}
@@ -46,7 +46,7 @@ export default function ModeSelection({ onSelect }) {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <button
             onClick={() => handleSelect('jobseeker')}
-            className="bg-white rounded-2xl p-6 text-left hover:shadow-2xl hover:scale-105 transition-all group"
+            className="bg-white rounded-2xl p-6 text-left hover:shadow-2xl hover:scale-105 active:scale-95 active:shadow-md transition-all group"
           >
             <div className="bg-blue-100 w-14 h-14 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
               <Briefcase size={28} className="text-blue-700" />
@@ -57,7 +57,7 @@ export default function ModeSelection({ onSelect }) {
 
           <button
             onClick={() => handleSelect('recruiter')}
-            className="bg-white rounded-2xl p-6 text-left hover:shadow-2xl hover:scale-105 transition-all group"
+            className="bg-white rounded-2xl p-6 text-left hover:shadow-2xl hover:scale-105 active:scale-95 active:shadow-md transition-all group"
           >
             <div className="bg-indigo-100 w-14 h-14 rounded-xl flex items-center justify-center mb-4 group-hover:bg-indigo-200 transition-colors">
               <Users size={28} className="text-indigo-700" />

@@ -4,7 +4,7 @@ import {
   Search, Plus, MapPin, Globe, Calendar,
   User, CheckCircle, Clock, Trash2, Edit2,
   ArrowLeft, ArrowRight, Download, Upload, Filter, Layout, List, Activity, AlertTriangle,
-  Cloud, CloudOff, Languages, BarChart2, Settings
+  Cloud, CloudOff, Languages, BarChart2, Settings, MoreVertical
 } from 'lucide-react';
 import { signInWithGoogle, signOut, onAuthChange, loadAllItems, updateItem, deleteItem, batchSaveItems, loadUserProfile, saveUserProfile, publishShare, loadSharedData } from './firebase';
 import { initAI } from './services/aiAssistant';
@@ -162,6 +162,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
   const [rejectionCompany, setRejectionCompany] = useState(null);
   const [shareMode, setShareMode] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const provider = localStorage.getItem('aiProvider') || 'gemini';
@@ -482,14 +483,14 @@ Rules:
   const BackArrow = isRTL ? ArrowRight : ArrowLeft;
 
   const renderBoard = () => (
-    <div className="flex-1 overflow-x-auto p-6 bg-slate-50 min-h-0 flex gap-6">
+    <div className="flex-1 overflow-x-auto p-3 sm:p-6 bg-slate-50 min-h-0 flex flex-col sm:flex-row gap-4 sm:gap-6">
       {STATUSES.map(statusObj => {
         const statusCompanies = companies.filter(c => c.status === statusObj.id);
         if (statusCompanies.length === 0) return null;
         return (
           <div
             key={statusObj.id}
-            className="w-80 flex-shrink-0 flex flex-col h-full"
+            className="w-full sm:w-80 sm:flex-shrink-0 flex flex-col sm:h-full"
             onDragOver={handleDragOver}
             onDrop={e => handleDrop(e, statusObj.id)}
           >
@@ -602,7 +603,7 @@ Rules:
   );
 
   const renderTimeline = () => (
-    <div className="flex-1 overflow-y-auto p-6 bg-slate-50 min-h-0 custom-scrollbar">
+    <div className="flex-1 overflow-y-auto p-3 sm:p-6 bg-slate-50 min-h-0 custom-scrollbar">
       <div className="max-w-3xl mx-auto">
         <h2 className="text-2xl font-bold text-gray-800 mb-8 flex items-center gap-2">
           <Activity className="text-blue-600" /> {t('timeline.title')}
@@ -709,7 +710,7 @@ Rules:
     }
 
     return (
-      <div className="flex-1 overflow-y-auto p-6 bg-slate-50 min-h-0 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-6 bg-slate-50 min-h-0 custom-scrollbar">
         <div className="max-w-4xl mx-auto space-y-8">
           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
             <BarChart2 className="text-indigo-600" /> {tMode('stats.title', 'Statistics')}
@@ -822,7 +823,7 @@ Rules:
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 font-sans" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="flex flex-col h-dvh bg-gray-50 font-sans" dir={isRTL ? 'rtl' : 'ltr'}>
       {toastMessage && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-green-600 text-white px-6 py-3 rounded-full shadow-lg font-bold">
           {toastMessage}
@@ -849,10 +850,10 @@ Rules:
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {!shareMode && (
-              <button onClick={openNewForm} className="flex items-center gap-2 bg-white text-indigo-700 hover:bg-blue-50 px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-sm">
-                <Plus size={18} /> {tMode('header.addCompany')}
+              <button onClick={openNewForm} className="flex items-center gap-2 bg-white text-indigo-700 hover:bg-blue-50 active:bg-blue-100 px-3 sm:px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-sm min-h-[40px]">
+                <Plus size={18} /> <span className="hidden xs:inline">{tMode('header.addCompany')}</span>
               </button>
             )}
 
@@ -860,18 +861,18 @@ Rules:
               <button
                 onClick={handleSignOut}
                 title={t('header.driveOnTooltip')}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-colors border ${syncing ? 'bg-yellow-500/20 border-yellow-400/30 text-yellow-100' : 'bg-green-500/20 border-green-400/30 text-green-100 hover:bg-red-500/20 hover:border-red-400/30 hover:text-red-100'}`}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-colors border min-h-[40px] ${syncing ? 'bg-yellow-500/20 border-yellow-400/30 text-yellow-100' : 'bg-green-500/20 border-green-400/30 text-green-100 hover:bg-red-500/20 hover:border-red-400/30 hover:text-red-100'}`}
               >
                 <Cloud size={16} className={syncing ? 'animate-pulse' : ''} />
-                {syncing ? t('header.driveSyncing') : user.displayName?.split(' ')[0] || t('header.driveOn')}
+                <span className="hidden sm:inline">{syncing ? t('header.driveSyncing') : user.displayName?.split(' ')[0] || t('header.driveOn')}</span>
               </button>
             ) : (
               <button
                 onClick={handleSignIn}
                 title={t('header.connectDriveTooltip')}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-blue-100 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-blue-100 transition-colors min-h-[40px]"
               >
-                <CloudOff size={16} /> {t('header.connectDrive')}
+                <CloudOff size={16} /> <span className="hidden sm:inline">{t('header.connectDrive')}</span>
               </button>
             )}
 
@@ -879,7 +880,8 @@ Rules:
               <ModeSwitcher currentMode={mode} onModeChange={onModeChange} />
             )}
 
-            <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-white/10 border border-white/20">
+            {/* Desktop controls */}
+            <div className="hidden md:flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-white/10 border border-white/20">
               <Languages size={16} className="text-blue-100 flex-shrink-0" />
               <select
                 value={i18n.language}
@@ -892,7 +894,7 @@ Rules:
               </select>
             </div>
 
-            <div className="flex bg-white/10 rounded-lg p-1">
+            <div className="hidden md:flex bg-white/10 rounded-lg p-1">
               <button onClick={handleExport} title={t('header.downloadTooltip')} className="p-2 bg-green-500/20 hover:bg-green-500/40 rounded text-white transition-colors border border-green-400/30">
                 <Download size={18} />
               </button>
@@ -911,13 +913,10 @@ Rules:
                 <button
                   onClick={async () => {
                     const url = `${window.location.origin}${window.location.pathname}?share=${user.uid}`;
-                    // publish snapshot (best-effort — requires firestore.rules deployed)
                     publishShare(user.uid, companies).catch(console.error);
-                    // copy URL regardless of Firestore result
                     try {
                       await navigator.clipboard.writeText(url);
                     } catch {
-                      // fallback for browsers without clipboard API
                       window.prompt('Copy this share link:', url);
                     }
                     setShareCopied(true);
@@ -936,6 +935,65 @@ Rules:
               >
                 <Settings size={18} />
               </button>
+            </div>
+
+            {/* Mobile overflow menu */}
+            <div className="md:hidden relative">
+              <button
+                onClick={() => setMobileMenuOpen(o => !o)}
+                className="p-2 bg-white/10 hover:bg-white/20 active:bg-white/30 rounded-lg text-white transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center"
+              >
+                <MoreVertical size={20} />
+              </button>
+              {mobileMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setMobileMenuOpen(false)} />
+                  <div className={`absolute ${isRTL ? 'left-0' : 'right-0'} top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-100 z-50 min-w-[200px] py-2`}>
+                    <div className="px-3 py-2 border-b border-gray-100">
+                      <div className="flex items-center gap-1.5">
+                        <Languages size={14} className="text-gray-400" />
+                        <select
+                          value={i18n.language}
+                          onChange={e => { i18n.changeLanguage(e.target.value); localStorage.setItem('appLanguage', e.target.value); setMobileMenuOpen(false); }}
+                          className="text-gray-700 text-sm font-bold border-none outline-none cursor-pointer bg-transparent flex-1"
+                        >
+                          <option value="en">English</option>
+                          <option value="he">עברית</option>
+                          <option value="fr">Français</option>
+                        </select>
+                      </div>
+                    </div>
+                    <button onClick={() => { handleExport(); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                      <Download size={16} className="text-green-600" /> {t('header.downloadTooltip')}
+                    </button>
+                    <label className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100 cursor-pointer">
+                      <Upload size={16} className="text-blue-600" /> {t('header.uploadTooltip')}
+                      <input type="file" accept=".json" onChange={e => { handleImport(e); setMobileMenuOpen(false); }} className="hidden" />
+                    </label>
+                    <button onClick={() => { setShowTemplates(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                      <span>📚</span> {t('templates.title', 'Interview Templates')}
+                    </button>
+                    {user && !shareMode && (
+                      <button
+                        onClick={async () => {
+                          const url = `${window.location.origin}${window.location.pathname}?share=${user.uid}`;
+                          publishShare(user.uid, companies).catch(console.error);
+                          try { await navigator.clipboard.writeText(url); } catch { window.prompt('Copy this share link:', url); }
+                          setShareCopied(true);
+                          setTimeout(() => setShareCopied(false), 3000);
+                          setMobileMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100"
+                      >
+                        <span>{shareCopied ? '✓' : '🔗'}</span> {t('header.shareTooltip', 'Share read-only link')}
+                      </button>
+                    )}
+                    <button onClick={() => { setShowAISettings(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                      <Settings size={16} className="text-gray-500" /> {t('header.aiSettings', 'AI Settings')}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -1010,7 +1068,7 @@ Rules:
                       <div
                         key={company.id}
                         onClick={() => selectCompany(company)}
-                        className={`p-3 rounded-xl cursor-pointer transition-all ${isSelected ? 'bg-indigo-50 border-indigo-200 shadow-sm border ring-1 ring-indigo-500' : 'hover:bg-gray-50 border border-transparent'}`}
+                        className={`p-3 sm:p-4 min-h-[56px] rounded-xl cursor-pointer transition-all ${isSelected ? 'bg-indigo-50 border-indigo-200 shadow-sm border ring-1 ring-indigo-500' : 'hover:bg-gray-50 active:bg-gray-100 border border-transparent'}`}
                       >
                         <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 ${getAvatarColor(company.name)}`}>
