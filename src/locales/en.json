@@ -327,7 +327,11 @@
   "tasks": {
     "modeSelection": {
       "title": "Task Manager",
+      "short": "Tasks",
       "desc": "Manage tasks with multiple steps and track progress"
+    },
+    "timeline": {
+      "dueDate": "Due date"
     },
     "header": {
       "title": "Task Manager",
@@ -428,8 +432,10 @@
       "title": "How will you use JobFlowTracker?",
       "subtitle": "Choose your role — this cannot be changed later",
       "jobSeekerTitle": "I'm a Job Seeker",
+      "jobSeekerShort": "Jobs",
       "jobSeekerDesc": "Track companies, applications, and interviews",
       "recruiterTitle": "I'm a Recruiter",
+      "recruiterShort": "Recruit",
       "recruiterDesc": "Track candidates through your hiring pipeline",
       "fixedNote": "You can switch modes anytime from the header"
     },

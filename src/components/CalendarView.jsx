@@ -95,7 +95,7 @@ export default function CalendarView({ events = [], onEventClick, isRTL = false 
 
   return (
     <div
-      className="flex flex-col md:flex-row gap-4 p-4 bg-white text-gray-900 rounded-xl [color-scheme:light]"
+      className="calendar-force-light flex flex-col md:flex-row gap-4 p-4 bg-white text-gray-900 rounded-xl"
       dir={isRTL ? 'rtl' : 'ltr'}
     >
       {/* Calendar grid */}
@@ -104,29 +104,33 @@ export default function CalendarView({ events = [], onEventClick, isRTL = false 
         <div className="flex items-center justify-between mb-4 gap-2">
           <button
             onClick={isRTL ? nextMonth : prevMonth}
-            className="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-100 text-gray-800 transition-colors shrink-0 touch-manipulation"
+            className="calendar-nav-btn p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-100 transition-colors shrink-0 touch-manipulation"
             aria-label="Previous month"
           >
-            <ChevronLeft className="w-5 h-5 text-gray-800" />
+            <ChevronLeft className="w-5 h-5 text-gray-800" style={{ color: '#1f2937' }} />
           </button>
           <div className="flex flex-col sm:flex-row items-center gap-2 min-w-0 flex-1 justify-center">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900 capitalize text-center leading-tight">
+            <h2
+              className="calendar-month-title text-base sm:text-lg font-semibold capitalize text-center leading-tight"
+              style={{ color: '#111827', WebkitTextFillColor: '#111827' }}
+            >
               {monthLabel}
             </h2>
             <button
               type="button"
               onClick={goToday}
-              className="text-xs px-2.5 py-1 rounded-md border border-gray-400 bg-white hover:bg-gray-50 text-gray-800 font-medium transition-colors shrink-0"
+              className="calendar-today-btn text-xs px-2.5 py-1 rounded-md border border-gray-400 bg-white hover:bg-gray-50 font-medium transition-colors shrink-0"
+              style={{ color: '#111827' }}
             >
               {t('calendar.today')}
             </button>
           </div>
           <button
             onClick={isRTL ? prevMonth : nextMonth}
-            className="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-100 text-gray-800 transition-colors shrink-0 touch-manipulation"
+            className="calendar-nav-btn p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-100 transition-colors shrink-0 touch-manipulation"
             aria-label="Next month"
           >
-            <ChevronRight className="w-5 h-5 text-gray-800" />
+            <ChevronRight className="w-5 h-5 text-gray-800" style={{ color: '#1f2937' }} />
           </button>
         </div>
 

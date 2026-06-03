@@ -327,7 +327,11 @@
   "tasks": {
     "modeSelection": {
       "title": "מנהל משימות",
+      "short": "משימות",
       "desc": "נהל משימות עם שלבים מרובים ועקוב אחרי ההתקדמות"
+    },
+    "timeline": {
+      "dueDate": "תאריך יעד"
     },
     "header": {
       "title": "מנהל משימות",
@@ -428,8 +432,10 @@
       "title": "איך תשתמש ב-JobFlowTracker?",
       "subtitle": "בחר את התפקיד שלך — לא ניתן לשנות בהמשך",
       "jobSeekerTitle": "אני מחפש עבודה",
+      "jobSeekerShort": "חיפוש",
       "jobSeekerDesc": "מעקב אחר חברות, מועמדויות וראיונות",
       "recruiterTitle": "אני מגייס",
+      "recruiterShort": "גיוס",
       "recruiterDesc": "מעקב אחר מועמדים בתהליך הגיוס",
       "fixedNote": "ניתן להחליף מוד בכל עת מהכותרת"
     },

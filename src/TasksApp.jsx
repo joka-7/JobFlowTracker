@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Plus, Search, Download, Upload, Layout, List, BarChart2,
+  Plus, Search, Download, Upload, Layout, List, BarChart2, Activity,
   Trash2, Edit2, ArrowLeft, ArrowRight, CheckCircle2, CheckCircle, Circle,
   Clock, AlertCircle, ChevronDown, Calendar, Cloud, CloudOff,
   ClipboardList, X, GripVertical, Languages, MoreVertical, Settings, Smartphone, Sparkles,
@@ -442,6 +442,24 @@ Rules:
       parentId: t.id,
     }))
   , [tasks]);
+
+  const timelineEvents = useMemo(() => {
+    const events = [];
+    tasks.forEach(task => {
+      if (!task.dueDate) return;
+      events.push({
+        date: task.dueDate,
+        taskName: safeStr(task.name),
+        status: task.status,
+        notes: safeStr(task.notes),
+        parentId: task.id,
+      });
+    });
+    return events.sort((a, b) => new Date(safeStr(a.date)) - new Date(safeStr(b.date)));
+  }, [tasks]);
+
+  const timelineBorder = isRTL ? 'border-r-2 pr-6' : 'border-l-2 pl-6';
+  const timelineDot = isRTL ? '-right-[31px]' : '-left-[31px]';
 
   const renderStepStatusBadge = (status) => {
     const cfg = STEP_STATUS_CONFIG[status] || STEP_STATUS_CONFIG.todo;
@@ -1007,9 +1025,50 @@ Rules:
     </div>
   );
 
+  const renderTimeline = () => (
+    <div className="flex-1 overflow-y-auto p-3 sm:p-6 bg-slate-50 min-h-0 custom-scrollbar">
+      <div className="max-w-3xl mx-auto">
+        <h2 className="text-2xl font-bold text-gray-800 mb-8 flex items-center gap-2">
+          <Activity className="text-emerald-600" /> {t('timeline.title')}
+        </h2>
+        {timelineEvents.length === 0 ? (
+          <div className="text-center text-gray-500 mt-10">{t('timeline.empty')}</div>
+        ) : (
+          <div className={`relative ${timelineBorder} border-emerald-200 space-y-8`}>
+            {timelineEvents.map((event, index) => (
+              <div key={index} className="relative">
+                <div className={`absolute ${timelineDot} top-1 w-4 h-4 rounded-full bg-emerald-500 border-4 border-white shadow-sm`} />
+                <button
+                  type="button"
+                  onClick={() => navigateTo('list', event.parentId)}
+                  className="w-full text-left bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex justify-between items-start mb-2 gap-2">
+                    <span className="px-2 py-1 text-xs font-bold rounded-md bg-emerald-100 text-emerald-800">
+                      {tt('timeline.dueDate', 'Due date')}
+                    </span>
+                    <span className="text-sm text-gray-500 font-medium bg-gray-50 px-2 py-1 rounded shrink-0">
+                      {formatDate(event.date, lang)}
+                    </span>
+                  </div>
+                  <h3 className="font-bold text-lg text-gray-800 mb-1">{event.taskName}</h3>
+                  <p className="text-sm text-gray-500 capitalize">{tt(`status.${event.status}`, event.status)}</p>
+                  {event.notes && (
+                    <p className="text-gray-600 text-sm mt-2 whitespace-pre-wrap line-clamp-3">{event.notes}</p>
+                  )}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   const TABS = [
     { id: 'board', icon: Layout, label: t('tabs.board', 'Board') },
     { id: 'list', icon: List, label: t('tabs.list', 'List & Edit') },
+    { id: 'timeline', icon: Activity, label: t('tabs.timeline', 'Timeline') },
     { id: 'calendar', icon: Calendar, label: t('tabs.calendar', 'Calendar') },
     { id: 'stats', icon: BarChart2, label: t('tabs.stats', 'Statistics') },
   ];
@@ -1060,6 +1119,12 @@ Rules:
               >
                 <CloudOff size={16} /> <span className="hidden sm:inline">{t('header.connectDrive')}</span>
               </button>
+            )}
+
+            {onModeChange && (
+              <div className="hidden md:block shrink-0">
+                <ModeSwitcher currentMode={MODE} onModeChange={onModeChange} />
+              </div>
             )}
 
             {canInstall && (
@@ -1175,11 +1240,11 @@ Rules:
                 </>
               )}
             </div>
-            </div>
+          </div>
           </div>
 
           {onModeChange && (
-            <div className="w-full overflow-x-auto scrollbar-none -mx-1 px-1">
+            <div className="md:hidden w-full overflow-x-auto scrollbar-none -mx-1 px-1">
               <ModeSwitcher currentMode={MODE} onModeChange={onModeChange} />
             </div>
           )}
@@ -1205,9 +1270,10 @@ Rules:
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {activeTab === 'board' && renderBoard()}
         {activeTab === 'list' && renderList()}
+        {activeTab === 'timeline' && renderTimeline()}
         {activeTab === 'stats' && renderStats()}
         {activeTab === 'calendar' && (
-          <div className="flex-1 overflow-auto bg-gray-50 min-h-0">
+          <div className="flex-1 overflow-auto calendar-page min-h-0">
             <CalendarView
               events={calendarEvents}
               isRTL={isRTL}
