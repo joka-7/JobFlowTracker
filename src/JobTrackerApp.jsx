@@ -14,6 +14,7 @@ import {
 } from './statuses';
 import Onboarding from './components/Onboarding';
 import AppBrandMark from './components/AppBrandMark';
+import { STORAGE_KEYS } from './storageKeys.js';
 import AIAssistant from './components/AIAssistant';
 import APIKeySettings from './components/APIKeySettings';
 import RejectionAnalysis from './components/RejectionAnalysis';
@@ -174,7 +175,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
   const dragCompanyId = useRef(null);
 
   const [showOnboarding, setShowOnboarding] = useState(
-    () => !isRecruiter && !localStorage.getItem('hasCompletedOnboarding'),
+    () => !isRecruiter && !localStorage.getItem(STORAGE_KEYS.jobSeekerOnboarding),
   );
   const [showAISettings, setShowAISettings] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);

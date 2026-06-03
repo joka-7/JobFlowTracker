@@ -1,3 +1,5 @@
+import { applyModeInit } from './modeInit.js';
+
 /** Clear app state before each test so mode selection appears. */
 export async function clearAppStorage(page) {
   await page.addInitScript(() => {
@@ -6,21 +8,19 @@ export async function clearAppStorage(page) {
   });
 }
 
-/** Pre-set job seeker mode and skip onboarding (for flow tests). */
+/** Pre-set job seeker mode, skip onboarding, and enable mock AI (for flow + chat tests). */
 export async function initJobSeekerApp(page) {
-  await page.addInitScript(() => {
-    localStorage.clear();
-    localStorage.setItem('appMode', 'jobseeker');
-    localStorage.setItem('hasCompletedOnboarding', '1');
-  });
+  await applyModeInit(page, 'jobseeker');
 }
 
-/** Pre-set recruiter mode (no onboarding shown). */
+/** Pre-set recruiter mode and mock AI. */
 export async function initRecruiterApp(page) {
-  await page.addInitScript(() => {
-    localStorage.clear();
-    localStorage.setItem('appMode', 'recruiter');
-  });
+  await applyModeInit(page, 'recruiter');
+}
+
+/** Pre-set tasks mode, skip welcome modal, and enable mock AI. */
+export async function initTasksApp(page) {
+  await applyModeInit(page, 'tasks');
 }
 
 export async function chooseRecruiterMode(page) {
@@ -74,7 +74,7 @@ export async function dragCardToColumn(page, cardName, columnHeaderPattern) {
   await card.dragTo(column.locator('.bg-gray-100').first());
 }
 
-/** Configure localStorage so isAIReady() is true (gemini + fake key). */
+/** @deprecated AI keys are set in applyModeInit presets; kept for tests that clear storage mid-flow. */
 export async function initMockAI(page) {
   await page.addInitScript(() => {
     localStorage.setItem('aiProvider', 'gemini');
@@ -98,33 +98,70 @@ export async function mockGeminiChatStream(page, replyText = 'Mock AI reply for 
   });
 }
 
-export async function initTasksApp(page) {
-  await page.addInitScript(() => {
-    localStorage.clear();
-    localStorage.setItem('appMode', 'tasks');
-    localStorage.setItem('hasCompletedOnboarding_tasks', '1');
-  });
-}
-
-export async function dismissWelcomeModal(page) {
-  const skip = page.getByRole('button', { name: /Skip/i });
-  if (await skip.isVisible().catch(() => false)) {
-    await skip.click();
-    return;
-  }
-  const start = page.getByRole('button', { name: /Get started/i });
-  if (await start.isVisible().catch(() => false)) {
-    await start.click();
+/** Dismiss onboarding, welcome, or other full-screen overlays that block header clicks. */
+export async function dismissBlockingOverlays(page) {
+  for (let i = 0; i < 3; i++) {
+    const skipTutorial = page.getByRole('button', { name: /Skip tutorial/i });
+    if (await skipTutorial.isVisible().catch(() => false)) {
+      await skipTutorial.click();
+      await page.waitForTimeout(200);
+      continue;
+    }
+    const skip = page.getByRole('button', { name: /^Skip$/i });
+    if (await skip.isVisible().catch(() => false)) {
+      await skip.click();
+      await page.waitForTimeout(200);
+      continue;
+    }
+    const letsGo = page.getByRole('button', { name: /Let's go!/i });
+    if (await letsGo.isVisible().catch(() => false)) {
+      await letsGo.click();
+      await page.waitForTimeout(200);
+      continue;
+    }
+    const getStarted = page.getByRole('button', { name: /Get started/i });
+    if (await getStarted.isVisible().catch(() => false)) {
+      await getStarted.click();
+      await page.waitForTimeout(200);
+      continue;
+    }
+    break;
   }
 }
 
 export async function openTemplateLibrary(page) {
-  await dismissWelcomeModal(page);
-  await page.getByTitle(/Interview Template|Task Planning|Candidate Interview/i).click();
+  await dismissBlockingOverlays(page);
+
+  const byTitle = page.getByTitle(/Interview Template|Task Planning|Candidate Interview/i);
+  if (await byTitle.first().isVisible().catch(() => false)) {
+    await byTitle.first().click();
+  } else {
+    await page.locator('header .md\\:hidden.relative > button').first().click();
+    await page.getByRole('button', { name: /Interview Template|Task Planning|Candidate Interview/i }).click();
+  }
+
   await page.getByRole('heading', { name: /Template Library|Task Planning|Interview Guide/i }).waitFor();
 }
 
+export function templateLibraryPanel(page) {
+  return page.locator('div.fixed.inset-0').filter({
+    has: page.getByRole('heading', { name: /Template Library|Task Planning|Interview Guide/i }),
+  });
+}
+
+export async function startMockInterview(page, buttonPattern = /Mock interview/i) {
+  await openTemplateLibrary(page);
+  await templateLibraryPanel(page).getByRole('button', { name: buttonPattern }).first().click();
+}
+
+export function chatModalPanel(page, titlePattern = /Mock Interview|AI Coaching|AI Chat/) {
+  return page.locator('div.fixed.inset-0').filter({
+    has: page.getByText(titlePattern),
+  });
+}
+
 export async function closeChatModal(page) {
-  const modal = page.locator('div.fixed.inset-0').filter({ has: page.getByRole('button', { name: 'Close' }) });
+  const modal = chatModalPanel(page);
   await modal.getByRole('button', { name: 'Close' }).click();
+  await modal.waitFor({ state: 'hidden', timeout: 10_000 });
 }

@@ -24,6 +24,7 @@ import APIKeySettings from './components/APIKeySettings';
 import { usePwaInstall } from './usePwaInstall';
 import AppBrandMark from './components/AppBrandMark';
 import WelcomeModal from './components/WelcomeModal';
+import { STORAGE_KEYS } from './storageKeys.js';
 
 const MODE = 'tasks';
 
@@ -131,7 +132,7 @@ export default function TasksApp({ onModeChange }) {
   const [chatOpen, setChatOpen] = useState(false);
   const [simulationData, setSimulationData] = useState(null);
   const [showTasksWelcome, setShowTasksWelcome] = useState(
-    () => !localStorage.getItem('hasCompletedOnboarding_tasks'),
+    () => !localStorage.getItem(STORAGE_KEYS.tasksWelcome),
   );
   const { canInstall, runInstall } = usePwaInstall();
 
@@ -1298,7 +1299,7 @@ Rules:
           skipLabel={tt('welcome.skip', 'Skip')}
           startLabel={tt('welcome.getStarted', 'Get started')}
           onClose={() => setShowTasksWelcome(false)}
-          onComplete={() => localStorage.setItem('hasCompletedOnboarding_tasks', '1')}
+          onComplete={() => localStorage.setItem(STORAGE_KEYS.tasksWelcome, '1')}
         />
       )}
 
