@@ -108,7 +108,7 @@ const makeInitialFormState = (isRecruiter) => ({
   ...(isRecruiter ? {} : {}),
 });
 
-export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
+export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOnboarding = true }) {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'he';
   const isRecruiter = mode === 'recruiter';
@@ -169,7 +169,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
     const model = localStorage.getItem('aiModel') || '';
     const ollamaUrl = localStorage.getItem('ollamaUrl') || 'http://localhost:11434';
     initAI(provider, apiKey, model, ollamaUrl);
-    if (!localStorage.getItem('hasCompletedOnboarding') && !isRecruiter) {
+    if (autoOnboarding && !localStorage.getItem('hasCompletedOnboarding') && !isRecruiter) {
       setShowOnboarding(true);
     }
 
@@ -181,7 +181,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
         if (data?.companies?.length) setCompanies(data.companies);
       }).catch(console.error);
     }
-  }, [isRecruiter]);
+  }, [isRecruiter, autoOnboarding]);
 
   const initialFormState = makeInitialFormState(isRecruiter);
   const [formData, setFormData] = useState(initialFormState);

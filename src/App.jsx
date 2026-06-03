@@ -5,6 +5,7 @@ import ModeSelection from './components/ModeSelection';
 import { resolveInitialAppMode } from './statuses';
 
 export default function App() {
+  const [autoOnboarding] = useState(() => !resolveInitialAppMode());
   const [mode, setMode] = useState(() => resolveInitialAppMode());
 
   if (!mode) {
@@ -15,5 +16,5 @@ export default function App() {
     return <TasksApp onModeChange={setMode} />;
   }
 
-  return <JobTrackerApp mode={mode} onModeChange={setMode} />;
+  return <JobTrackerApp mode={mode} onModeChange={setMode} autoOnboarding={autoOnboarding} />;
 }
