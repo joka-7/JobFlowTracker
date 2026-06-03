@@ -6,7 +6,7 @@ import {
   ArrowLeft, ArrowRight, Download, Upload, Filter, Layout, List, Activity, AlertTriangle,
   Cloud, CloudOff, Languages, BarChart2, Settings, MoreVertical
 } from 'lucide-react';
-import { signInWithGoogle, signOut, onAuthChange, loadAllItems, updateItem, deleteItem, batchSaveItems, loadUserProfile, saveUserProfile, publishShare, loadSharedData } from './firebase';
+import { signInWithGoogle, signOut, onAuthChange, loadAllItems, updateItem, deleteItem, batchSaveItems, loadUserProfile, saveUserProfile } from './firebase';
 import { initAI } from './services/aiAssistant';
 import {
   getStatuses, getTerminalStatuses, getRejectedStatuses, getFunnelOrder,
@@ -160,8 +160,6 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
   const [showTemplates, setShowTemplates] = useState(false);
   const [simulationData, setSimulationData] = useState(null); // { systemPrompt, title }
   const [rejectionCompany, setRejectionCompany] = useState(null);
-  const [shareMode, setShareMode] = useState(false);
-  const [shareCopied, setShareCopied] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -174,14 +172,6 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
       setShowOnboarding(true);
     }
 
-    const params = new URLSearchParams(window.location.search);
-    const shareUid = params.get('share');
-    if (shareUid) {
-      setShareMode(true);
-      loadSharedData(shareUid).then(data => {
-        if (data?.companies?.length) setCompanies(data.companies);
-      }).catch(console.error);
-    }
   }, [isRecruiter, autoOnboarding]);
 
   const initialFormState = makeInitialFormState(isRecruiter);
@@ -851,11 +841,9 @@ Rules:
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            {!shareMode && (
-              <button onClick={openNewForm} className="flex items-center gap-2 bg-white text-indigo-700 hover:bg-blue-50 active:bg-blue-100 px-3 sm:px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-sm min-h-[40px]">
-                <Plus size={18} /> <span className="hidden sm:inline">{tMode('header.addCompany')}</span>
-              </button>
-            )}
+            <button onClick={openNewForm} className="flex items-center gap-2 bg-white text-indigo-700 hover:bg-blue-50 active:bg-blue-100 px-3 sm:px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-sm min-h-[40px]">
+              <Plus size={18} /> <span className="hidden sm:inline">{tMode('header.addCompany')}</span>
+            </button>
 
             {user ? (
               <button
@@ -909,25 +897,6 @@ Rules:
               >
                 📚
               </button>
-              {user && !shareMode && (
-                <button
-                  onClick={async () => {
-                    const url = `${window.location.origin}${window.location.pathname}?share=${user.uid}`;
-                    publishShare(user.uid, companies).catch(console.error);
-                    try {
-                      await navigator.clipboard.writeText(url);
-                    } catch {
-                      window.prompt('Copy this share link:', url);
-                    }
-                    setShareCopied(true);
-                    setTimeout(() => setShareCopied(false), 3000);
-                  }}
-                  title={t('header.shareTooltip', 'Share read-only link')}
-                  className="p-2 hover:bg-white/20 rounded text-white transition-colors"
-                >
-                  {shareCopied ? '✓' : '🔗'}
-                </button>
-              )}
               <button
                 onClick={() => setShowAISettings(true)}
                 title={t('header.aiSettings', 'AI Settings')}
@@ -973,21 +942,6 @@ Rules:
                     <button onClick={() => { setShowTemplates(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <span>📚</span> {t('templates.title', 'Interview Templates')}
                     </button>
-                    {user && !shareMode && (
-                      <button
-                        onClick={async () => {
-                          const url = `${window.location.origin}${window.location.pathname}?share=${user.uid}`;
-                          publishShare(user.uid, companies).catch(console.error);
-                          try { await navigator.clipboard.writeText(url); } catch { window.prompt('Copy this share link:', url); }
-                          setShareCopied(true);
-                          setTimeout(() => setShareCopied(false), 3000);
-                          setMobileMenuOpen(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100"
-                      >
-                        <span>{shareCopied ? '✓' : '🔗'}</span> {t('header.shareTooltip', 'Share read-only link')}
-                      </button>
-                    )}
                     <button onClick={() => { setShowAISettings(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <Settings size={16} className="text-gray-500" /> {t('header.aiSettings', 'AI Settings')}
                     </button>
@@ -1016,13 +970,6 @@ Rules:
         </div>
       </header>
 
-      {shareMode && (
-        <div className="bg-amber-50 border-b border-amber-200 px-6 py-2 flex items-center gap-2 text-amber-800 text-sm">
-          <span>👁️</span>
-          <span className="font-medium">{t('header.viewOnly', 'View only')} —</span>
-          <span>{t('header.viewOnlyDesc', 'You are viewing a shared read-only snapshot.')}</span>
-        </div>
-      )}
 
       {activeTab === 'board' && renderBoard()}
       {activeTab === 'timeline' && renderTimeline()}
