@@ -202,6 +202,29 @@ export default function TasksApp({ onModeChange }) {
     return () => window.removeEventListener('keydown', handler);
   }, [openNewForm]);
 
+  // Browser back/forward support
+  const navigateTo = useCallback((tab, taskId = null) => {
+    const state = { tab, selectedId: taskId };
+    window.history.pushState(state, '');
+    setActiveTab(tab);
+    if (taskId) {
+      setSelectedId(taskId);
+      setIsEditing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const onPop = (e) => {
+      const s = e.state;
+      if (!s) return;
+      setActiveTab(s.tab || 'board');
+      setSelectedId(s.selectedId || null);
+      setIsEditing(false);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
   const handleSave = async () => {
     if (!safeStr(formData.name).trim()) {
       alert(tt('form.requiredName', 'Task name is required'));
@@ -429,7 +452,7 @@ export default function TasksApp({ onModeChange }) {
                         key={task.id}
                         draggable
                         onDragStart={() => handleDragStart(task.id)}
-                        onClick={() => { setSelectedId(task.id); setActiveTab('list'); setIsEditing(false); }}
+                        onClick={() => navigateTo('list', task.id)}
                         className="bg-white border border-gray-200 rounded-xl p-3 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all group"
                       >
                         <div className="flex items-start justify-between gap-2 mb-1">
@@ -951,7 +974,7 @@ export default function TasksApp({ onModeChange }) {
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => navigateTo(tab.id)}
               className={`flex items-center gap-1.5 px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${
                 active
                   ? 'border-emerald-600 text-emerald-700'
@@ -975,7 +998,7 @@ export default function TasksApp({ onModeChange }) {
             <CalendarView
               events={calendarEvents}
               isRTL={isRTL}
-              onEventClick={ev => { setSelectedId(ev.parentId); setActiveTab('list'); setIsEditing(false); }}
+              onEventClick={ev => { navigateTo('list', ev.parentId); }}
             />
           </div>
         )}

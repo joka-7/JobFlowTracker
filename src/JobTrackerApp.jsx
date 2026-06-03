@@ -250,6 +250,29 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
     return () => window.removeEventListener('keydown', handler);
   }, [openNewForm]);
 
+  // Browser back/forward support
+  const navigateTo = useCallback((tab, companyId = null) => {
+    const state = { tab, selectedId: companyId };
+    window.history.pushState(state, '');
+    setActiveTab(tab);
+    if (companyId) {
+      setSelectedId(companyId);
+      setIsEditing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const onPop = (e) => {
+      const s = e.state;
+      if (!s) return;
+      setActiveTab(s.tab || 'board');
+      setSelectedId(s.selectedId || null);
+      setIsEditing(false);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
   const handleSignIn = async () => {
     try {
       await signInWithGoogle();
@@ -504,8 +527,9 @@ Rules:
   };
 
   const selectCompany = (company) => {
-    setSelectedId(company.id);
-    setFormData({ ...initialFormState, ...company, rejection: company.rejection || { date: '', method: '', notes: '' } });
+    const full = companies.find(c => c.id === company.id) || company;
+    setSelectedId(full.id);
+    setFormData({ ...initialFormState, ...full, rejection: full.rejection || { date: '', method: '', notes: '' } });
     setIsEditing(false);
   };
 
@@ -557,7 +581,7 @@ Rules:
                     draggable
                     onDragStart={e => handleDragStart(e, company.id)}
                     onDragEnd={handleDragEnd}
-                    onClick={() => { selectCompany(company); setActiveTab('list'); }}
+                    onClick={() => { selectCompany(company); navigateTo('list', company.id); }}
                     className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
                   >
                     <div className="font-bold text-gray-800 mb-1">{safeStr(company.name)}</div>
@@ -1047,7 +1071,7 @@ Rules:
           ].map(({ key, icon }) => (
             <button
               key={key}
-              onClick={() => setActiveTab(key)}
+              onClick={() => navigateTo(key)}
               className={`px-4 py-2 rounded-t-lg font-medium flex items-center gap-2 transition-colors ${activeTab === key ? 'bg-gray-50 text-indigo-800' : 'bg-white/10 text-blue-100 hover:bg-white/20'}`}
             >
               {icon} {t(`tabs.${key}`, key)}
@@ -1065,7 +1089,7 @@ Rules:
           <CalendarView
             events={calendarEvents}
             isRTL={isRTL}
-            onEventClick={ev => { selectCompany({ id: ev.parentId }); setActiveTab('list'); }}
+            onEventClick={ev => { selectCompany({ id: ev.parentId }); navigateTo('list', ev.parentId); }}
           />
         </div>
       )}
