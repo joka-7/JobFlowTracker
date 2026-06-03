@@ -54,6 +54,12 @@ See [docs/RECRUITER_MODE.md](docs/RECRUITER_MODE.md) for full recruiter details.
 |---|---|---|
 | ![Tasks board](docs/screenshots/tasks-board.png) | ![Tasks list](docs/screenshots/tasks-list.png) | ![Tasks stats](docs/screenshots/tasks-stats.png) |
 
+### Calendar view (all modes)
+
+| Monthly grid | Day detail panel |
+|---|---|
+| ![Calendar view](docs/screenshots/calendar-view.png) | ![Calendar day detail](docs/screenshots/calendar-day-detail.png) |
+
 ---
 
 ## Features
@@ -61,6 +67,7 @@ See [docs/RECRUITER_MODE.md](docs/RECRUITER_MODE.md) for full recruiter details.
 ### Views & Navigation
 - **Kanban board** — drag-and-drop cards across status columns
 - **List & edit view** — detailed profiles with history and notes
+- **Calendar** — monthly grid showing interviews, deadlines, and task due dates; click any day to see its events
 - **Timeline** — chronological activity log of all interviews and submissions (job seeker & recruiter)
 - **Stats** — counts, response rate, upcoming events, hiring funnel
 
