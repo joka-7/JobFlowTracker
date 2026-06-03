@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   getStatuses, getTerminalStatuses, getRejectedStatuses, getFunnelOrder,
-  getStorageKey, resolveInitialAppMode, STATUSES_JOBSEEKER, STATUSES_RECRUITER,
+  getStorageKey, resolveInitialAppMode, filterItemsForMode,
+  STATUSES_JOBSEEKER, STATUSES_RECRUITER,
 } from '../statuses';
 
 describe('statuses', () => {
@@ -41,5 +42,25 @@ describe('statuses', () => {
 
   it('returns null when no mode and no legacy data', () => {
     expect(resolveInitialAppMode()).toBeNull();
+  });
+
+  it('filterItemsForMode excludes jobseeker-only statuses from recruiter data', () => {
+    const mixed = [
+      { id: '1', name: 'Co', status: 'applied', linkedinCompany: 'https://li.co' },
+      { id: '2', name: 'Co2', status: 'hr_call', linkedinCompany: 'https://li.co' },
+      { id: '3', name: 'Cand', status: 'screening', linkedinCandidate: 'https://li.com/c' },
+    ];
+    const recruiter = filterItemsForMode(mixed, 'recruiter');
+    expect(recruiter.map(c => c.id)).toEqual(['3']);
+    const jobseeker = filterItemsForMode(mixed, 'jobseeker');
+    expect(jobseeker.map(c => c.id)).toEqual(['1', '2']);
+  });
+
+  it('filterItemsForMode keeps only task-shaped records in tasks mode', () => {
+    const mixed = [
+      { id: '1', name: 'Task A', status: 'active', steps: [{ id: 's1', title: 'Step' }] },
+      { id: '2', name: 'Job Co', status: 'applied', interviews: [] },
+    ];
+    expect(filterItemsForMode(mixed, 'tasks').map(t => t.id)).toEqual(['1']);
   });
 });

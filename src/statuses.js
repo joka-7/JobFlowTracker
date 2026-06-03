@@ -78,6 +78,68 @@ export const getCollectionName = (mode) => {
 export const getStorageKey = (mode) =>
   `jobTrackerAppV2Data_${mode}`;
 
+const JOBSEEKER_ONLY_STATUSES = new Set([
+  'hr_call', 'tech_interview', 'manager_interview', 'home_assignment',
+  'references', 'frozen', 'ghosted', 'offer',
+]);
+
+const RECRUITER_ONLY_STATUSES = new Set([
+  'screening', 'phone_screen', 'technical', 'final_interview',
+  'offer_extended', 'offer_accepted',
+]);
+
+const TASK_ONLY_STATUSES = new Set(['active', 'on_hold', 'completed', 'cancelled']);
+
+const SHARED_PIPELINE_STATUSES = new Set(['applied', 'rejected', 'withdrawn']);
+
+const looksLikeRecruiterRecord = (item) => Boolean(
+  item.linkedinCandidate || item.source || item.expectedSalary || item.currentRole,
+);
+
+const looksLikeJobseekerRecord = (item) => Boolean(
+  item.linkedinCompany || item.website || item.description || item.products ||
+  item.linkedinHR || (Array.isArray(item.homeworks) && item.homeworks.length > 0),
+);
+
+/** Drop records that belong to another mode (e.g. after legacy storage bleed). */
+export function filterItemsForMode(items, mode) {
+  if (!Array.isArray(items)) return [];
+
+  if (mode === 'tasks') {
+    return items.filter((item) => {
+      if (!item || typeof item !== 'object') return false;
+      if (Array.isArray(item.steps)) return true;
+      if (Array.isArray(item.interviews) || item.linkedinCompany || item.linkedinCandidate) {
+        return false;
+      }
+      return !item.status || TASK_ONLY_STATUSES.has(item.status);
+    });
+  }
+
+  return items.filter((item) => {
+    if (!item || typeof item !== 'object') return false;
+    const status = item.status;
+
+    if (mode === 'recruiter') {
+      if (JOBSEEKER_ONLY_STATUSES.has(status)) return false;
+      if (RECRUITER_ONLY_STATUSES.has(status)) return true;
+      if (SHARED_PIPELINE_STATUSES.has(status)) {
+        if (looksLikeJobseekerRecord(item) && !looksLikeRecruiterRecord(item)) return false;
+        return true;
+      }
+      return looksLikeRecruiterRecord(item);
+    }
+
+    if (RECRUITER_ONLY_STATUSES.has(status)) return false;
+    if (JOBSEEKER_ONLY_STATUSES.has(status)) return true;
+    if (SHARED_PIPELINE_STATUSES.has(status)) {
+      if (looksLikeRecruiterRecord(item) && !looksLikeJobseekerRecord(item)) return false;
+      return true;
+    }
+    return looksLikeJobseekerRecord(item) || !looksLikeRecruiterRecord(item);
+  });
+}
+
 export function resolveInitialAppMode() {
   const stored = localStorage.getItem('appMode');
   if (stored === 'jobseeker' || stored === 'recruiter' || stored === 'tasks') return stored;

@@ -10,7 +10,7 @@ import {
   signInWithGoogle, signOut, onAuthChange, loadAllItems,
   updateItem, deleteItem, batchSaveItems, loadUserProfile, saveUserProfile,
 } from './firebase';
-import { getStorageKey, STATUSES_TASKS } from './statuses';
+import { getStorageKey, STATUSES_TASKS, filterItemsForMode } from './statuses';
 import ModeSwitcher from './components/ModeSwitcher';
 import CalendarView from './components/CalendarView';
 import TemplateLibrary from './components/TemplateLibrary';
@@ -97,7 +97,7 @@ export default function TasksApp({ onModeChange }) {
       const saved = localStorage.getItem(getStorageKey(MODE));
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed)) return filterItemsForMode(parsed, MODE);
       }
     } catch { /* ignore */ }
     return [];
@@ -155,7 +155,7 @@ export default function TasksApp({ onModeChange }) {
           await saveUserProfile(firebaseUser.uid, { appMode: MODE });
           const data = await loadAllItems(firebaseUser.uid, MODE);
           if (data && data.length > 0) {
-            setTasks(data);
+            setTasks(filterItemsForMode(data, MODE));
             showToast(tt('toast.imported', 'Data loaded from cloud!'));
           }
         } catch (e) { console.error(e); }
@@ -940,7 +940,7 @@ export default function TasksApp({ onModeChange }) {
   return (
     <div className="flex flex-col h-screen bg-white" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
-      <header className={`bg-gradient-to-r ${isRTL ? 'from-indigo-800 to-blue-700' : 'from-blue-700 to-indigo-800'} text-white shadow-md flex-shrink-0`}>
+      <header className={`bg-gradient-to-r ${isRTL ? 'from-emerald-700 to-green-600' : 'from-green-600 to-emerald-700'} text-white shadow-md flex-shrink-0`}>
         <div className="px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
@@ -956,12 +956,12 @@ export default function TasksApp({ onModeChange }) {
                   </span>
                 )}
               </h1>
-              <p className="text-blue-200 text-sm">{tt('header.subtitle', 'Manage your tasks and track progress')}</p>
+              <p className="text-green-100 text-sm">{tt('header.subtitle', 'Manage your tasks and track progress')}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <button onClick={openNewForm} className="flex items-center gap-2 bg-white text-indigo-700 hover:bg-blue-50 active:bg-blue-100 px-3 sm:px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-sm min-h-[40px]">
+            <button onClick={openNewForm} className="flex items-center gap-2 bg-white text-emerald-700 hover:bg-green-50 active:bg-green-100 px-3 sm:px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-sm min-h-[40px]">
               <Plus size={18} /> <span className="hidden sm:inline">{tt('header.addTask', 'Add Task')}</span>
             </button>
 
@@ -978,7 +978,7 @@ export default function TasksApp({ onModeChange }) {
               <button
                 onClick={() => signInWithGoogle().catch(() => {})}
                 title={t('header.connectDriveTooltip')}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-blue-100 transition-colors min-h-[40px]"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-green-100 transition-colors min-h-[40px]"
               >
                 <CloudOff size={16} /> <span className="hidden sm:inline">{t('header.connectDrive')}</span>
               </button>
@@ -990,11 +990,11 @@ export default function TasksApp({ onModeChange }) {
 
             {/* Desktop controls */}
             <div className="hidden md:flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-white/10 border border-white/20">
-              <Languages size={16} className="text-blue-100 flex-shrink-0" />
+              <Languages size={16} className="text-green-100 flex-shrink-0" />
               <select
                 value={i18n.language}
                 onChange={e => { i18n.changeLanguage(e.target.value); localStorage.setItem('appLanguage', e.target.value); }}
-                className="bg-transparent text-blue-100 text-sm font-bold border-none outline-none cursor-pointer"
+                className="bg-transparent text-green-100 text-sm font-bold border-none outline-none cursor-pointer"
               >
                 <option value="en" className="text-gray-800">English</option>
                 <option value="he" className="text-gray-800">עברית</option>
@@ -1012,7 +1012,7 @@ export default function TasksApp({ onModeChange }) {
               </label>
               <button
                 onClick={() => setShowTemplates(true)}
-                title={t('templates.title', 'Templates')}
+                title={t('templates.titleTasks', 'Task Planning Prompts')}
                 className="p-2 hover:bg-white/20 rounded text-white transition-colors"
               >
                 📚
@@ -1060,7 +1060,7 @@ export default function TasksApp({ onModeChange }) {
                       <input type="file" accept=".json" onChange={e => { handleImport(e); setMobileMenuOpen(false); }} className="hidden" />
                     </label>
                     <button onClick={() => { setShowTemplates(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
-                      <span>📚</span> {t('templates.title', 'Templates')}
+                      <span>📚</span> {t('templates.titleTasks', 'Task Planning Prompts')}
                     </button>
                     <button onClick={() => { setShowAISettings(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <Settings size={16} className="text-gray-500" /> {t('header.aiSettings', 'AI Settings')}
@@ -1099,7 +1099,7 @@ export default function TasksApp({ onModeChange }) {
             <button
               key={id}
               onClick={() => navigateTo(id)}
-              className={`px-4 py-2 rounded-t-lg font-medium flex items-center gap-2 transition-colors ${activeTab === id ? 'bg-gray-50 text-indigo-800' : 'bg-white/10 text-blue-100 hover:bg-white/20'}`}
+              className={`px-4 py-2 rounded-t-lg font-medium flex items-center gap-2 transition-colors ${activeTab === id ? 'bg-gray-50 text-emerald-800' : 'bg-white/10 text-green-100 hover:bg-white/20'}`}
             >
               <Icon size={16} /> {label}
             </button>
@@ -1137,6 +1137,7 @@ export default function TasksApp({ onModeChange }) {
       {showTemplates && (
         <TemplateLibrary
           t={t}
+          libraryMode="tasks"
           onClose={() => setShowTemplates(false)}
         />
       )}

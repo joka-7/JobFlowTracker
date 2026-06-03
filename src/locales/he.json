@@ -288,11 +288,15 @@
   },
   "templates": {
     "title": "ספריית תבניות ראיון",
+    "titleRecruiter": "מדריך ראיון מועמדים",
+    "titleTasks": "שאלות לתכנון משימות",
     "search": "חיפוש שאלות...",
     "copy": "העתק",
     "copied": "הועתק!",
     "footer": "השתמש בשאלות אלה לתרגול. תשובות התנהגותיות צריכות לעקוב אחר פורמט STAR.",
+    "footerTasks": "השתמש בשאלות אלה בעת תכנון, פירוק או סקירת משימות.",
     "practiceButton": "ראיון מדומה",
+    "practiceButtonRecruiter": "תרגול ניהול ראיון",
     "categories": {
       "hr": "משאבי אנוש / סינון",
       "technical": "טכני",
@@ -300,6 +304,14 @@
       "manager": "מנהל",
       "culture": "התאמה תרבותית",
       "questions_to_ask": "שאלות לשאול"
+    },
+    "taskCategories": {
+      "planning": "תכנון והגדרת היקף",
+      "breakdown": "פירוק לשלבים",
+      "execution": "בדיקות ביצוע",
+      "review": "סקירה וסיום",
+      "collaboration": "שיתוף פעולה והעברה",
+      "retrospective": "רטרוספקטיבה"
     }
   },
   "tasks": {

@@ -32,7 +32,7 @@ function Message({ msg, onSave, t }) {
           ? 'bg-indigo-600 text-white rounded-br-sm'
           : 'bg-gray-100 text-gray-800 rounded-bl-sm'
       }`}>
-        {msg.content.split('\n').map((line, i) => (
+        {String(msg.content ?? '').split('\n').map((line, i) => (
           <p key={i} className={i > 0 ? 'mt-1' : ''}><MarkdownText text={line} /></p>
         ))}
         {msg.streaming && (
@@ -104,7 +104,9 @@ export default function ChatModal({
     setMessages(prev => [...prev, { role: 'assistant', content: '', streaming: true }]);
 
     // strip UI-only fields; replace trigger with a neutral user turn for the API
-    let apiMessages = newMessages.map(({ role, content }) => ({ role, content }));
+    let apiMessages = newMessages
+      .map(({ role, content }) => ({ role, content: String(content ?? '') }))
+      .filter(m => m.content.length > 0);
     if (isTrigger) {
       apiMessages = [...apiMessages, { role: 'user', content: 'begin' }];
     } else if (apiMessages.length > 0 && apiMessages[0].role === 'assistant') {
@@ -112,6 +114,17 @@ export default function ChatModal({
       // Prepend the hidden trigger so the API always sees a valid user-first sequence.
       apiMessages = [{ role: 'user', content: 'begin' }, ...apiMessages];
     }
+    // Anthropic/OpenAI require strict user/assistant alternation after the first turn.
+    const normalized = [];
+    for (const msg of apiMessages) {
+      const last = normalized[normalized.length - 1];
+      if (last && last.role === msg.role) {
+        last.content = `${last.content}\n\n${msg.content}`;
+      } else {
+        normalized.push({ ...msg });
+      }
+    }
+    apiMessages = normalized;
 
     try {
       await streamChat(
