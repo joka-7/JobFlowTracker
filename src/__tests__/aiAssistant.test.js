@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { PROVIDERS, initAI, isAIReady, getCurrentProvider, getInterviewPrep, analyzeRejection, analyzePatterns, debriefInterview } from '../services/aiAssistant.js';
+import { PROVIDERS, initAI, isAIReady, getCurrentProvider, getInterviewPrep, analyzeRejection, analyzePatterns, debriefInterview, buildApiMessages } from '../services/aiAssistant.js';
 
 vi.mock('@anthropic-ai/sdk', () => ({ default: vi.fn() }));
 
@@ -53,6 +53,30 @@ function makeOkResponse(stream) {
 // ---------------------------------------------------------------------------
 // 1. PROVIDERS config
 // ---------------------------------------------------------------------------
+
+describe('buildApiMessages', () => {
+  it('appendSimBegin adds a begin user turn for simulation start', () => {
+    expect(buildApiMessages([], { appendSimBegin: true })).toEqual([
+      { role: 'user', content: 'begin' },
+    ]);
+  });
+
+  it('prepends begin when history starts with assistant', () => {
+    const out = buildApiMessages([{ role: 'assistant', content: 'Hello' }]);
+    expect(out[0]).toEqual({ role: 'user', content: 'begin' });
+    expect(out[1].role).toBe('assistant');
+  });
+
+  it('merges consecutive same-role messages', () => {
+    const out = buildApiMessages([
+      { role: 'user', content: 'Hi' },
+      { role: 'user', content: 'There' },
+    ]);
+    expect(out).toHaveLength(1);
+    expect(out[0].content).toContain('Hi');
+    expect(out[0].content).toContain('There');
+  });
+});
 
 describe('PROVIDERS config', () => {
   it('has exactly 5 providers', () => {

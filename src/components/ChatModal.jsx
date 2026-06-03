@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Send, Loader2, Save, MessageSquare } from 'lucide-react';
-import { streamChat, isAIReady } from '../services/aiAssistant';
+import { streamChat, isAIReady, buildApiMessages } from '../services/aiAssistant';
 
 function MarkdownText({ text }) {
-  if (!text) return null;
+  const safe = String(text ?? '');
+  if (!safe) return null;
   return (
     <span>
-      {text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+      {safe.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
         part.startsWith('**') && part.endsWith('**')
           ? <strong key={i}>{part.slice(2, -2)}</strong>
           : <span key={i}>{part}</span>
@@ -18,9 +19,11 @@ function MarkdownText({ text }) {
 function Message({ msg, onSave, t }) {
   const isUser = msg.role === 'user';
   const [saved, setSaved] = useState(false);
+  const content = String(msg.content ?? '');
 
   const handleSave = () => {
-    onSave(msg.content);
+    if (!content || !onSave) return;
+    onSave(content);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -32,13 +35,13 @@ function Message({ msg, onSave, t }) {
           ? 'bg-indigo-600 text-white rounded-br-sm'
           : 'bg-gray-100 text-gray-800 rounded-bl-sm'
       }`}>
-        {String(msg.content ?? '').split('\n').map((line, i) => (
+        {content.split('\n').map((line, i) => (
           <p key={i} className={i > 0 ? 'mt-1' : ''}><MarkdownText text={line} /></p>
         ))}
         {msg.streaming && (
           <span className="inline-block w-1.5 h-3.5 bg-indigo-400 animate-pulse rounded ml-0.5 align-middle" />
         )}
-        {!isUser && !msg.streaming && onSave && (
+        {!isUser && !msg.streaming && onSave && content && (
           <button
             onClick={handleSave}
             className={`mt-2 text-[11px] flex items-center gap-1 transition-colors ${
@@ -54,14 +57,45 @@ function Message({ msg, onSave, t }) {
   );
 }
 
+class ChatErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center">
+            <p className="text-red-600 font-bold mb-2">Something went wrong</p>
+            <p className="text-sm text-gray-600 mb-4">{this.state.error.message}</p>
+            <button
+              onClick={this.props.onClose}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // sentinel value used to trigger AI-first simulation without showing a user bubble
 const SIM_TRIGGER = '__sim_start__';
 
-export default function ChatModal({
-  company, language, t, onClose, onOpenSettings, onSaveToCompany,
-  systemPromptOverride, // simulation: overrides default system prompt
-  simulationTitle,      // simulation: header subtitle
-  autoStart,            // simulation: fires hidden trigger on mount so AI speaks first
+function ChatModalInner({
+  company, t, onClose, onOpenSettings, onSaveToCompany,
+  systemPromptOverride,
+  simulationTitle,
+  autoStart,
 }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -70,97 +104,103 @@ export default function ChatModal({
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
   const autoStarted = useRef(false);
+  const sendingRef = useRef(false);
+  const mountedRef = useRef(true);
 
   const aiReady = isAIReady();
 
   const systemPrompt = systemPromptOverride || (company
-    ? `You are a helpful job search assistant. The user is tracking their application to ${company.name}${company.role ? ` for the role of ${company.role}` : ''}${company.location ? ` in ${company.location}` : ''}. Current status: ${company.status}. Number of interviews: ${company.interviews?.length || 0}. Be concise and practical.`
+    ? `You are a helpful job search assistant. The user is tracking their application to ${company.name || 'a company'}${company.role ? ` for the role of ${company.role}` : ''}${company.location ? ` in ${company.location}` : ''}. Current status: ${company.status || 'unknown'}. Number of interviews: ${company.interviews?.length || 0}. Be concise and practical.`
     : 'You are a helpful job search assistant. Be concise and practical.');
+
+  const subtitle = simulationTitle
+    ? String(simulationTitle)
+    : (company ? `${company.name || ''}${company.role ? ` — ${company.role}` : ''}` : '');
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   useEffect(() => {
-    inputRef.current?.focus();
+    if (!loading) inputRef.current?.focus();
+  }, [loading]);
+
+  const patchStreamingAssistant = useCallback((content, streaming) => {
+    setMessages(prev => {
+      if (!prev.length) return prev;
+      const updated = [...prev];
+      const idx = updated.length - 1;
+      updated[idx] = { role: 'assistant', content: String(content ?? ''), streaming: !!streaming };
+      return updated;
+    });
   }, []);
 
-  const send = async (textOverride) => {
-    // guard: onClick passes a SyntheticEvent — treat non-string as "no override"
+  const send = useCallback(async (textOverride) => {
     const explicit = typeof textOverride === 'string' ? textOverride : null;
     const isTrigger = explicit === SIM_TRIGGER;
     const text = isTrigger ? SIM_TRIGGER : (explicit || input).trim();
-    if ((!isTrigger && !text) || loading) return;
+    if ((!isTrigger && !text) || sendingRef.current) return;
     if (!aiReady) { onOpenSettings(); return; }
 
-    // For the hidden sim trigger, don't add a user bubble to UI
+    sendingRef.current = true;
     const visibleUserMsg = isTrigger ? null : { role: 'user', content: text };
-    const newMessages = visibleUserMsg ? [...messages, visibleUserMsg] : [...messages];
-    if (visibleUserMsg) setMessages(newMessages);
+    const historyForApi = visibleUserMsg ? [...messages, visibleUserMsg] : [...messages];
+    if (visibleUserMsg) setMessages(historyForApi);
     if (!explicit) setInput('');
     setError('');
     setLoading(true);
-
     setMessages(prev => [...prev, { role: 'assistant', content: '', streaming: true }]);
 
-    // strip UI-only fields; replace trigger with a neutral user turn for the API
-    let apiMessages = newMessages
-      .map(({ role, content }) => ({ role, content: String(content ?? '') }))
-      .filter(m => m.content.length > 0);
-    if (isTrigger) {
-      apiMessages = [...apiMessages, { role: 'user', content: 'begin' }];
-    } else if (apiMessages.length > 0 && apiMessages[0].role === 'assistant') {
-      // Simulation follow-up: the AI's opening message has no matching user turn in state.
-      // Prepend the hidden trigger so the API always sees a valid user-first sequence.
-      apiMessages = [{ role: 'user', content: 'begin' }, ...apiMessages];
-    }
-    // Anthropic/OpenAI require strict user/assistant alternation after the first turn.
-    const normalized = [];
-    for (const msg of apiMessages) {
-      const last = normalized[normalized.length - 1];
-      if (last && last.role === msg.role) {
-        last.content = `${last.content}\n\n${msg.content}`;
-      } else {
-        normalized.push({ ...msg });
-      }
-    }
-    apiMessages = normalized;
+    const apiMessages = buildApiMessages(historyForApi, { appendSimBegin: isTrigger });
 
     try {
       await streamChat(
         apiMessages,
         systemPrompt,
         (partial) => {
-          setMessages(prev => {
-            const updated = [...prev];
-            updated[updated.length - 1] = { role: 'assistant', content: partial, streaming: true };
-            return updated;
-          });
+          if (mountedRef.current) patchStreamingAssistant(partial, true);
         },
       );
-      setMessages(prev => {
-        const updated = [...prev];
-        updated[updated.length - 1] = { ...updated[updated.length - 1], streaming: false };
-        return updated;
-      });
+      if (mountedRef.current) {
+        setMessages(prev => {
+          if (!prev.length) return prev;
+          const updated = [...prev];
+          const idx = updated.length - 1;
+          updated[idx] = { ...updated[idx], streaming: false };
+          return updated;
+        });
+      }
     } catch (e) {
-      setMessages(prev => prev.filter(m => !m.streaming));
-      setError(e.message || 'Error');
+      if (mountedRef.current) {
+        setMessages(prev => prev.filter(m => !m.streaming));
+        setError(e?.message || 'Error');
+      }
+    } finally {
+      sendingRef.current = false;
+      if (mountedRef.current) setLoading(false);
     }
-    setLoading(false);
-  };
+  }, [aiReady, input, messages, onOpenSettings, patchStreamingAssistant, systemPrompt]);
 
-  // Auto-start: fire hidden trigger so AI opens the simulation
   useEffect(() => {
-    if (autoStart && aiReady && !autoStarted.current) {
-      autoStarted.current = true;
-      const timer = setTimeout(() => send(SIM_TRIGGER), 150);
-      return () => clearTimeout(timer);
-    }
-  }, [aiReady]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!autoStart || !aiReady || autoStarted.current) return;
+    autoStarted.current = true;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      if (!cancelled) send(SIM_TRIGGER);
+    }, 150);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [autoStart, aiReady, send]);
 
   const handleSave = (content) => {
-    if (onSaveToCompany && company) {
+    if (onSaveToCompany && company?.id) {
       onSaveToCompany(company.id, content);
     }
   };
@@ -169,21 +209,17 @@ export default function ChatModal({
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="bg-white w-full sm:max-w-lg sm:rounded-2xl shadow-2xl flex flex-col h-[90vh] sm:h-[600px] overflow-hidden">
 
-        {/* Header */}
         <div className="bg-gradient-to-r from-indigo-600 to-purple-700 px-4 py-3 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2 text-white">
             <span className="text-base">{simulationTitle ? '🎭' : <MessageSquare size={16} />}</span>
             <div>
               <p className="font-bold text-sm">{simulationTitle ? t('chat.simulationTitle', 'Mock Interview') : t('chat.title', 'AI Chat')}</p>
-              <p className="text-indigo-200 text-xs">
-                {simulationTitle || (company && `${company.name}${company.role ? ` — ${company.role}` : ''}`)}
-              </p>
+              {subtitle && <p className="text-indigo-200 text-xs">{subtitle}</p>}
             </div>
           </div>
           <button onClick={onClose} className="text-white/70 hover:text-white"><X size={20} /></button>
         </div>
 
-        {/* Messages */}
         <div className="flex-1 overflow-y-auto px-4 py-4">
           {messages.length === 0 && !loading && (
             <div className="text-center text-gray-400 mt-8">
@@ -196,7 +232,7 @@ export default function ChatModal({
                   ? t('chat.simulationEmpty', 'Starting your mock interview...')
                   : t('chat.empty', 'Start the conversation...')}
               </p>
-              {!simulationTitle && company && (
+              {!simulationTitle && company?.name && (
                 <p className="text-xs mt-1 text-gray-300">
                   {t('chat.context', 'Context')}: {company.name}
                 </p>
@@ -210,7 +246,7 @@ export default function ChatModal({
           )}
           {messages.map((msg, i) => (
             <Message
-              key={i}
+              key={`${msg.role}-${i}-${msg.streaming ? 's' : 'd'}`}
               msg={msg}
               t={t}
               onSave={onSaveToCompany && company && !msg.streaming ? handleSave : null}
@@ -227,7 +263,6 @@ export default function ChatModal({
           <div ref={bottomRef} className="h-8" />
         </div>
 
-        {/* Input */}
         <div className="border-t border-gray-100 px-3 py-3 flex-shrink-0">
           {!aiReady ? (
             <button
@@ -245,12 +280,13 @@ export default function ChatModal({
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
                 placeholder={t('chat.placeholder', 'Type a message... (Enter to send)')}
                 rows={1}
-                className="flex-1 resize-none p-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none max-h-28 overflow-y-auto"
+                disabled={loading}
+                className="flex-1 resize-none p-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none max-h-28 overflow-y-auto disabled:opacity-60"
                 style={{ height: 'auto' }}
                 onInput={e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
               />
               <button
-                onClick={send}
+                onClick={() => send()}
                 disabled={!input.trim() || loading}
                 className={`p-2.5 rounded-xl transition-colors flex-shrink-0 ${
                   !input.trim() || loading
@@ -265,5 +301,13 @@ export default function ChatModal({
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ChatModal(props) {
+  return (
+    <ChatErrorBoundary onClose={props.onClose}>
+      <ChatModalInner {...props} />
+    </ChatErrorBoundary>
   );
 }

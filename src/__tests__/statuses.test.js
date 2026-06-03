@@ -56,6 +56,15 @@ describe('statuses', () => {
     expect(jobseeker.map(c => c.id)).toEqual(['1', '2']);
   });
 
+  it('filterItemsForMode hides job-search applied rows from recruiter view', () => {
+    const leaked = [
+      { id: '1', name: 'Google', role: 'Engineer', status: 'applied', interviews: [] },
+      { id: '2', name: 'Meta', role: 'PM', status: 'applied', interviews: [] },
+      { id: '3', name: 'Alex', role: 'Engineer', status: 'applied', linkedinCandidate: 'https://li.com/a' },
+    ];
+    expect(filterItemsForMode(leaked, 'recruiter').map(c => c.id)).toEqual(['3']);
+  });
+
   it('filterItemsForMode keeps only task-shaped records in tasks mode', () => {
     const mixed = [
       { id: '1', name: 'Task A', status: 'active', steps: [{ id: 's1', title: 'Step' }] },
