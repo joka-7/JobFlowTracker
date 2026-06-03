@@ -39,6 +39,17 @@ const safeStr = (val) => {
   return String(val);
 };
 
+const safeUrl = (val) => {
+  try {
+    const str = safeStr(val).trim();
+    if (!str) return null;
+    const withScheme = /^https?:\/\//i.test(str) ? str : `https://${str}`;
+    const parsed = new URL(withScheme);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    return parsed.href;
+  } catch { return null; }
+};
+
 const PRIORITIES = [
   { id: 'high', color: 'bg-red-500' },
   { id: 'medium', color: 'bg-orange-500' },
@@ -419,14 +430,34 @@ Rules:
             const potentialArray = Object.values(importedRaw).find(val => Array.isArray(val));
             importedArray = potentialArray ? potentialArray : [importedRaw];
           }
-          if (importedArray.length > 0) {
+          if (importedArray.length > 0 && importedArray.length <= 10000) {
             const sanitizedData = importedArray.map((c, idx) => ({
-              ...c,
+              id: c.id ? String(c.id).slice(0, 64) : Date.now().toString() + idx,
               name: safeStr(c.name || c.company || tMode('alert.unnamedCompany')),
               role: safeStr(c.role || c.position || ''),
-              interviews: Array.isArray(c.interviews) ? c.interviews.map(inv => ({ ...inv, type: safeStr(inv.type || inv.round || '') })) : [],
-              rejection: c.rejection || { date: '', method: '', notes: '' },
-              id: c.id ? String(c.id) : Date.now().toString() + idx,
+              status: safeStr(c.status || ''),
+              location: safeStr(c.location || ''),
+              website: safeStr(c.website || ''),
+              linkedinCompany: safeStr(c.linkedinCompany || ''),
+              linkedinCandidate: safeStr(c.linkedinCandidate || ''),
+              description: safeStr(c.description || ''),
+              products: safeStr(c.products || ''),
+              currentRole: safeStr(c.currentRole || ''),
+              expectedSalary: safeStr(c.expectedSalary || ''),
+              source: safeStr(c.source || ''),
+              generalNotes: safeStr(c.generalNotes || ''),
+              priority: safeStr(c.priority || 'medium'),
+              interviews: Array.isArray(c.interviews) ? c.interviews.slice(0, 100).map(inv => ({
+                type: safeStr(inv.type || inv.round || ''),
+                date: safeStr(inv.date || ''),
+                interviewer: safeStr(inv.interviewer || ''),
+                summary: safeStr(inv.summary || ''),
+              })) : [],
+              rejection: c.rejection && typeof c.rejection === 'object' ? {
+                date: safeStr(c.rejection.date || ''),
+                method: safeStr(c.rejection.method || ''),
+                notes: safeStr(c.rejection.notes || ''),
+              } : { date: '', method: '', notes: '' },
             }));
             setCompanies(sanitizedData);
             showToast(tMode('toast.imported'));
@@ -1272,18 +1303,18 @@ Rules:
                           </div>
                         </div>
                         <div className="mt-6 flex flex-wrap gap-4">
-                          {!isRecruiter && company.website && typeof company.website === 'string' && (
-                            <a href={company.website.startsWith('http') ? company.website : `https://${company.website}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
+                          {!isRecruiter && safeUrl(company.website) && (
+                            <a href={safeUrl(company.website)} target="_blank" rel="noreferrer noopener" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
                               <Globe size={14} /> {tMode('detail.companyWebsite')}
                             </a>
                           )}
-                          {!isRecruiter && company.linkedinCompany && typeof company.linkedinCompany === 'string' && (
-                            <a href={company.linkedinCompany.startsWith('http') ? company.linkedinCompany : `https://${company.linkedinCompany}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
+                          {!isRecruiter && safeUrl(company.linkedinCompany) && (
+                            <a href={safeUrl(company.linkedinCompany)} target="_blank" rel="noreferrer noopener" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
                               <Linkedin size={14} /> {tMode('detail.companyLinkedin')}
                             </a>
                           )}
-                          {isRecruiter && company.linkedinCandidate && typeof company.linkedinCandidate === 'string' && (
-                            <a href={company.linkedinCandidate.startsWith('http') ? company.linkedinCandidate : `https://${company.linkedinCandidate}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
+                          {isRecruiter && safeUrl(company.linkedinCandidate) && (
+                            <a href={safeUrl(company.linkedinCandidate)} target="_blank" rel="noreferrer noopener" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
                               <Linkedin size={14} /> {tMode('detail.candidateLinkedin')}
                             </a>
                           )}
