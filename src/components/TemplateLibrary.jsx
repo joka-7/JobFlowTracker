@@ -37,7 +37,7 @@ function CopyButton({ text, label, copiedLabel }) {
   );
 }
 
-export default function TemplateLibrary({ t, onClose, onStartSimulation }) {
+export default function TemplateLibrary({ t, onClose, onStartSimulation, isRecruiter }) {
   const categoryKeys = Object.keys(TEMPLATES);
   const [activeCategory, setActiveCategory] = useState(categoryKeys[0]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -71,7 +71,9 @@ export default function TemplateLibrary({ t, onClose, onStartSimulation }) {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-indigo-600 to-blue-600 text-white flex-shrink-0">
           <h2 className="text-lg font-bold tracking-tight flex items-center gap-2">
-            📚 {t('templates.title', 'Interview Template Library')}
+            📚 {isRecruiter
+              ? t('templates.titleRecruiter', 'Candidate Interview Guide')
+              : t('templates.title', 'Interview Template Library')}
           </h2>
           <button
             onClick={onClose}
@@ -120,7 +122,7 @@ export default function TemplateLibrary({ t, onClose, onStartSimulation }) {
                         onClick={() => onStartSimulation(key)}
                         className="w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-600 flex items-center gap-1.5"
                       >
-                        🎭 {t('templates.practiceButton', 'Mock interview')}
+                        🎭 {isRecruiter ? t('templates.practiceButtonRecruiter', 'Practice conducting') : t('templates.practiceButton', 'Mock interview')}
                       </button>
                     )}
                   </div>
@@ -165,7 +167,7 @@ export default function TemplateLibrary({ t, onClose, onStartSimulation }) {
                       onClick={() => onStartSimulation(activeCategory)}
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors"
                     >
-                      🎭 {t('templates.practiceButton', 'Mock interview')}
+                      🎭 {isRecruiter ? t('templates.practiceButtonRecruiter', 'Practice conducting') : t('templates.practiceButton', 'Mock interview')}
                     </button>
                   )}
                 </div>

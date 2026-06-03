@@ -214,10 +214,6 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
       if (firebaseUser) {
         setSyncing(true);
         try {
-          const profile = await loadUserProfile(firebaseUser.uid);
-          if (profile.appMode && profile.appMode !== mode) {
-            localStorage.setItem('appMode', profile.appMode);
-          }
           await saveUserProfile(firebaseUser.uid, { appMode: mode });
           const data = await loadAllItems(firebaseUser.uid, mode);
           if (data && data.length > 0) {
@@ -426,8 +422,21 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
     if (!cat) return;
     const isQuestionsToAsk = categoryKey === 'questions_to_ask';
     const questionList = cat.questions.map((q, i) => `${i + 1}. ${q}`).join('\n');
-    const systemPrompt = isQuestionsToAsk
-      ? `You are a friendly, experienced hiring manager. The user is practicing asking insightful questions during a job interview.
+    let systemPrompt;
+    if (isRecruiter) {
+      systemPrompt = `You are a realistic job candidate being interviewed for a software/tech role. The user is the interviewer practicing conducting a ${cat.label} interview.
+
+Use these questions as a guide for what the interviewer may ask:
+${questionList}
+
+Rules:
+- Answer each question as a real candidate would: confident but honest, with some strengths and minor areas to grow
+- Keep answers to 2-4 sentences — realistic, not perfect
+- After each answer, briefly note (in parentheses) one thing the interviewer could follow up on
+- Stay in character throughout
+- When the user says "begin", introduce yourself briefly as the candidate and wait for the first question`;
+    } else if (isQuestionsToAsk) {
+      systemPrompt = `You are a friendly, experienced hiring manager. The user is practicing asking insightful questions during a job interview.
 
 They may ask you any of these questions (in any order or their own phrasing):
 ${questionList}
@@ -436,8 +445,9 @@ Rules:
 - Answer each question as a real hiring manager would (2-3 sentences, specific and honest)
 - After answering, give one brief tip on what made the question strong or how to phrase it better
 - Stay in character throughout
-- When the user says "begin", introduce yourself briefly and invite the first question`
-      : `You are a professional interviewer running a ${cat.label} mock interview practice session.
+- When the user says "begin", introduce yourself briefly and invite the first question`;
+    } else {
+      systemPrompt = `You are a professional interviewer running a ${cat.label} mock interview practice session.
 
 Ask these questions one at a time:
 ${questionList}
@@ -449,13 +459,14 @@ Rules:
 - After all questions, give a short overall assessment (3-4 sentences)
 - Keep a professional but encouraging tone
 - When the user says "begin", introduce the session in one sentence and ask question 1`;
+    }
 
     setSimulationData({
       systemPrompt,
       title: `${cat.icon} ${cat.label}`,
     });
     setShowTemplates(false);
-  }, []);
+  }, [isRecruiter]);
 
   const handleExport = () => {
     const dataStr = JSON.stringify(companies, null, 2);
@@ -1576,6 +1587,7 @@ Rules:
           t={t}
           onClose={() => setShowTemplates(false)}
           onStartSimulation={handleStartSimulation}
+          isRecruiter={isRecruiter}
         />
       )}
 

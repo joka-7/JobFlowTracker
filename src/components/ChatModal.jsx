@@ -104,10 +104,14 @@ export default function ChatModal({
     setMessages(prev => [...prev, { role: 'assistant', content: '', streaming: true }]);
 
     // strip UI-only fields; replace trigger with a neutral user turn for the API
-    const apiMessages = [
-      ...newMessages.map(({ role, content }) => ({ role, content })),
-      ...(isTrigger ? [{ role: 'user', content: 'begin' }] : []),
-    ];
+    let apiMessages = newMessages.map(({ role, content }) => ({ role, content }));
+    if (isTrigger) {
+      apiMessages = [...apiMessages, { role: 'user', content: 'begin' }];
+    } else if (apiMessages.length > 0 && apiMessages[0].role === 'assistant') {
+      // Simulation follow-up: the AI's opening message has no matching user turn in state.
+      // Prepend the hidden trigger so the API always sees a valid user-first sequence.
+      apiMessages = [{ role: 'user', content: 'begin' }, ...apiMessages];
+    }
 
     try {
       await streamChat(
