@@ -4,12 +4,12 @@ import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, writ
 import { getCollectionName } from './statuses';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: "AIzaSyBeEQR4lW_j0M53kAZMSagma1zo9mRonFw",
+  authDomain: "jobflowtracker-7733e.firebaseapp.com",
+  projectId: "jobflowtracker-7733e",
+  storageBucket: "jobflowtracker-7733e.firebasestorage.app",
+  messagingSenderId: "163411158407",
+  appId: "1:163411158407:web:042975ed70499f35a7de22"
 };
 
 const app = initializeApp(firebaseConfig);
