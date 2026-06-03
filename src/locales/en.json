@@ -291,6 +291,97 @@
       "questions_to_ask": "Questions to Ask"
     }
   },
+  "tasks": {
+    "modeSelection": {
+      "title": "Task Manager",
+      "desc": "Manage tasks with multiple steps and track progress"
+    },
+    "header": {
+      "title": "Task Manager",
+      "savedInBrowser": "Saved in browser",
+      "saving": "Saving...",
+      "addTask": "Add Task"
+    },
+    "status": {
+      "active": "Active",
+      "on_hold": "On Hold",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "stepStatus": {
+      "todo": "To Do",
+      "in_progress": "In Progress",
+      "done": "Done",
+      "blocked": "Blocked"
+    },
+    "board": {
+      "emptyTitle": "Welcome to Task Manager",
+      "emptyDesc": "Organize your tasks with multiple steps and track progress at a glance.",
+      "addFirstButton": "Add your first task",
+      "signInButton": "Sign in with Google — sync everywhere",
+      "loadButton": "Restore from JSON backup"
+    },
+    "list": {
+      "searchPlaceholder": "Search tasks...",
+      "allStatuses": "All Statuses",
+      "noResults": "No results found.",
+      "backToList": "Back to List",
+      "loadMore": "Load more",
+      "remaining": "remaining",
+      "selectTask": "Select a task from the list",
+      "noTasks": "No tasks yet."
+    },
+    "form": {
+      "editTitle": "Edit Task",
+      "addTitle": "Add New Task",
+      "cancel": "Cancel",
+      "save": "Save Changes",
+      "taskName": "Task Name *",
+      "taskNamePlaceholder": "What needs to be done?",
+      "description": "Description",
+      "descriptionPlaceholder": "Goal, context, or background info...",
+      "status": "Status",
+      "priority": "Priority",
+      "dueDate": "Due Date",
+      "steps": "Steps",
+      "addStep": "Add step",
+      "addStepPlaceholder": "Describe the step...",
+      "stepNotesPlaceholder": "Step notes or details...",
+      "noSteps": "No steps added yet.",
+      "notes": "Notes",
+      "notesPlaceholder": "Any additional notes...",
+      "requiredName": "Task name is required"
+    },
+    "detail": {
+      "editDetails": "Edit Details",
+      "deleteTask": "Delete Task",
+      "noSteps": "No steps. Click \"Edit Details\" to add steps.",
+      "progress": "Progress",
+      "nextStep": "Next step",
+      "notes": "Notes",
+      "dueDate": "Due"
+    },
+    "stats": {
+      "title": "Statistics",
+      "total": "Tasks",
+      "active": "Active",
+      "completed": "Completed",
+      "totalSteps": "Total Steps",
+      "doneSteps": "Steps Done",
+      "byStatus": "By Status"
+    },
+    "toast": {
+      "saved": "Task saved!",
+      "deleted": "Task deleted.",
+      "exported": "Backup file downloaded!",
+      "imported": "File loaded successfully!"
+    },
+    "alert": {
+      "deleteConfirm": "Are you sure you want to delete this task?",
+      "noData": "No task data found in the uploaded file.",
+      "importError": "Error importing file. Make sure this is a valid JSON file."
+    }
+  },
   "recruiter": {
     "modeSelection": {
       "title": "How will you use JobFlowTracker?",
@@ -299,7 +390,7 @@
       "jobSeekerDesc": "Track companies, applications, and interviews",
       "recruiterTitle": "I'm a Recruiter",
       "recruiterDesc": "Track candidates through your hiring pipeline",
-      "fixedNote": "Your choice is saved permanently for this browser"
+      "fixedNote": "You can switch modes anytime from the header"
     },
     "status": {
       "applied": "Application Received",

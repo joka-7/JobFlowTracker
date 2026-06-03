@@ -58,15 +58,29 @@ export const JOBSEEKER_FUNNEL_ORDER = [
 export const getFunnelOrder = (mode) =>
   mode === 'recruiter' ? RECRUITER_FUNNEL_ORDER : JOBSEEKER_FUNNEL_ORDER;
 
-export const getCollectionName = (mode) =>
-  mode === 'recruiter' ? 'candidates' : 'companies';
+export const STATUSES_TASKS = [
+  { id: 'active', color: 'bg-blue-100 text-blue-800 border-blue-200' },
+  { id: 'on_hold', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+  { id: 'completed', color: 'bg-green-100 text-green-800 border-green-200' },
+  { id: 'cancelled', color: 'bg-gray-100 text-gray-600 border-gray-200' },
+];
+
+export const STEP_STATUSES = ['todo', 'in_progress', 'done', 'blocked'];
+
+export const TASKS_TERMINAL_STATUSES = ['completed', 'cancelled'];
+
+export const getCollectionName = (mode) => {
+  if (mode === 'recruiter') return 'candidates';
+  if (mode === 'tasks') return 'tasks';
+  return 'companies';
+};
 
 export const getStorageKey = (mode) =>
   `jobTrackerAppV2Data_${mode}`;
 
 export function resolveInitialAppMode() {
   const stored = localStorage.getItem('appMode');
-  if (stored === 'jobseeker' || stored === 'recruiter') return stored;
+  if (stored === 'jobseeker' || stored === 'recruiter' || stored === 'tasks') return stored;
 
   const legacyKeys = ['jobTrackerAppV2Data', 'jobTrackerV3Data', 'jobTrackerData'];
   for (const key of legacyKeys) {
