@@ -6,8 +6,9 @@ import {
   ArrowLeft, ArrowRight, Download, Upload, Filter, Layout, List, Activity, AlertTriangle,
   Cloud, CloudOff, Languages, BarChart2, Settings
 } from 'lucide-react';
-import { signInWithGoogle, signOut, onAuthChange, loadAllItems, updateItem, deleteItem, batchSaveItems, loadUserProfile, saveUserProfile, publishShare, loadSharedData } from './firebase';
+import { signInWithGoogle, signOut, onAuthChange, loadAllItems, updateItem, deleteItem, batchSaveItems, loadUserProfile, saveUserProfile } from './firebase';
 import { initAI } from './services/aiAssistant';
+import { logger } from './logger';
 import {
   getStatuses, getTerminalStatuses, getRejectedStatuses, getFunnelOrder,
   getStorageKey, INTERVIEW_TYPE_KEYS,
@@ -37,6 +38,19 @@ const safeStr = (val) => {
     try { return JSON.stringify(val); } catch { return ''; }
   }
   return String(val);
+};
+
+const safeUrl = (val) => {
+  try {
+    const str = safeStr(val).trim();
+    if (!str) return null;
+    const withScheme = /^https?:\/\//i.test(str) ? str : `https://${str}`;
+    const parsed = new URL(withScheme);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    return parsed.href;
+  } catch {
+    return null;
+  }
 };
 
 const PRIORITIES = [
@@ -160,9 +174,6 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
   const [showTemplates, setShowTemplates] = useState(false);
   const [simulationData, setSimulationData] = useState(null); // { systemPrompt, title }
   const [rejectionCompany, setRejectionCompany] = useState(null);
-  const [shareMode, setShareMode] = useState(false);
-  const [shareCopied, setShareCopied] = useState(false);
-
   useEffect(() => {
     const provider = localStorage.getItem('aiProvider') || 'gemini';
     const apiKey = localStorage.getItem('aiApiKey') || localStorage.getItem('anthropicApiKey') || '';
@@ -173,14 +184,6 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
       setShowOnboarding(true);
     }
 
-    const params = new URLSearchParams(window.location.search);
-    const shareUid = params.get('share');
-    if (shareUid) {
-      setShareMode(true);
-      loadSharedData(shareUid).then(data => {
-        if (data?.companies?.length) setCompanies(data.companies);
-      }).catch(console.error);
-    }
   }, [isRecruiter, autoOnboarding]);
 
   const initialFormState = makeInitialFormState(isRecruiter);
@@ -215,7 +218,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
           } else {
             showToast(tMode('toast.driveConnectedEmpty'));
           }
-        } catch (e) { console.error(e); }
+        } catch (e) { logger.error('drive sync', { error: e }); }
         setSyncing(false);
       }
     });
@@ -318,7 +321,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
     };
     if (dataToSave.id) {
       setCompanies(companies.map(c => String(c.id) === String(dataToSave.id) ? dataToSave : c));
-      if (user) updateItem(user.uid, mode, dataToSave).catch(console.error);
+      if (user) updateItem(user.uid, mode, dataToSave).catch(e => logger.error('firestore', { error: e }));
     } else {
       const newCompany = { ...dataToSave, id: Date.now().toString() };
       setCompanies([newCompany, ...companies]);
@@ -328,7 +331,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
         ...newCompany,
         rejection: newCompany.rejection || { date: '', method: '', notes: '' },
       });
-      if (user) updateItem(user.uid, mode, newCompany).catch(console.error);
+      if (user) updateItem(user.uid, mode, newCompany).catch(e => logger.error('firestore', { error: e }));
     }
     setIsEditing(false);
     showToast(tMode('toast.saved'));
@@ -340,7 +343,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
       setSelectedId(null);
       setIsEditing(false);
       showToast(tMode('toast.deleted'));
-      if (user) deleteItem(user.uid, mode, id).catch(console.error);
+      if (user) deleteItem(user.uid, mode, id).catch(e => logger.error('firestore', { error: e }));
     }
   };
 
@@ -352,7 +355,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
       generalNotes: target.generalNotes ? `${target.generalNotes}\n\n---\n${text}` : text,
     };
     setCompanies(prev => prev.map(c => String(c.id) === String(companyId) ? updated : c));
-    if (user) updateItem(user.uid, mode, updated).catch(console.error);
+    if (user) updateItem(user.uid, mode, updated).catch(e => logger.error('firestore', { error: e }));
   }, [companies, user, mode]);
 
   const handleRejectionNoteSave = useCallback((text) => {
@@ -364,7 +367,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
       generalNotes: target.generalNotes ? `${target.generalNotes}\n\n---\n${text}` : text,
     };
     setCompanies(prev => prev.map(c => c.id === rejectionCompany.id ? updated : c));
-    if (user) updateItem(user.uid, mode, updated).catch(console.error);
+    if (user) updateItem(user.uid, mode, updated).catch(e => logger.error('firestore', { error: e }));
   }, [companies, user, rejectionCompany, mode]);
 
   const handleStartSimulation = useCallback((categoryKey) => {
@@ -428,18 +431,37 @@ Rules:
             const potentialArray = Object.values(importedRaw).find(val => Array.isArray(val));
             importedArray = potentialArray ? potentialArray : [importedRaw];
           }
-          if (importedArray.length > 0) {
+          if (importedArray.length > 0 && importedArray.length <= 10000) {
             const sanitizedData = importedArray.map((c, idx) => ({
-              ...c,
+              id: c.id ? String(c.id).slice(0, 64) : Date.now().toString() + idx,
               name: safeStr(c.name || c.company || tMode('alert.unnamedCompany')),
               role: safeStr(c.role || c.position || ''),
-              interviews: Array.isArray(c.interviews) ? c.interviews.map(inv => ({ ...inv, type: safeStr(inv.type || inv.round || '') })) : [],
-              rejection: c.rejection || { date: '', method: '', notes: '' },
-              id: c.id ? String(c.id) : Date.now().toString() + idx,
+              status: safeStr(c.status || ''),
+              location: safeStr(c.location || ''),
+              website: safeStr(c.website || ''),
+              linkedinCompany: safeStr(c.linkedinCompany || ''),
+              linkedinCandidate: safeStr(c.linkedinCandidate || ''),
+              description: safeStr(c.description || ''),
+              products: safeStr(c.products || ''),
+              currentRole: safeStr(c.currentRole || ''),
+              expectedSalary: safeStr(c.expectedSalary || ''),
+              source: safeStr(c.source || ''),
+              generalNotes: safeStr(c.generalNotes || ''),
+              interviews: Array.isArray(c.interviews) ? c.interviews.slice(0, 100).map(inv => ({
+                type: safeStr(inv.type || inv.round || ''),
+                date: safeStr(inv.date || ''),
+                interviewer: safeStr(inv.interviewer || ''),
+                summary: safeStr(inv.summary || ''),
+              })) : [],
+              rejection: c.rejection && typeof c.rejection === 'object' ? {
+                date: safeStr(c.rejection.date || ''),
+                method: safeStr(c.rejection.method || ''),
+                notes: safeStr(c.rejection.notes || ''),
+              } : { date: '', method: '', notes: '' },
             }));
             setCompanies(sanitizedData);
             showToast(tMode('toast.imported'));
-            if (user) batchSaveItems(user.uid, mode, sanitizedData).catch(console.error);
+            if (user) batchSaveItems(user.uid, mode, sanitizedData).catch(e => logger.error('firestore', { error: e }));
           } else {
             alert(tMode('alert.noCompanyData'));
           }
@@ -474,7 +496,7 @@ Rules:
     setCompanies(prev => prev.map(c => String(c.id) === String(id) ? { ...c, status: statusId } : c));
     dragCompanyId.current = null;
     showToast(tMode('toast.saved'));
-    if (user && company) updateItem(user.uid, mode, { ...company, status: statusId }).catch(console.error);
+    if (user && company) updateItem(user.uid, mode, { ...company, status: statusId }).catch(e => logger.error('firestore', { error: e }));
   };
 
   const timelineBorder = isRTL ? 'border-r-2 pr-6' : 'border-l-2 pl-6';
@@ -850,11 +872,9 @@ Rules:
           </div>
 
           <div className="flex items-center gap-3">
-            {!shareMode && (
-              <button onClick={openNewForm} className="flex items-center gap-2 bg-white text-indigo-700 hover:bg-blue-50 px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-sm">
-                <Plus size={18} /> {tMode('header.addCompany')}
-              </button>
-            )}
+            <button onClick={openNewForm} className="flex items-center gap-2 bg-white text-indigo-700 hover:bg-blue-50 px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-sm">
+              <Plus size={18} /> {tMode('header.addCompany')}
+            </button>
 
             {user ? (
               <button
@@ -907,28 +927,6 @@ Rules:
               >
                 📚
               </button>
-              {user && !shareMode && (
-                <button
-                  onClick={async () => {
-                    const url = `${window.location.origin}${window.location.pathname}?share=${user.uid}`;
-                    // publish snapshot (best-effort — requires firestore.rules deployed)
-                    publishShare(user.uid, companies).catch(console.error);
-                    // copy URL regardless of Firestore result
-                    try {
-                      await navigator.clipboard.writeText(url);
-                    } catch {
-                      // fallback for browsers without clipboard API
-                      window.prompt('Copy this share link:', url);
-                    }
-                    setShareCopied(true);
-                    setTimeout(() => setShareCopied(false), 3000);
-                  }}
-                  title={t('header.shareTooltip', 'Share read-only link')}
-                  className="p-2 hover:bg-white/20 rounded text-white transition-colors"
-                >
-                  {shareCopied ? '✓' : '🔗'}
-                </button>
-              )}
               <button
                 onClick={() => setShowAISettings(true)}
                 title={t('header.aiSettings', 'AI Settings')}
@@ -958,15 +956,8 @@ Rules:
         </div>
       </header>
 
-      {shareMode && (
-        <div className="bg-amber-50 border-b border-amber-200 px-6 py-2 flex items-center gap-2 text-amber-800 text-sm">
-          <span>👁️</span>
-          <span className="font-medium">{t('header.viewOnly', 'View only')} —</span>
-          <span>{t('header.viewOnlyDesc', 'You are viewing a shared read-only snapshot.')}</span>
-        </div>
-      )}
 
-      {activeTab === 'board' && renderBoard()}
+{activeTab === 'board' && renderBoard()}
       {activeTab === 'timeline' && renderTimeline()}
       {activeTab === 'stats' && renderStats()}
 
@@ -1267,18 +1258,18 @@ Rules:
                           </div>
                         </div>
                         <div className="mt-6 flex flex-wrap gap-4">
-                          {!isRecruiter && company.website && typeof company.website === 'string' && (
-                            <a href={company.website.startsWith('http') ? company.website : `https://${company.website}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
+                          {!isRecruiter && safeUrl(company.website) && (
+                            <a href={safeUrl(company.website)} target="_blank" rel="noreferrer noopener" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
                               <Globe size={14} /> {tMode('detail.companyWebsite')}
                             </a>
                           )}
-                          {!isRecruiter && company.linkedinCompany && typeof company.linkedinCompany === 'string' && (
-                            <a href={company.linkedinCompany.startsWith('http') ? company.linkedinCompany : `https://${company.linkedinCompany}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
+                          {!isRecruiter && safeUrl(company.linkedinCompany) && (
+                            <a href={safeUrl(company.linkedinCompany)} target="_blank" rel="noreferrer noopener" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
                               <Linkedin size={14} /> {tMode('detail.companyLinkedin')}
                             </a>
                           )}
-                          {isRecruiter && company.linkedinCandidate && typeof company.linkedinCandidate === 'string' && (
-                            <a href={company.linkedinCandidate.startsWith('http') ? company.linkedinCandidate : `https://${company.linkedinCandidate}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
+                          {isRecruiter && safeUrl(company.linkedinCandidate) && (
+                            <a href={safeUrl(company.linkedinCandidate)} target="_blank" rel="noreferrer noopener" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
                               <Linkedin size={14} /> {tMode('detail.candidateLinkedin')}
                             </a>
                           )}
@@ -1428,12 +1419,6 @@ Rules:
         </div>
       )}
 
-      <style dangerouslySetInnerHTML={{__html: `
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
-        .custom-scrollbar:hover::-webkit-scrollbar-thumb { background-color: #94a3b8; }
-      `}} />
 
       {showOnboarding && (
         <Onboarding

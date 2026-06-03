@@ -1,6 +1,4 @@
-// Replace with your Google OAuth Client ID from Google Cloud Console
-// https://console.cloud.google.com/ → APIs & Services → Credentials → Create OAuth Client ID
-export const DRIVE_CLIENT_ID = 'VITE_GOOGLE_OAUTH_CLIENT_ID_REMOVED_FROM_HISTORY';
+export const DRIVE_CLIENT_ID = import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID;
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
 const FILE_NAME = 'jobflowtracker-data.json';
