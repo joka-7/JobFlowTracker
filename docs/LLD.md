@@ -2,11 +2,21 @@
 
 ## 1. State Management
 
+### App.jsx
+
+| State / derived | Type | Purpose |
+|---|---|---|
+| `autoOnboarding` | `boolean` (useState, read-only) | `true` only when no mode was stored at startup (i.e., true first ever visit). Passed to `JobTrackerApp` to suppress the onboarding wizard when switching modes. |
+| `mode` | `string \| null` (useState) | Current mode: `'jobseeker' \| 'recruiter' \| 'tasks' \| null`. `null` shows `ModeSelection`. |
+
+### JobTrackerApp.jsx
+
 All state lives in `JobTrackerApp.jsx` using React `useState`. No external state library is used.
 
 | State variable | Type | Purpose |
 |---|---|---|
-| `mode` | prop on `JobTrackerApp` | `'jobseeker' \| 'recruiter'` — fixed for session, from `localStorage.appMode` |
+| `mode` | prop on `JobTrackerApp` | `'jobseeker' \| 'recruiter'` — from `localStorage.appMode` |
+| `autoOnboarding` | prop (boolean) | When `false`, suppresses the onboarding wizard even if `hasCompletedOnboarding` is unset. |
 | `companies` | `Company[]` | Master array (companies or candidates). Loaded from `jobTrackerAppV2Data_{mode}`. |
 | `selectedId` | `string \| null` | ID of the entity shown in the detail/edit panel. |
 | `isEditing` | `boolean` | Whether the edit form is active. |
@@ -116,6 +126,58 @@ See `STATUSES_RECRUITER` in `src/statuses.js` (9 statuses). Documented in [RECRU
 
 `'Automatic Email'`, `'Personal Email'`, `'Phone Call'`, `'No Response'`, `'During Interview'`, `'Other'`
 
+### TasksApp.jsx
+
+| State variable | Type | Purpose |
+|---|---|---|
+| `tasks` | `Task[]` | Master array. Loaded from `jobTrackerAppV2Data_tasks`. |
+| `selectedId` | `string \| null` | ID of the task shown in the detail panel. |
+| `isEditing` | `boolean` | Whether the task edit form is active. |
+| `formData` | `Task` | Working copy of the task being edited. Includes a `steps` array. |
+| `newStepTitle` | `string` | Live value of the "add step" input field. |
+| `searchQuery` | `string` | Filters `filteredTasks`. |
+| `statusFilter` | `string` | Status dropdown filter (`'all'` or a status ID). |
+| `activeTab` | `'board' \| 'list' \| 'stats'` | Which view is rendered. |
+| `user`, `syncing`, `isSaved`, `toastMessage` | — | Same pattern as `JobTrackerApp`. |
+
+### Task Object
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `id` | `string` | Yes | `Date.now().toString()` at creation. |
+| `name` | `string` | Yes | Task title. |
+| `description` | `string` | No | Goal or background info. |
+| `status` | `'active' \| 'on_hold' \| 'completed' \| 'cancelled'` | Yes | Default: `'active'`. |
+| `priority` | `'high' \| 'medium' \| 'low'` | No | Default: `'medium'`. |
+| `dueDate` | `string` | No | ISO date string (`YYYY-MM-DD`). |
+| `steps` | `Step[]` | No | Ordered array of step objects. Default: `[]`. |
+| `notes` | `string` | No | Free-text notes. |
+
+### Step Object
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | `string` | `Date.now().toString() + Math.random()` at creation. |
+| `title` | `string` | Step description. |
+| `status` | `'todo' \| 'in_progress' \| 'done' \| 'blocked'` | Default: `'todo'`. Cycled by clicking the status icon. |
+| `notes` | `string` | Optional details. |
+| `dueDate` | `string` | Optional ISO date. |
+
+### Task Status Values
+
+| ID | Display (EN) | Color (Tailwind) |
+|---|---|---|
+| `active` | Active | `bg-blue-100 text-blue-800` |
+| `on_hold` | On Hold | `bg-yellow-100 text-yellow-800` |
+| `completed` | Completed | `bg-green-100 text-green-800` |
+| `cancelled` | Cancelled | `bg-gray-100 text-gray-600` |
+
+### Step Status Cycle
+
+`todo → in_progress → done → blocked → todo`
+
+Each status maps to a Lucide icon and background color (defined in `STEP_STATUS_CONFIG` in `TasksApp.jsx`).
+
 ---
 
 ## 3. Firestore Structure
@@ -126,9 +188,10 @@ See `STATUSES_RECRUITER` in `src/statuses.js` (9 statuses). Documented in [RECRU
 /users/{uid}                              — user profile (appMode, etc.)
 /users/{uid}/companies/{companyId}        — job seeker entities
 /users/{uid}/candidates/{candidateId}     — recruiter entities
+/users/{uid}/tasks/{taskId}              — task manager entities
 ```
 
-The `companyId` in the subcollection path is `String(company.id)`, which is a numeric timestamp string (e.g., `"1717600000000"`).
+The document ID is `String(item.id)`, which is a numeric timestamp string (e.g., `"1717600000000"`).
 
 ### Write Strategies
 

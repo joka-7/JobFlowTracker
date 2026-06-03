@@ -50,7 +50,18 @@
     "board": "לוח סטטוסים",
     "list": "רשימה ועריכה",
     "timeline": "ציר זמן",
+    "calendar": "לוח שנה",
     "stats": "סטטיסטיקות"
+  },
+  "calendar": {
+    "today": "היום",
+    "noEvents": "אין אירועים ביום זה.",
+    "selectDay": "לחץ על יום כדי לראות אירועים",
+    "type": {
+      "interview": "ראיון",
+      "assignment": "מטלה",
+      "task": "משימה"
+    }
   },
   "board": {
     "emptyTitle": "ברוך הבא למעקב חיפוש עבודה",
@@ -291,6 +302,97 @@
       "questions_to_ask": "שאלות לשאול"
     }
   },
+  "tasks": {
+    "modeSelection": {
+      "title": "מנהל משימות",
+      "desc": "נהל משימות עם שלבים מרובים ועקוב אחרי ההתקדמות"
+    },
+    "header": {
+      "title": "מנהל משימות",
+      "savedInBrowser": "שמור בדפדפן",
+      "saving": "שומר...",
+      "addTask": "הוסף משימה"
+    },
+    "status": {
+      "active": "פעיל",
+      "on_hold": "בהמתנה",
+      "completed": "הושלם",
+      "cancelled": "בוטל"
+    },
+    "stepStatus": {
+      "todo": "לביצוע",
+      "in_progress": "בביצוע",
+      "done": "הושלם",
+      "blocked": "חסום"
+    },
+    "board": {
+      "emptyTitle": "ברוך הבא למנהל המשימות",
+      "emptyDesc": "ארגן את המשימות שלך עם שלבים מרובים ועקוב אחרי ההתקדמות.",
+      "addFirstButton": "הוסף את המשימה הראשונה שלך",
+      "signInButton": "התחבר עם Google — סנכרון בכל מקום",
+      "loadButton": "שחזר מגיבוי JSON"
+    },
+    "list": {
+      "searchPlaceholder": "חיפוש משימות...",
+      "allStatuses": "כל הסטטוסים",
+      "noResults": "לא נמצאו תוצאות.",
+      "backToList": "חזרה לרשימה",
+      "loadMore": "טען עוד",
+      "remaining": "נותרו",
+      "selectTask": "בחר משימה מהרשימה",
+      "noTasks": "אין משימות עדיין."
+    },
+    "form": {
+      "editTitle": "עריכת משימה",
+      "addTitle": "הוספת משימה חדשה",
+      "cancel": "ביטול",
+      "save": "שמור שינויים",
+      "taskName": "שם המשימה *",
+      "taskNamePlaceholder": "מה צריך לעשות?",
+      "description": "תיאור",
+      "descriptionPlaceholder": "מטרה, הקשר או מידע רקע...",
+      "status": "סטטוס",
+      "priority": "עדיפות",
+      "dueDate": "תאריך יעד",
+      "steps": "שלבים",
+      "addStep": "הוסף שלב",
+      "addStepPlaceholder": "תאר את השלב...",
+      "stepNotesPlaceholder": "הערות לשלב...",
+      "noSteps": "אין שלבים עדיין.",
+      "notes": "הערות",
+      "notesPlaceholder": "הערות נוספות...",
+      "requiredName": "שם המשימה נדרש"
+    },
+    "detail": {
+      "editDetails": "ערוך פרטים",
+      "deleteTask": "מחק משימה",
+      "noSteps": "אין שלבים. לחץ \"ערוך פרטים\" להוספה.",
+      "progress": "התקדמות",
+      "nextStep": "השלב הבא",
+      "notes": "הערות",
+      "dueDate": "יעד"
+    },
+    "stats": {
+      "title": "סטטיסטיקות",
+      "total": "משימות",
+      "active": "פעיל",
+      "completed": "הושלמו",
+      "totalSteps": "סה\"כ שלבים",
+      "doneSteps": "שלבים שהושלמו",
+      "byStatus": "לפי סטטוס"
+    },
+    "toast": {
+      "saved": "המשימה נשמרה!",
+      "deleted": "המשימה נמחקה.",
+      "exported": "קובץ גיבוי הורד!",
+      "imported": "הקובץ נטען בהצלחה!"
+    },
+    "alert": {
+      "deleteConfirm": "האם אתה בטוח שברצונך למחוק משימה זו?",
+      "noData": "לא נמצאו נתוני משימות בקובץ.",
+      "importError": "שגיאה בייבוא הקובץ. ודא שזה קובץ JSON תקין."
+    }
+  },
   "recruiter": {
     "modeSelection": {
       "title": "איך תשתמש ב-JobFlowTracker?",
@@ -299,7 +401,7 @@
       "jobSeekerDesc": "מעקב אחר חברות, מועמדויות וראיונות",
       "recruiterTitle": "אני מגייס",
       "recruiterDesc": "מעקב אחר מועמדים בתהליך הגיוס",
-      "fixedNote": "הבחירה שלך נשמרת לצמיתות בדפדפן זה"
+      "fixedNote": "ניתן להחליף מוד בכל עת מהכותרת"
     },
     "status": {
       "applied": "מועמדות התקבלה",

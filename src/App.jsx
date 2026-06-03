@@ -1,14 +1,20 @@
 import { useState } from 'react';
 import JobTrackerApp from './JobTrackerApp';
+import TasksApp from './TasksApp';
 import ModeSelection from './components/ModeSelection';
 import { resolveInitialAppMode } from './statuses';
 
 export default function App() {
+  const [autoOnboarding] = useState(() => !resolveInitialAppMode());
   const [mode, setMode] = useState(() => resolveInitialAppMode());
 
   if (!mode) {
     return <ModeSelection onSelect={setMode} />;
   }
 
-  return <JobTrackerApp mode={mode} />;
+  if (mode === 'tasks') {
+    return <TasksApp onModeChange={setMode} />;
+  }
+
+  return <JobTrackerApp key={mode} mode={mode} onModeChange={setMode} autoOnboarding={autoOnboarding} />;
 }

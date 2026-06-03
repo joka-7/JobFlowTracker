@@ -80,7 +80,7 @@ test.describe('Job seeker mode flows', () => {
     await goToBoardTab(page);
     await dragCardToColumn(page, 'Drag Co', /^HR Call \(\d+\)$/);
 
-    const hrCol = page.locator('.w-80').filter({ has: page.getByText(/^HR Call \(\d+\)$/) });
+    const hrCol = page.locator('.board-column').filter({ has: page.getByText(/^HR Call \(\d+\)$/) });
     await expect(hrCol.getByText('Drag Co')).toBeVisible();
   });
 

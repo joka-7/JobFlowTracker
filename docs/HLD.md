@@ -2,16 +2,16 @@
 
 ## 1. Overview
 
-JobFlowTracker is a single-page application (SPA) for tracking a personal job search **or a recruiter hiring pipeline**. Users choose their role once at first launch (`jobseeker` or `recruiter`). Both modes use the same kanban UI with mode-specific statuses, labels, and form fields. All views read from a single in-memory array mirrored to mode-scoped localStorage and optionally synced to Firestore.
+JobFlowTracker is a single-page application (SPA) for tracking a job search, a recruiter hiring pipeline, or multi-step task management. Users choose a starting mode on first visit and can switch freely at any time using the header mode switcher. All modes use a kanban-based UI with mode-specific statuses and form fields. Each mode's data is stored in its own scoped localStorage key and Firestore subcollection — switching modes never affects other modes' data.
 
 **Key design principles:**
 
-- **No custom backend.** There is no server-side API. All business logic runs in the browser. Firebase provides auth and a database; Vercel provides static hosting.
-- **Dual mode, fixed at launch.** `App.jsx` gates on `localStorage.appMode`. Mode selection is shown once; legacy users with existing data default to `jobseeker`. See [RECRUITER_MODE.md](RECRUITER_MODE.md).
-- **Client-side AI (job seeker only).** AI requests run from the browser with the user's API key. Recruiter mode hides the AI Assistant in v1.
-- **User-isolated data.** Firestore rules allow each user read/write on `users/{userId}/**` (profile, `companies`, `candidates`).
+- **No custom backend.** All business logic runs in the browser. Firebase provides auth and a database; Vercel provides static hosting.
+- **Three modes, freely switchable.** `App.jsx` gates on `localStorage.appMode`. `ModeSwitcher` in every header lets users move between modes at runtime. Each mode's data persists independently.
+- **Client-side AI (job seeker only).** AI requests run from the browser with the user's API key. Recruiter and task manager modes do not expose the AI Assistant.
+- **User-isolated data.** Firestore rules allow each user read/write on `users/{userId}/**`.
 - **Offline-first local cache.** Data is written to mode-scoped localStorage keys on every mutation.
-- **Granular writes.** Each mutation calls `updateItem(uid, mode, item)` for the affected document.
+- **Granular writes.** Each mutation calls `updateItem(uid, mode, item)` for the affected document only.
 
 ---
 
@@ -22,52 +22,48 @@ JobFlowTracker is a single-page application (SPA) for tracking a personal job se
 │                        Browser                               │
 │                                                              │
 │  ┌─────────────────────────────────────────────────────┐     │
-│  │              React 18 SPA (Vite build)              │     │
+│  │              React 19 SPA (Vite build)              │     │
 │  │                                                     │     │
-│  │  JobTrackerApp.jsx  (state + handlers)              │     │
-│  │    ├── Kanban Board (drag & drop)                   │     │
-│  │    ├── List / Edit view                             │     │
-│  │    ├── Timeline view                                │     │
-│  │    └── Stats view (Hiring Funnel)                   │     │
+│  │  App.jsx  (mode gate + autoOnboarding flag)         │     │
+│  │    ├── ModeSelection  (first visit, 3 options)      │     │
+│  │    ├── JobTrackerApp  (job seeker | recruiter)      │     │
+│  │    │     ├── Kanban Board (drag & drop)             │     │
+│  │    │     ├── List / Edit view                       │     │
+│  │    │     ├── Timeline view                          │     │
+│  │    │     ├── Calendar view (interviews + deadlines) │     │
+│  │    │     └── Stats view (Hiring Funnel)             │     │
+│  │    └── TasksApp  (task manager)                     │     │
+│  │          ├── Kanban Board (4 columns)               │     │
+│  │          ├── List / Step-detail view                │     │
+│  │          ├── Calendar view (task due dates)         │     │
+│  │          └── Stats view                             │     │
 │  │                                                     │     │
-│  │  Components: AIAssistant, APIKeySettings,           │     │
+│  │  Shared: ModeSwitcher, AIAssistant, APIKeySettings, │     │
 │  │    ChatModal, ResumeReview, RejectionAnalysis,      │     │
 │  │    TemplateLibrary, Onboarding, Tooltip             │     │
 │  │                                                     │     │
-│  │  Services: aiAssistant.js (provider abstraction)    │     │
+│  │  Services: aiAssistant.js (provider abstraction)   │     │
 │  │  Firebase module: firebase.js                       │     │
 │  │  i18n: react-i18next  (EN / HE / FR)               │     │
 │  │                                                     │     │
-│  │  localStorage: appMode, companies/candidates cache, AI config │
+│  │  localStorage: appMode, per-mode data cache, AI cfg │     │
 │  └───────────────┬─────────────────────┬───────────────┘     │
 └──────────────────┼─────────────────────┼─────────────────────┘
                    │ HTTPS               │ HTTPS
          ┌─────────┴──────────┐    ┌─────┴──────────────────────┐
          │   Firebase (GCP)   │    │      AI Providers          │
          │                    │    │                            │
-         │  ┌──────────────┐  │    │  ┌──────────────────────┐  │
-         │  │ Firebase Auth│  │    │  │ Google Gemini SSE    │  │
-         │  │ (Google OIDC)│  │    │  │ (generativelanguage  │  │
-         │  └──────────────┘  │    │  │  .googleapis.com)    │  │
-         │                    │    │  ├──────────────────────┤  │
-         │  ┌──────────────┐  │    │  │ Groq                 │  │
-         │  │  Firestore   │  │    │  │ (api.groq.com) SSE   │  │
-         │  │              │  │    │  ├──────────────────────┤  │
-         │  │ /users/{uid}/│  │    │  │ Anthropic Claude     │  │
-         │  │  companies/  │  │    │  │ (SDK streaming)      │  │
-         │  │  {companyId} │  │    │  ├──────────────────────┤  │
-         │  │              │  │    │  │ OpenAI               │  │
-         │  │ /shares/{uid}│  │    │  │ (api.openai.com) SSE │  │
-         │  └──────────────┘  │    │  ├──────────────────────┤  │
-         └────────────────────┘    │  │ Ollama (local)       │  │
-                                   │  │ (localhost:11434)     │  │
-                                   │  │ newline-delimited JSON│  │
-         ┌──────────────────────┐  │  └──────────────────────┘  │
-         │   Vercel CDN         │  └────────────────────────────┘
-         │  (static hosting)    │
-         │  auto-deploy on      │
-         │  push to main        │
-         └──────────────────────┘
+         │  Firebase Auth     │    │  Google Gemini SSE         │
+         │  (Google OIDC)     │    │  Groq (OpenAI-compat SSE)  │
+         │                    │    │  Anthropic (SDK streaming)  │
+         │  Firestore         │    │  OpenAI (SSE)              │
+         │  /users/{uid}/     │    │  Ollama (local NDJSON)     │
+         │    companies/      │    └────────────────────────────┘
+         │    candidates/     │
+         │    tasks/          │    ┌──────────────────────┐
+         │  /shares/{uid}     │    │   Vercel CDN         │
+         └────────────────────┘    │  (static hosting)    │
+                                   └──────────────────────┘
 ```
 
 ---
@@ -76,25 +72,27 @@ JobFlowTracker is a single-page application (SPA) for tracking a personal job se
 
 | File | Type | Responsibility |
 |---|---|---|
-| `src/App.jsx` | Root | Mode gate: `ModeSelection` or `JobTrackerApp` |
-| `src/statuses.js` | Config | `STATUSES_JOBSEEKER`, `STATUSES_RECRUITER`, storage keys, legacy migration |
-| `src/components/ModeSelection.jsx` | Full-screen | First-launch job seeker vs recruiter picker |
-| `src/JobTrackerApp.jsx` | Main component | Mode-aware UI, all tabs, Firestore integration |
-| `src/firebase.js` | Module | Auth, `loadAllItems(uid, mode)`, profile `appMode`, legacy migration |
-| `src/components/Onboarding.jsx` | Modal | 5-step wizard (job seeker only) |
-| `src/services/aiAssistant.js` | Module | Provider configuration (`PROVIDERS` object), `initAI`, `isAIReady`, all streaming functions per provider, six high-level AI task functions |
-| `src/components/AIAssistant.jsx` | Floating panel | Sparkles button, menu screen, debrief screen, launches ChatModal and ResumeReview; calls interview prep, pattern analysis, scheduling advice |
-| `src/components/APIKeySettings.jsx` | Modal | Provider selector with FREE badges, API key / Ollama URL input, model override, saves to localStorage, calls `initAI` |
-| `src/components/ChatModal.jsx` | Modal | Multi-turn AI chat, streaming message display, company context system prompt, save-to-notes per message |
-| `src/components/RejectionAnalysis.jsx` | Modal | Displays rejection data for a specific company, runs `analyzeRejection`, streaming result, save-to-notes |
-| `src/components/ResumeReview.jsx` | Modal | Resume paste (up to 3000 chars), calls `getResumeAdvice`, streaming result, save-to-notes |
-| `src/components/TemplateLibrary.jsx` | Modal | 80+ interview questions, 6 categories, sidebar navigation, full-text search, copy-to-clipboard |
-| `src/components/Onboarding.jsx` | Modal | 5-step wizard, language picker (EN/HE/FR), shown on first visit, sets `hasCompletedOnboarding` in localStorage |
+| `src/App.jsx` | Root | Mode gate: `ModeSelection`, `JobTrackerApp`, or `TasksApp`; tracks `autoOnboarding` flag |
+| `src/statuses.js` | Config | `STATUSES_JOBSEEKER`, `STATUSES_RECRUITER`, `STATUSES_TASKS`, `STEP_STATUSES`, storage keys, `getCollectionName`, `resolveInitialAppMode` |
+| `src/components/ModeSelection.jsx` | Full-screen | First-launch 3-mode picker (job seeker / recruiter / task manager) |
+| `src/components/ModeSwitcher.jsx` | Header widget | 3 icon buttons; updates `localStorage.appMode` and calls `onModeChange` |
+| `src/JobTrackerApp.jsx` | Main component | Mode-aware UI for job seeker and recruiter; all tabs, Firestore integration |
+| `src/TasksApp.jsx` | Main component | Task manager UI: board, list+step-detail, stats; step status cycling |
+| `src/firebase.js` | Module | Auth, mode-aware `loadAllItems(uid, mode)`, profile `appMode`, legacy migration |
+| `src/components/Onboarding.jsx` | Modal | 5-step wizard (job seeker only, skipped when switching from another mode) |
+| `src/services/aiAssistant.js` | Module | Provider configuration, `initAI`, `isAIReady`, all streaming functions |
+| `src/components/AIAssistant.jsx` | Floating panel | Sparkles button, menu screen, debrief; launches ChatModal and ResumeReview |
+| `src/components/APIKeySettings.jsx` | Modal | Provider selector, API key / Ollama URL input, saves to localStorage |
+| `src/components/ChatModal.jsx` | Modal | Multi-turn AI chat with streaming, company context, save-to-notes |
+| `src/components/RejectionAnalysis.jsx` | Modal | Rejection AI analysis for a specific company, streaming result |
+| `src/components/ResumeReview.jsx` | Modal | Resume paste, calls `getResumeAdvice`, streaming result |
+| `src/components/TemplateLibrary.jsx` | Modal | 80+ interview questions, 6 categories, full-text search |
+| `src/components/CalendarView.jsx` | View | Monthly calendar grid; receives `events[]`, shows color-coded chips per day, day-detail side panel, RTL-aware, i18n date formatting |
 | `src/components/Tooltip.jsx` | Utility | Hover tooltip using Tailwind group/group-hover classes |
-| `src/data/interviewTemplates.js` | Data | `TEMPLATES` object with 6 category keys, each containing label, icon, color, and questions array |
-| `src/locales/en.json` | i18n | English translation strings |
-| `src/locales/he.json` | i18n | Hebrew translation strings (RTL language) |
-| `src/locales/fr.json` | i18n | French translation strings |
+| `src/data/interviewTemplates.js` | Data | `TEMPLATES` with 6 category keys |
+| `src/locales/en.json` | i18n | English strings (includes `tasks.*` namespace) |
+| `src/locales/he.json` | i18n | Hebrew strings (RTL) |
+| `src/locales/fr.json` | i18n | French strings |
 | `src/i18n.js` | Config | react-i18next initialization, language detection from localStorage |
 | `src/main.jsx` | Entry | React root mount, i18n import |
 
@@ -105,103 +103,75 @@ JobFlowTracker is a single-page application (SPA) for tracking a personal job se
 ### 4.1 Sign-In Flow
 
 ```
-User clicks "Connect Drive"
+User clicks "Connect Drive" / Cloud icon
   → signInWithGoogle()
   → onAuthStateChanged fires
-  → loadUserProfile(uid) → may confirm appMode
+  → loadUserProfile(uid) → confirm or update appMode
   → saveUserProfile(uid, { appMode })
   → loadAllItems(uid, mode)
-      → getDocs(/users/{uid}/companies OR /users/{uid}/candidates)
+      → getDocs(/users/{uid}/companies OR /candidates OR /tasks)
       → jobseeker only: legacy root-doc migration if subcollection empty
-  → setCompanies(data)
+  → setCompanies / setTasks(data)
 ```
 
-### 4.1b Mode Selection Flow
+### 4.2 Mode Selection / Switching Flow
 
 ```
-First visit (no appMode, no legacy data)
-  → ModeSelection screen
-  → user picks jobseeker | recruiter
+First visit (no appMode in localStorage)
+  → ModeSelection screen (3 options)
+  → user picks jobseeker | recruiter | tasks
   → localStorage.appMode = choice
-  → JobTrackerApp renders with mode prop
-  → jobseeker: may show Onboarding wizard
-  → recruiter: skip onboarding, empty board
+  → App renders JobTrackerApp or TasksApp
+  → jobseeker + autoOnboarding=true: may show Onboarding wizard
+  → recruiter / tasks: skip onboarding
+
+Switching via ModeSwitcher (any time)
+  → localStorage.appMode = newMode
+  → App.setMode(newMode) → re-renders appropriate component
+  → autoOnboarding=false → onboarding never shown when switching
+  → each mode independently loads its own localStorage cache
 ```
 
-### 4.2 Data Mutation Flow
+### 4.3 Data Mutation Flow
 
-Every mutation follows the same pattern: update React state, write to localStorage immediately, then fire a Firestore write in the background (only when a user is signed in).
+Every mutation follows the same pattern: update React state → write localStorage → Firestore write in background.
 
 ```
-User action (add / edit / drag-drop / AI note save)
-  → setCompanies(newState)           [React re-render]
-  → useEffect [companies] fires
-      → localStorage.setItem('jobTrackerAppV2Data_{mode}', JSON.stringify(companies))
+User action (add / edit / drag-drop / step status toggle)
+  → setState(newState)
+  → useEffect [state] fires
+      → localStorage.setItem('jobTrackerAppV2Data_{mode}', JSON.stringify(data))
   → if (user) updateItem(uid, mode, item)
 
-User action (delete)
-  → setCompanies(prev.filter(...))
-  → if (user) deleteFirestoreCompany(uid, id)
+Delete
+  → setState(prev.filter(...))
+  → if (user) deleteItem(uid, mode, id)
 
 JSON import
-  → setCompanies(sanitizedData)
-  → if (user) batchSaveCompanies(uid, sanitizedData)   [chunked writeBatch, 490/batch]
+  → setState(sanitizedData)
+  → if (user) batchSaveItems(uid, mode, sanitizedData)   [chunked writeBatch, 490/batch]
 ```
 
-The `isSaved` indicator in the header badge reflects the localStorage write latency (800 ms debounce), not the Firestore write.
+### 4.4 Task Step Status Toggle
 
-### 4.3 AI Request Flow
+Steps are cycled without entering edit mode. A click on a step's status icon in the detail panel calls `handleStepStatusToggle(taskId, stepId)`, which updates the task's `steps` array in state and fires `updateItem(uid, 'tasks', task)` to Firestore.
 
-```
-User opens APIKeySettings
-  → selects provider, enters API key (or Ollama URL)
-  → handleSave()
-      → localStorage.setItem('aiProvider', ...)
-      → localStorage.setItem('aiApiKey', ...)
-      → localStorage.setItem('aiModel', ...)
-      → initAI(provider, key, model, ollamaUrl)   [updates module-level config object]
+Cycle order: `todo → in_progress → done → blocked → todo`
 
-On app mount (useEffect [])
-  → reads localStorage AI config
-  → initAI(...)    [re-hydrates config after page refresh]
-
-User clicks an AI action button
-  → isAIReady() checked   [returns false if no key and not Ollama]
-  → if not ready → openSettings()
-  → if ready → runStream(prompt, onChunk)
-      → dispatches to provider-specific streaming function:
-          gemini    → streamGemini()       [SSE fetch, data: lines]
-          groq      → streamOpenAICompat() [SSE fetch, OpenAI schema]
-          openai    → streamOpenAICompat() [SSE fetch, OpenAI schema]
-          ollama    → streamOllama()       [newline-delimited JSON]
-          anthropic → streamAnthropic()    [Anthropic SDK async iterator]
-      → onChunk(accumulatedText) called on each token
-      → React state updated → streaming text rendered live
-  → on completion → "Save to notes" button enabled
-      → onSaveToCompany(companyId, text) → updateCompany(uid, updatedCompany)
-```
-
-Multi-turn chat (`streamChat`) follows the same provider dispatch but sends the full `messages` array instead of a single prompt string.
-
-### 4.4 Share Flow
+### 4.5 Share Flow (job seeker only)
 
 ```
-Signed-in user clicks share button (link icon)
+Signed-in user clicks share button
   → publishShare(uid, companies)
       → setDoc(/shares/{uid}, { companies, sharedAt })
   → constructs URL: <origin>?share=<uid>
   → navigator.clipboard.writeText(url)
-  → setShareCopied(true)  → button shows checkmark for 3s
 
 Recipient visits ?share=<uid>
-  → useEffect [] detects URLSearchParams.get('share')
-  → setShareMode(true)      [disables all edit controls, shows amber banner]
-  → loadSharedData(uid)
-      → getDoc(/shares/{uid})   [public read, no auth required]
+  → setShareMode(true)  [disables all edit controls]
+  → loadSharedData(uid) → getDoc(/shares/{uid})  [public read]
   → setCompanies(data.companies)
 ```
-
-The share snapshot is a point-in-time copy. It does not update automatically when the owner changes their data.
 
 ---
 
@@ -209,27 +179,19 @@ The share snapshot is a point-in-time copy. It does not update automatically whe
 
 ### Provider Abstraction
 
-All provider-specific configuration lives in the `PROVIDERS` constant in `aiAssistant.js`. The module-level `config` object holds the active selection and is set by `initAI()`. All high-level functions (`getInterviewPrep`, `analyzeRejection`, etc.) call the internal `runStream(prompt, onChunk)` dispatcher, which reads `config.provider` and routes to the appropriate streaming function.
+All provider-specific configuration lives in the `PROVIDERS` constant in `aiAssistant.js`. The module-level `config` object holds the active selection and is set by `initAI()`. All high-level functions call the internal `runStream(prompt, onChunk)` dispatcher.
 
 ### Streaming Approaches
 
-| Provider | Protocol | Endpoint | Parsing |
-|---|---|---|---|
-| Gemini | SSE (`alt=sse`) | `generativelanguage.googleapis.com/v1beta/models/{model}:streamGenerateContent` | `data:` lines → `candidates[0].content.parts[0].text` |
-| Groq | SSE (OpenAI-compatible) | `api.groq.com/openai/v1/chat/completions` | `data:` lines → `choices[0].delta.content` |
-| OpenAI | SSE (OpenAI-compatible) | `api.openai.com/v1/chat/completions` | `data:` lines → `choices[0].delta.content` |
-| Ollama | Newline-delimited JSON | `{ollamaUrl}/api/generate` (single-turn) or `/api/chat` (multi-turn) | Each line parsed as JSON → `response` or `message.content` |
-| Anthropic | SDK async iterator | SDK handles transport | `content_block_delta` event → `delta.text` |
+| Provider | Protocol | Parsing |
+|---|---|---|
+| Gemini | SSE (`alt=sse`) | `candidates[0].content.parts[0].text` |
+| Groq | SSE (OpenAI-compat) | `choices[0].delta.content` |
+| OpenAI | SSE (OpenAI-compat) | `choices[0].delta.content` |
+| Ollama | Newline-delimited JSON | `response` or `message.content` |
+| Anthropic | SDK async iterator | `content_block_delta → delta.text` |
 
-All streaming functions accumulate a `full` string and call `onChunk(full)` on each token, so the UI always receives the complete text so far (not a delta). This avoids React state management complexity with incremental appends.
-
-### Privacy Policy
-
-All AI prompts strip personally identifying information before sending:
-- Company names and role titles are included (required for relevance).
-- Interviewer names entered by the user are never included in any prompt.
-- Resume text is truncated to 3000 characters. The UI warns users not to include their own name, email, or phone.
-- Interview debrief notes and chat messages display a privacy warning advising users not to include personal names.
+All functions accumulate a `full` string and call `onChunk(full)` on each token.
 
 ---
 
@@ -240,40 +202,31 @@ All AI prompts strip personally identifying information before sending:
 ```
 /users/{uid}                          — read/write: only if request.auth.uid == uid
 /users/{uid}/companies/{companyId}    — read/write: only if request.auth.uid == uid
-/shares/{uid}                         — read: public (no auth required)
-                                        write: only if request.auth.uid == uid
+/users/{uid}/candidates/{candidateId} — read/write: only if request.auth.uid == uid
+/users/{uid}/tasks/{taskId}           — read/write: only if request.auth.uid == uid
+/shares/{uid}                         — read: public; write: only if request.auth.uid == uid
 ```
-
-No other paths exist or are accessible.
 
 ### API Keys
 
-AI provider API keys are stored exclusively in `localStorage` in the user's own browser. They are included directly in outbound `fetch` requests from the browser (Authorization header or query parameter for Gemini). They are never sent to any server controlled by this project. Ollama requires no key and connects only to a local URL.
+AI provider API keys are stored exclusively in `localStorage`. Never sent to any server controlled by this project.
 
 ### No Server-Side Code
 
-There is no Express server, Edge function, or cloud function in this project. The Vercel deployment serves only static assets produced by `vite build`. All dynamic behavior (auth, database reads/writes, AI requests) is handled entirely by browser-to-third-party HTTPS calls.
-
-### XSS Mitigation
-
-User-entered data is rendered via React's JSX, which escapes strings by default. The only `dangerouslySetInnerHTML` usage is for a custom scrollbar `<style>` block containing no user input.
+There is no Express server, Edge function, or cloud function. Vercel serves only static assets. All dynamic behavior is browser-to-third-party HTTPS.
 
 ---
 
 ## 7. Deployment
 
-The app is hosted on Vercel with automatic deployment:
-
 ```
 git push origin main
   → Vercel webhook triggers build
-  → vite build   (output: dist/)
-  → Vercel deploys dist/ to CDN edge nodes globally
-  → Previous deployment remains live until new deployment passes health check
+  → vite build  (output: dist/)
+  → Vercel deploys dist/ to CDN
 ```
 
 - **Build command:** `vite build`
 - **Output directory:** `dist/`
-- **Framework preset:** Vite (auto-detected by Vercel)
-- **Environment variables:** None required at build time. Firebase config is hardcoded in `src/firebase.js` (public project config, safe per Firebase security model). AI keys are runtime browser-only.
-- **SPA routing:** Vercel serves `index.html` for all routes. The `?share=uid` query parameter is read client-side by `URLSearchParams`.
+- **Framework preset:** Vite
+- **Environment variables:** None required. Firebase config is in `src/firebase.js` (public project config). AI keys are runtime browser-only.

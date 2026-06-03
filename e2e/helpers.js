@@ -70,6 +70,6 @@ export async function acceptNextDialog(page) {
 /** Drag a kanban card into a column identified by its status header text. */
 export async function dragCardToColumn(page, cardName, columnHeaderPattern) {
   const card = page.locator('[draggable="true"]').filter({ hasText: cardName });
-  const column = page.locator('.w-80').filter({ has: page.getByText(columnHeaderPattern) });
+  const column = page.locator('.board-column').filter({ has: page.getByText(columnHeaderPattern) });
   await card.dragTo(column.locator('.bg-gray-100').first());
 }

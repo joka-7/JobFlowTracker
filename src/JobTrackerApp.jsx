@@ -4,9 +4,9 @@ import {
   Search, Plus, MapPin, Globe, Calendar,
   User, CheckCircle, Clock, Trash2, Edit2,
   ArrowLeft, ArrowRight, Download, Upload, Filter, Layout, List, Activity, AlertTriangle,
-  Cloud, CloudOff, Languages, BarChart2, Settings
+  Cloud, CloudOff, Languages, BarChart2, Settings, MoreVertical, Smartphone
 } from 'lucide-react';
-import { signInWithGoogle, signOut, onAuthChange, loadAllItems, updateItem, deleteItem, batchSaveItems, loadUserProfile, saveUserProfile, publishShare, loadSharedData } from './firebase';
+import { signInWithGoogle, signOut, onAuthChange, loadAllItems, updateItem, deleteItem, batchSaveItems, loadUserProfile, saveUserProfile } from './firebase';
 import { initAI } from './services/aiAssistant';
 import {
   getStatuses, getTerminalStatuses, getRejectedStatuses, getFunnelOrder,
@@ -18,6 +18,8 @@ import APIKeySettings from './components/APIKeySettings';
 import RejectionAnalysis from './components/RejectionAnalysis';
 import TemplateLibrary from './components/TemplateLibrary';
 import Tooltip from './components/Tooltip';
+import ModeSwitcher from './components/ModeSwitcher';
+import CalendarView from './components/CalendarView';
 import { TEMPLATES } from './data/interviewTemplates';
 
 const Linkedin = ({ size = 16, ...p }) => (
@@ -36,6 +38,17 @@ const safeStr = (val) => {
     try { return JSON.stringify(val); } catch { return ''; }
   }
   return String(val);
+};
+
+const safeUrl = (val) => {
+  try {
+    const str = safeStr(val).trim();
+    if (!str) return null;
+    const withScheme = /^https?:\/\//i.test(str) ? str : `https://${str}`;
+    const parsed = new URL(withScheme);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    return parsed.href;
+  } catch { return null; }
 };
 
 const PRIORITIES = [
@@ -107,7 +120,7 @@ const makeInitialFormState = (isRecruiter) => ({
   ...(isRecruiter ? {} : {}),
 });
 
-export default function JobTrackerApp({ mode = 'jobseeker' }) {
+export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOnboarding = true }) {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'he';
   const isRecruiter = mode === 'recruiter';
@@ -159,8 +172,15 @@ export default function JobTrackerApp({ mode = 'jobseeker' }) {
   const [showTemplates, setShowTemplates] = useState(false);
   const [simulationData, setSimulationData] = useState(null); // { systemPrompt, title }
   const [rejectionCompany, setRejectionCompany] = useState(null);
-  const [shareMode, setShareMode] = useState(false);
-  const [shareCopied, setShareCopied] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState(null);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  useEffect(() => {
+    const handler = (e) => { e.preventDefault(); setInstallPrompt(e); };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
 
   useEffect(() => {
     const provider = localStorage.getItem('aiProvider') || 'gemini';
@@ -168,19 +188,11 @@ export default function JobTrackerApp({ mode = 'jobseeker' }) {
     const model = localStorage.getItem('aiModel') || '';
     const ollamaUrl = localStorage.getItem('ollamaUrl') || 'http://localhost:11434';
     initAI(provider, apiKey, model, ollamaUrl);
-    if (!localStorage.getItem('hasCompletedOnboarding') && !isRecruiter) {
+    if (autoOnboarding && !localStorage.getItem('hasCompletedOnboarding') && !isRecruiter) {
       setShowOnboarding(true);
     }
 
-    const params = new URLSearchParams(window.location.search);
-    const shareUid = params.get('share');
-    if (shareUid) {
-      setShareMode(true);
-      loadSharedData(shareUid).then(data => {
-        if (data?.companies?.length) setCompanies(data.companies);
-      }).catch(console.error);
-    }
-  }, [isRecruiter]);
+  }, [isRecruiter, autoOnboarding]);
 
   const initialFormState = makeInitialFormState(isRecruiter);
   const [formData, setFormData] = useState(initialFormState);
@@ -202,10 +214,6 @@ export default function JobTrackerApp({ mode = 'jobseeker' }) {
       if (firebaseUser) {
         setSyncing(true);
         try {
-          const profile = await loadUserProfile(firebaseUser.uid);
-          if (profile.appMode && profile.appMode !== mode) {
-            localStorage.setItem('appMode', profile.appMode);
-          }
           await saveUserProfile(firebaseUser.uid, { appMode: mode });
           const data = await loadAllItems(firebaseUser.uid, mode);
           if (data && data.length > 0) {
@@ -237,6 +245,29 @@ export default function JobTrackerApp({ mode = 'jobseeker' }) {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [openNewForm]);
+
+  // Browser back/forward support
+  const navigateTo = useCallback((tab, companyId = null) => {
+    const state = { tab, selectedId: companyId };
+    window.history.pushState(state, '');
+    setActiveTab(tab);
+    if (companyId) {
+      setSelectedId(companyId);
+      setIsEditing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const onPop = (e) => {
+      const s = e.state;
+      if (!s) return;
+      setActiveTab(s.tab || 'board');
+      setSelectedId(s.selectedId || null);
+      setIsEditing(false);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
 
   const handleSignIn = async () => {
     try {
@@ -284,6 +315,26 @@ export default function JobTrackerApp({ mode = 'jobseeker' }) {
     });
     return events.sort((a, b) => new Date(safeStr(b.date)) - new Date(safeStr(a.date)));
   }, [companies, i18n.language]);
+
+  const calendarEvents = useMemo(() => {
+    const evs = [];
+    companies.forEach(company => {
+      const cName = safeStr(company.name || company.company || t('alert.noName'));
+      if (Array.isArray(company.interviews)) {
+        company.interviews.forEach(iv => {
+          if (iv && iv.date)
+            evs.push({ date: iv.date, title: `${cName} – ${iv.type || ''}`, type: 'interview', parentId: company.id });
+        });
+      }
+      if (Array.isArray(company.homeworks)) {
+        company.homeworks.forEach(hw => {
+          if (hw && hw.deadline)
+            evs.push({ date: hw.deadline, title: `${cName} – ${hw.title || t('timeline.assignmentSubmission')}`, type: 'assignment', parentId: company.id });
+        });
+      }
+    });
+    return evs;
+  }, [companies]);
 
   const stats = useMemo(() => {
     const total = companies.length;
@@ -371,8 +422,21 @@ export default function JobTrackerApp({ mode = 'jobseeker' }) {
     if (!cat) return;
     const isQuestionsToAsk = categoryKey === 'questions_to_ask';
     const questionList = cat.questions.map((q, i) => `${i + 1}. ${q}`).join('\n');
-    const systemPrompt = isQuestionsToAsk
-      ? `You are a friendly, experienced hiring manager. The user is practicing asking insightful questions during a job interview.
+    let systemPrompt;
+    if (isRecruiter) {
+      systemPrompt = `You are a realistic job candidate being interviewed for a software/tech role. The user is the interviewer practicing conducting a ${cat.label} interview.
+
+Use these questions as a guide for what the interviewer may ask:
+${questionList}
+
+Rules:
+- Answer each question as a real candidate would: confident but honest, with some strengths and minor areas to grow
+- Keep answers to 2-4 sentences — realistic, not perfect
+- After each answer, briefly note (in parentheses) one thing the interviewer could follow up on
+- Stay in character throughout
+- When the user says "begin", introduce yourself briefly as the candidate and wait for the first question`;
+    } else if (isQuestionsToAsk) {
+      systemPrompt = `You are a friendly, experienced hiring manager. The user is practicing asking insightful questions during a job interview.
 
 They may ask you any of these questions (in any order or their own phrasing):
 ${questionList}
@@ -381,8 +445,9 @@ Rules:
 - Answer each question as a real hiring manager would (2-3 sentences, specific and honest)
 - After answering, give one brief tip on what made the question strong or how to phrase it better
 - Stay in character throughout
-- When the user says "begin", introduce yourself briefly and invite the first question`
-      : `You are a professional interviewer running a ${cat.label} mock interview practice session.
+- When the user says "begin", introduce yourself briefly and invite the first question`;
+    } else {
+      systemPrompt = `You are a professional interviewer running a ${cat.label} mock interview practice session.
 
 Ask these questions one at a time:
 ${questionList}
@@ -394,13 +459,14 @@ Rules:
 - After all questions, give a short overall assessment (3-4 sentences)
 - Keep a professional but encouraging tone
 - When the user says "begin", introduce the session in one sentence and ask question 1`;
+    }
 
     setSimulationData({
       systemPrompt,
       title: `${cat.icon} ${cat.label}`,
     });
     setShowTemplates(false);
-  }, []);
+  }, [isRecruiter]);
 
   const handleExport = () => {
     const dataStr = JSON.stringify(companies, null, 2);
@@ -427,14 +493,34 @@ Rules:
             const potentialArray = Object.values(importedRaw).find(val => Array.isArray(val));
             importedArray = potentialArray ? potentialArray : [importedRaw];
           }
-          if (importedArray.length > 0) {
+          if (importedArray.length > 0 && importedArray.length <= 10000) {
             const sanitizedData = importedArray.map((c, idx) => ({
-              ...c,
+              id: c.id ? String(c.id).slice(0, 64) : Date.now().toString() + idx,
               name: safeStr(c.name || c.company || tMode('alert.unnamedCompany')),
               role: safeStr(c.role || c.position || ''),
-              interviews: Array.isArray(c.interviews) ? c.interviews.map(inv => ({ ...inv, type: safeStr(inv.type || inv.round || '') })) : [],
-              rejection: c.rejection || { date: '', method: '', notes: '' },
-              id: c.id ? String(c.id) : Date.now().toString() + idx,
+              status: safeStr(c.status || ''),
+              location: safeStr(c.location || ''),
+              website: safeStr(c.website || ''),
+              linkedinCompany: safeStr(c.linkedinCompany || ''),
+              linkedinCandidate: safeStr(c.linkedinCandidate || ''),
+              description: safeStr(c.description || ''),
+              products: safeStr(c.products || ''),
+              currentRole: safeStr(c.currentRole || ''),
+              expectedSalary: safeStr(c.expectedSalary || ''),
+              source: safeStr(c.source || ''),
+              generalNotes: safeStr(c.generalNotes || ''),
+              priority: safeStr(c.priority || 'medium'),
+              interviews: Array.isArray(c.interviews) ? c.interviews.slice(0, 100).map(inv => ({
+                type: safeStr(inv.type || inv.round || ''),
+                date: safeStr(inv.date || ''),
+                interviewer: safeStr(inv.interviewer || ''),
+                summary: safeStr(inv.summary || ''),
+              })) : [],
+              rejection: c.rejection && typeof c.rejection === 'object' ? {
+                date: safeStr(c.rejection.date || ''),
+                method: safeStr(c.rejection.method || ''),
+                notes: safeStr(c.rejection.notes || ''),
+              } : { date: '', method: '', notes: '' },
             }));
             setCompanies(sanitizedData);
             showToast(tMode('toast.imported'));
@@ -452,8 +538,9 @@ Rules:
   };
 
   const selectCompany = (company) => {
-    setSelectedId(company.id);
-    setFormData({ ...initialFormState, ...company, rejection: company.rejection || { date: '', method: '', notes: '' } });
+    const full = companies.find(c => c.id === company.id) || company;
+    setSelectedId(full.id);
+    setFormData({ ...initialFormState, ...full, rejection: full.rejection || { date: '', method: '', notes: '' } });
     setIsEditing(false);
   };
 
@@ -481,14 +568,14 @@ Rules:
   const BackArrow = isRTL ? ArrowRight : ArrowLeft;
 
   const renderBoard = () => (
-    <div className="flex-1 overflow-x-auto p-6 bg-slate-50 min-h-0 flex gap-6">
+    <div className="flex-1 overflow-x-auto p-3 sm:p-6 bg-slate-50 min-h-0 flex flex-col sm:flex-row gap-4 sm:gap-6">
       {STATUSES.map(statusObj => {
         const statusCompanies = companies.filter(c => c.status === statusObj.id);
         if (statusCompanies.length === 0) return null;
         return (
           <div
             key={statusObj.id}
-            className="w-80 flex-shrink-0 flex flex-col h-full"
+            className="board-column w-full sm:w-80 sm:flex-shrink-0 flex flex-col sm:h-full"
             onDragOver={handleDragOver}
             onDrop={e => handleDrop(e, statusObj.id)}
           >
@@ -505,7 +592,7 @@ Rules:
                     draggable
                     onDragStart={e => handleDragStart(e, company.id)}
                     onDragEnd={handleDragEnd}
-                    onClick={() => { selectCompany(company); setActiveTab('list'); }}
+                    onClick={() => { selectCompany(company); navigateTo('list', company.id); }}
                     className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
                   >
                     <div className="font-bold text-gray-800 mb-1">{safeStr(company.name)}</div>
@@ -601,7 +688,7 @@ Rules:
   );
 
   const renderTimeline = () => (
-    <div className="flex-1 overflow-y-auto p-6 bg-slate-50 min-h-0 custom-scrollbar">
+    <div className="flex-1 overflow-y-auto p-3 sm:p-6 bg-slate-50 min-h-0 custom-scrollbar">
       <div className="max-w-3xl mx-auto">
         <h2 className="text-2xl font-bold text-gray-800 mb-8 flex items-center gap-2">
           <Activity className="text-blue-600" /> {t('timeline.title')}
@@ -708,15 +795,15 @@ Rules:
     }
 
     return (
-      <div className="flex-1 overflow-y-auto p-6 bg-slate-50 min-h-0 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-6 bg-slate-50 min-h-0 custom-scrollbar">
         <div className="max-w-4xl mx-auto space-y-8">
           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
             <BarChart2 className="text-indigo-600" /> {tMode('stats.title', 'Statistics')}
           </h2>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             {statCards.map(card => (
-              <div key={card.label} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 text-center">
+              <div key={card.label} className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-5 text-center">
                 {card.label === tMode('stats.responseRate', 'Response Rate') ? (
                   <Tooltip text={t('tooltips.responseRate')} position="top">
                     <div className={`text-3xl font-black mb-1 ${card.color}`}>{card.value}</div>
@@ -730,12 +817,14 @@ Rules:
           </div>
 
           {/* Application Journey card */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div className="flex items-center justify-between mb-1">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-6">
+            <div className="flex items-center justify-between mb-1 gap-2">
               <h3 className="font-bold text-gray-800">🔽 {tMode('stats.journey', 'Hiring Funnel')}</h3>
               {avgDays !== null && (
-                <span className="text-xs text-gray-500 bg-gray-50 border border-gray-100 px-2 py-1 rounded-lg">
-                  {tMode('stats.avgDays', 'Avg. days from first to last interview')}: <span className="font-bold text-gray-700">{avgDays}d</span>
+                <span className="text-xs text-gray-500 bg-gray-50 border border-gray-100 px-2 py-1 rounded-lg whitespace-nowrap">
+                  <span className="hidden sm:inline">{tMode('stats.avgDays', 'Avg. days from first to last interview')}: </span>
+                  <span className="sm:hidden">{tMode('stats.avgDaysShort', 'Avg')}: </span>
+                  <span className="font-bold text-gray-700">{avgDays}d</span>
                 </span>
               )}
             </div>
@@ -745,7 +834,8 @@ Rules:
                 {tMode('stats.noData', 'Add more to see patterns')}
               </div>
             ) : (
-              <div className="flex flex-wrap items-center gap-1">
+              <div className="overflow-x-auto -mx-1 px-1">
+              <div className="flex items-center gap-1 min-w-max">
                 {journeyCounts.map((stage, i) => {
                   const prevCount = i > 0 ? journeyCounts[i - 1].count : null;
                   const pct = prevCount && prevCount > 0
@@ -769,15 +859,16 @@ Rules:
                   );
                 })}
               </div>
+              </div>
             )}
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-6">
             <h3 className="font-bold text-gray-800 mb-5">{tMode('stats.byStatus', 'By Status')}</h3>
             <div className="space-y-3">
               {STATUSES.filter(s => (stats.byStatus[s.id] || 0) > 0).map(s => (
-                <div key={s.id} className="flex items-center gap-3">
-                  <div className="w-32 text-sm text-gray-600 flex-shrink-0 truncate">{tStatus(s.id)}</div>
+                <div key={s.id} className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-20 sm:w-32 text-sm text-gray-600 flex-shrink-0 truncate">{tStatus(s.id)}</div>
                   <div className="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all ${s.color.split(' ')[0]}`}
@@ -821,14 +912,20 @@ Rules:
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 font-sans" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="flex flex-col h-dvh bg-gray-50 font-sans" dir={isRTL ? 'rtl' : 'ltr'}>
       {toastMessage && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-green-600 text-white px-6 py-3 rounded-full shadow-lg font-bold">
           {toastMessage}
         </div>
       )}
 
-      <header className={`bg-gradient-to-r ${isRTL ? 'from-indigo-800 to-blue-700' : 'from-blue-700 to-indigo-800'} text-white shadow-md flex-shrink-0`}>
+      <header className={`bg-gradient-to-r ${
+        mode === 'tasks'
+          ? (isRTL ? 'from-emerald-700 to-green-600' : 'from-green-600 to-emerald-700')
+          : isRecruiter
+            ? (isRTL ? 'from-yellow-600 to-amber-500' : 'from-amber-500 to-yellow-600')
+            : (isRTL ? 'from-indigo-800 to-blue-700' : 'from-blue-700 to-indigo-800')
+      } text-white shadow-md flex-shrink-0`}>
         <div className="px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
@@ -844,37 +941,60 @@ Rules:
                   </span>
                 )}
               </h1>
-              <p className="text-blue-200 text-sm">{tMode('header.subtitle')}</p>
+              <p className={`${isRecruiter ? 'text-yellow-100' : 'text-blue-200'} text-sm`}>{tMode('header.subtitle')}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            {!shareMode && (
-              <button onClick={openNewForm} className="flex items-center gap-2 bg-white text-indigo-700 hover:bg-blue-50 px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-sm">
-                <Plus size={18} /> {tMode('header.addCompany')}
-              </button>
-            )}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button onClick={openNewForm} className={`flex items-center gap-2 bg-white ${isRecruiter ? 'text-yellow-600 hover:bg-yellow-50 active:bg-yellow-100' : 'text-indigo-700 hover:bg-blue-50 active:bg-blue-100'} px-3 sm:px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-sm min-h-[40px]`}>
+              <Plus size={18} /> <span className="hidden sm:inline">{tMode('header.addCompany')}</span>
+            </button>
 
             {user ? (
               <button
                 onClick={handleSignOut}
                 title={t('header.driveOnTooltip')}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-colors border ${syncing ? 'bg-yellow-500/20 border-yellow-400/30 text-yellow-100' : 'bg-green-500/20 border-green-400/30 text-green-100 hover:bg-red-500/20 hover:border-red-400/30 hover:text-red-100'}`}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-colors border min-h-[40px] ${syncing ? 'bg-yellow-500/20 border-yellow-400/30 text-yellow-100' : 'bg-green-500/20 border-green-400/30 text-green-100 hover:bg-red-500/20 hover:border-red-400/30 hover:text-red-100'}`}
               >
                 <Cloud size={16} className={syncing ? 'animate-pulse' : ''} />
-                {syncing ? t('header.driveSyncing') : user.displayName?.split(' ')[0] || t('header.driveOn')}
+                <span className="hidden sm:inline">{syncing ? t('header.driveSyncing') : user.displayName?.split(' ')[0] || t('header.driveOn')}</span>
               </button>
             ) : (
               <button
                 onClick={handleSignIn}
                 title={t('header.connectDriveTooltip')}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-blue-100 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-blue-100 transition-colors min-h-[40px]"
               >
-                <CloudOff size={16} /> {t('header.connectDrive')}
+                <CloudOff size={16} /> <span className="hidden sm:inline">{t('header.connectDrive')}</span>
               </button>
             )}
 
-            <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-white/10 border border-white/20">
+            {onModeChange && (
+              <ModeSwitcher currentMode={mode} onModeChange={onModeChange} />
+            )}
+
+            {/* Install button — visible on mobile when installable */}
+            {(installPrompt || isIOS) && (
+              <button
+                onClick={async () => {
+                  if (installPrompt) {
+                    installPrompt.prompt();
+                    const { outcome } = await installPrompt.userChoice;
+                    if (outcome === 'accepted') setInstallPrompt(null);
+                  } else {
+                    alert(t('header.iosInstallHint', 'Tap the Share button (□↑) in Safari, then "Add to Home Screen"'));
+                  }
+                }}
+                className="md:hidden flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold bg-white text-indigo-700 shadow-sm min-h-[40px] transition-colors hover:bg-blue-50 active:bg-blue-100"
+                title={t('header.installApp', 'Install App')}
+              >
+                <Smartphone size={16} />
+                <span className="hidden xs:inline">{t('header.installApp', 'Install')}</span>
+              </button>
+            )}
+
+            {/* Desktop controls */}
+            <div className="hidden md:flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-white/10 border border-white/20">
               <Languages size={16} className="text-blue-100 flex-shrink-0" />
               <select
                 value={i18n.language}
@@ -887,7 +1007,7 @@ Rules:
               </select>
             </div>
 
-            <div className="flex bg-white/10 rounded-lg p-1">
+            <div className="hidden md:flex bg-white/10 rounded-lg p-1">
               <button onClick={handleExport} title={t('header.downloadTooltip')} className="p-2 bg-green-500/20 hover:bg-green-500/40 rounded text-white transition-colors border border-green-400/30">
                 <Download size={18} />
               </button>
@@ -902,28 +1022,6 @@ Rules:
               >
                 📚
               </button>
-              {user && !shareMode && (
-                <button
-                  onClick={async () => {
-                    const url = `${window.location.origin}${window.location.pathname}?share=${user.uid}`;
-                    // publish snapshot (best-effort — requires firestore.rules deployed)
-                    publishShare(user.uid, companies).catch(console.error);
-                    // copy URL regardless of Firestore result
-                    try {
-                      await navigator.clipboard.writeText(url);
-                    } catch {
-                      // fallback for browsers without clipboard API
-                      window.prompt('Copy this share link:', url);
-                    }
-                    setShareCopied(true);
-                    setTimeout(() => setShareCopied(false), 3000);
-                  }}
-                  title={t('header.shareTooltip', 'Share read-only link')}
-                  className="p-2 hover:bg-white/20 rounded text-white transition-colors"
-                >
-                  {shareCopied ? '✓' : '🔗'}
-                </button>
-              )}
               <button
                 onClick={() => setShowAISettings(true)}
                 title={t('header.aiSettings', 'AI Settings')}
@@ -932,20 +1030,86 @@ Rules:
                 <Settings size={18} />
               </button>
             </div>
+
+            {/* Mobile overflow menu */}
+            <div className="md:hidden relative">
+              <button
+                onClick={() => setMobileMenuOpen(o => !o)}
+                className="p-2 bg-white/10 hover:bg-white/20 active:bg-white/30 rounded-lg text-white transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center"
+              >
+                <MoreVertical size={20} />
+              </button>
+              {mobileMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setMobileMenuOpen(false)} />
+                  <div className={`absolute ${isRTL ? 'left-0' : 'right-0'} top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-100 z-50 min-w-[200px] py-2`}>
+                    <div className="px-3 py-2 border-b border-gray-100">
+                      <div className="flex items-center gap-1.5">
+                        <Languages size={14} className="text-gray-400" />
+                        <select
+                          value={i18n.language}
+                          onChange={e => { i18n.changeLanguage(e.target.value); localStorage.setItem('appLanguage', e.target.value); setMobileMenuOpen(false); }}
+                          className="text-gray-700 text-sm font-bold border-none outline-none cursor-pointer bg-transparent flex-1"
+                        >
+                          <option value="en">English</option>
+                          <option value="he">עברית</option>
+                          <option value="fr">Français</option>
+                        </select>
+                      </div>
+                    </div>
+                    <button onClick={() => { handleExport(); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                      <Download size={16} className="text-green-600" /> {t('header.downloadTooltip')}
+                    </button>
+                    <label className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100 cursor-pointer">
+                      <Upload size={16} className="text-blue-600" /> {t('header.uploadTooltip')}
+                      <input type="file" accept=".json" onChange={e => { handleImport(e); setMobileMenuOpen(false); }} className="hidden" />
+                    </label>
+                    <button onClick={() => { setShowTemplates(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                      <span>📚</span> {t('templates.title', 'Interview Templates')}
+                    </button>
+                    <button onClick={() => { setShowAISettings(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                      <Settings size={16} className="text-gray-500" /> {t('header.aiSettings', 'AI Settings')}
+                    </button>
+                    {installPrompt && (
+                      <button
+                        onClick={async () => {
+                          installPrompt.prompt();
+                          const { outcome } = await installPrompt.userChoice;
+                          if (outcome === 'accepted') setInstallPrompt(null);
+                          setMobileMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-indigo-700 hover:bg-indigo-50 active:bg-indigo-100 border-t border-gray-100"
+                      >
+                        <Smartphone size={16} className="text-indigo-600" /> {t('header.installApp', 'Install App')}
+                      </button>
+                    )}
+                    {isIOS && !installPrompt && (
+                      <button
+                        onClick={() => { alert(t('header.iosInstallHint', 'Tap the Share button (□↑) in Safari, then "Add to Home Screen"')); setMobileMenuOpen(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-indigo-700 hover:bg-indigo-50 active:bg-indigo-100 border-t border-gray-100"
+                      >
+                        <Smartphone size={16} className="text-indigo-600" /> {t('header.installApp', 'Install App')}
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="flex px-6 gap-2 mt-2">
+        <div className="flex px-2 sm:px-6 gap-0.5 sm:gap-2 mt-2 overflow-x-auto scrollbar-none">
           {[
-            { key: 'board', icon: <Layout size={16} /> },
-            { key: 'list', icon: <List size={16} /> },
-            { key: 'timeline', icon: <Calendar size={16} /> },
-            { key: 'stats', icon: <BarChart2 size={16} /> },
+            { key: 'board', icon: <Layout size={15} /> },
+            { key: 'list', icon: <List size={15} /> },
+            { key: 'timeline', icon: <Calendar size={15} /> },
+            { key: 'calendar', icon: <Calendar size={15} /> },
+            { key: 'stats', icon: <BarChart2 size={15} /> },
           ].map(({ key, icon }) => (
             <button
               key={key}
-              onClick={() => setActiveTab(key)}
-              className={`px-4 py-2 rounded-t-lg font-medium flex items-center gap-2 transition-colors ${activeTab === key ? 'bg-gray-50 text-indigo-800' : 'bg-white/10 text-blue-100 hover:bg-white/20'}`}
+              onClick={() => navigateTo(key)}
+              className={`px-3 sm:px-4 py-2 rounded-t-lg font-medium flex items-center gap-1.5 transition-colors whitespace-nowrap flex-shrink-0 text-sm ${activeTab === key ? 'bg-gray-50 text-indigo-800' : 'bg-white/10 text-blue-100 hover:bg-white/20'}`}
             >
               {icon} {t(`tabs.${key}`, key)}
             </button>
@@ -953,17 +1117,19 @@ Rules:
         </div>
       </header>
 
-      {shareMode && (
-        <div className="bg-amber-50 border-b border-amber-200 px-6 py-2 flex items-center gap-2 text-amber-800 text-sm">
-          <span>👁️</span>
-          <span className="font-medium">{t('header.viewOnly', 'View only')} —</span>
-          <span>{t('header.viewOnlyDesc', 'You are viewing a shared read-only snapshot.')}</span>
-        </div>
-      )}
 
       {activeTab === 'board' && renderBoard()}
       {activeTab === 'timeline' && renderTimeline()}
       {activeTab === 'stats' && renderStats()}
+      {activeTab === 'calendar' && (
+        <div className="flex-1 overflow-auto bg-gray-50">
+          <CalendarView
+            events={calendarEvents}
+            isRTL={isRTL}
+            onEventClick={ev => { selectCompany({ id: ev.parentId }); navigateTo('list', ev.parentId); }}
+          />
+        </div>
+      )}
 
       {activeTab === 'list' && (
         <div className="flex flex-1 overflow-hidden">
@@ -1005,7 +1171,7 @@ Rules:
                       <div
                         key={company.id}
                         onClick={() => selectCompany(company)}
-                        className={`p-3 rounded-xl cursor-pointer transition-all ${isSelected ? 'bg-indigo-50 border-indigo-200 shadow-sm border ring-1 ring-indigo-500' : 'hover:bg-gray-50 border border-transparent'}`}
+                        className={`p-3 sm:p-4 min-h-[56px] rounded-xl cursor-pointer transition-all ${isSelected ? 'bg-indigo-50 border-indigo-200 shadow-sm border ring-1 ring-indigo-500' : 'hover:bg-gray-50 active:bg-gray-100 border border-transparent'}`}
                       >
                         <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 ${getAvatarColor(company.name)}`}>
@@ -1262,18 +1428,18 @@ Rules:
                           </div>
                         </div>
                         <div className="mt-6 flex flex-wrap gap-4">
-                          {!isRecruiter && company.website && typeof company.website === 'string' && (
-                            <a href={company.website.startsWith('http') ? company.website : `https://${company.website}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
+                          {!isRecruiter && safeUrl(company.website) && (
+                            <a href={safeUrl(company.website)} target="_blank" rel="noreferrer noopener" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
                               <Globe size={14} /> {tMode('detail.companyWebsite')}
                             </a>
                           )}
-                          {!isRecruiter && company.linkedinCompany && typeof company.linkedinCompany === 'string' && (
-                            <a href={company.linkedinCompany.startsWith('http') ? company.linkedinCompany : `https://${company.linkedinCompany}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
+                          {!isRecruiter && safeUrl(company.linkedinCompany) && (
+                            <a href={safeUrl(company.linkedinCompany)} target="_blank" rel="noreferrer noopener" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
                               <Linkedin size={14} /> {tMode('detail.companyLinkedin')}
                             </a>
                           )}
-                          {isRecruiter && company.linkedinCandidate && typeof company.linkedinCandidate === 'string' && (
-                            <a href={company.linkedinCandidate.startsWith('http') ? company.linkedinCandidate : `https://${company.linkedinCandidate}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
+                          {isRecruiter && safeUrl(company.linkedinCandidate) && (
+                            <a href={safeUrl(company.linkedinCandidate)} target="_blank" rel="noreferrer noopener" className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm bg-white/50 px-3 py-1 rounded-md">
                               <Linkedin size={14} /> {tMode('detail.candidateLinkedin')}
                             </a>
                           )}
@@ -1423,12 +1589,8 @@ Rules:
         </div>
       )}
 
-      <style dangerouslySetInnerHTML={{__html: `
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
-        .custom-scrollbar:hover::-webkit-scrollbar-thumb { background-color: #94a3b8; }
-      `}} />
+
+
 
       {showOnboarding && (
         <Onboarding
@@ -1451,6 +1613,7 @@ Rules:
           t={t}
           onClose={() => setShowTemplates(false)}
           onStartSimulation={handleStartSimulation}
+          isRecruiter={isRecruiter}
         />
       )}
 
