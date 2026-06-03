@@ -853,7 +853,7 @@ Rules:
           <div className="flex items-center gap-2 sm:gap-3">
             {!shareMode && (
               <button onClick={openNewForm} className="flex items-center gap-2 bg-white text-indigo-700 hover:bg-blue-50 active:bg-blue-100 px-3 sm:px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-sm min-h-[40px]">
-                <Plus size={18} /> <span className="hidden xs:inline">{tMode('header.addCompany')}</span>
+                <Plus size={18} /> <span className="hidden sm:inline">{tMode('header.addCompany')}</span>
               </button>
             )}
 
