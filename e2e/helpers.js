@@ -98,16 +98,17 @@ export async function mockGeminiChatStream(page, replyText = 'Mock AI reply for 
   });
 }
 
+/** Pre-set tasks mode and skip Task Manager welcome modal. */
 export async function initTasksApp(page) {
   await page.addInitScript(() => {
     localStorage.clear();
     localStorage.setItem('appMode', 'tasks');
-    localStorage.setItem('hasCompletedOnboarding', '1');
+    localStorage.setItem('hasCompletedOnboarding_tasks', '1');
   });
 }
 
 export async function openTemplateLibrary(page) {
-  await page.getByTitle(/Interview Template|Task Planning|Candidate Interview/i).click();
+  await page.getByTestId('open-templates').first().click();
   await page.getByRole('heading', { name: /Template Library|Task Planning|Interview Guide/i }).waitFor();
 }
 

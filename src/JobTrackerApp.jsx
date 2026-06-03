@@ -14,6 +14,7 @@ import {
 } from './statuses';
 import Onboarding from './components/Onboarding';
 import AppBrandMark from './components/AppBrandMark';
+import { STORAGE_KEYS } from './storageKeys.js';
 import AIAssistant from './components/AIAssistant';
 import APIKeySettings from './components/APIKeySettings';
 import RejectionAnalysis from './components/RejectionAnalysis';
@@ -174,7 +175,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
   const dragCompanyId = useRef(null);
 
   const [showOnboarding, setShowOnboarding] = useState(
-    () => !isRecruiter && !localStorage.getItem('hasCompletedOnboarding'),
+    () => !isRecruiter && !localStorage.getItem(STORAGE_KEYS.jobSeekerOnboarding),
   );
   const [showAISettings, setShowAISettings] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
@@ -945,7 +946,7 @@ Rules:
 
           <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
             <button onClick={openNewForm} className={`flex items-center gap-2 bg-white ${isRecruiter ? 'text-yellow-600 hover:bg-yellow-50 active:bg-yellow-100' : 'text-indigo-700 hover:bg-blue-50 active:bg-blue-100'} px-3 sm:px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-sm min-h-[40px]`}>
-              <Plus size={18} /> <span className="hidden sm:inline">{tMode('header.addCompany')}</span>
+              <Plus size={18} className="shrink-0" /> <span className="shrink-0 max-w-[5rem] truncate sm:max-w-none">{tMode('header.addCompany')}</span>
             </button>
 
             {user ? (
@@ -955,7 +956,7 @@ Rules:
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-colors border min-h-[40px] ${syncing ? 'bg-yellow-500/20 border-yellow-400/30 text-yellow-100' : 'bg-green-500/20 border-green-400/30 text-green-100 hover:bg-red-500/20 hover:border-red-400/30 hover:text-red-100'}`}
               >
                 <Cloud size={16} className={syncing ? 'animate-pulse' : ''} />
-                <span className="hidden sm:inline">{syncing ? t('header.driveSyncing') : user.displayName?.split(' ')[0] || t('header.driveOn')}</span>
+                <span className="shrink-0 max-w-[5rem] truncate sm:max-w-none">{syncing ? t('header.driveSyncing') : user.displayName?.split(' ')[0] || t('header.driveOn')}</span>
               </button>
             ) : (
               <button
@@ -963,13 +964,13 @@ Rules:
                 title={t('header.connectDriveTooltip')}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-blue-100 transition-colors min-h-[40px]"
               >
-                <CloudOff size={16} /> <span className="hidden sm:inline">{t('header.connectDrive')}</span>
+                <CloudOff size={16} className="shrink-0" /> <span className="shrink-0 max-w-[5rem] truncate sm:max-w-none">{t('header.connectDrive')}</span>
               </button>
             )}
 
             {onModeChange && (
               <div className="hidden md:block shrink-0">
-                <ModeSwitcher currentMode={mode} onModeChange={onModeChange} />
+                <ModeSwitcher currentMode={mode} onModeChange={onModeChange} labelSize="compact" />
               </div>
             )}
 
@@ -981,7 +982,7 @@ Rules:
                 title={t('header.installApp')}
               >
                 <Smartphone size={16} className="shrink-0" />
-                <span className="hidden sm:inline">{t('header.installApp')}</span>
+                <span className="shrink-0 max-w-[5rem] truncate sm:max-w-none">{t('header.installApp')}</span>
               </button>
             )}
 
@@ -1008,6 +1009,9 @@ Rules:
                 <input id="main-file-upload" type="file" accept=".json" onChange={handleImport} className="hidden" />
               </label>
               <button
+                type="button"
+                data-testid="open-templates"
+                aria-label={t('templates.title', 'Interview Templates')}
                 onClick={() => setShowTemplates(true)}
                 title={t('templates.title', 'Interview Templates')}
                 className="p-2 hover:bg-white/20 rounded text-white transition-colors"
@@ -1065,7 +1069,7 @@ Rules:
                       <Upload size={16} className="text-blue-600" /> {t('header.uploadTooltip')}
                       <input type="file" accept=".json" onChange={e => { handleImport(e); setMobileMenuOpen(false); }} className="hidden" />
                     </label>
-                    <button onClick={() => { setShowTemplates(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                    <button type="button" data-testid="open-templates" onClick={() => { setShowTemplates(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <span>📚</span> {t('templates.title', 'Interview Templates')}
                     </button>
                     <button onClick={() => { setShowAISettings(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
@@ -1094,7 +1098,7 @@ Rules:
 
           {onModeChange && (
             <div className="md:hidden w-full overflow-x-auto scrollbar-none -mx-1 px-1">
-              <ModeSwitcher currentMode={mode} onModeChange={onModeChange} />
+              <ModeSwitcher currentMode={mode} onModeChange={onModeChange} labelSize="full" />
             </div>
           )}
         </div>
@@ -1112,7 +1116,7 @@ Rules:
               onClick={() => navigateTo(key)}
               className={`px-2.5 sm:px-4 py-2.5 rounded-t-lg font-medium flex items-center gap-1 sm:gap-2 transition-colors whitespace-nowrap flex-shrink-0 text-xs sm:text-sm min-h-[44px] touch-manipulation ${activeTab === key ? 'bg-gray-50 text-indigo-800' : 'bg-white/10 text-blue-100 hover:bg-white/20 active:bg-white/25'}`}
             >
-              {icon} <span className="hidden min-[380px]:inline">{t(`tabs.${key}`, key)}</span>
+              {icon} <span className="shrink-0">{t(`tabs.${key}`, key)}</span>
             </button>
           ))}
         </div>

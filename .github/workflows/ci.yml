@@ -23,6 +23,9 @@ jobs:
       - name: Run unit tests
         run: npm test
 
+      - name: Verify E2E storage key parity
+        run: npm test -- src/__tests__/storageKeys.e2eParity.test.js
+
       - name: Build
         run: npm run build
 
@@ -38,6 +41,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Verify E2E storage key parity
+        run: npm test -- src/__tests__/storageKeys.e2eParity.test.js
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4
