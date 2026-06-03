@@ -257,7 +257,11 @@
     "saveToNotes": "שמור להערות",
     "saved": "נשמר ✓",
     "simulationTitle": "ראיון מדומה",
-    "simulationEmpty": "מתחיל את הראיון המדומה..."
+    "simulationEmpty": "מתחיל את הראיון המדומה...",
+    "titleTasks": "מאמן משימות",
+    "coachingTitle": "אימון AI",
+    "coachingEmpty": "מתחיל את מפגש האימון...",
+    "taskGeneral": "אימון כללי"
   },
   "settings": {
     "title": "הגדרות AI",
@@ -297,6 +301,7 @@
     "footerTasks": "השתמש בשאלות אלה בעת תכנון, פירוק או סקירת משימות.",
     "practiceButton": "ראיון מדומה",
     "practiceButtonRecruiter": "תרגול ניהול ראיון",
+    "practiceButtonTasks": "תרגול עם מאמן AI",
     "categories": {
       "hr": "משאבי אנוש / סינון",
       "technical": "טכני",

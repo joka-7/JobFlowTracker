@@ -91,11 +91,26 @@ class ChatErrorBoundary extends React.Component {
 // sentinel value used to trigger AI-first simulation without showing a user bubble
 const SIM_TRIGGER = '__sim_start__';
 
+const buildTaskCoachPrompt = (task) => {
+  if (!task) {
+    return 'You are a helpful task management coach. Help the user plan, break down, and complete their work. Be concise and practical.';
+  }
+  const steps = Array.isArray(task.steps) ? task.steps : [];
+  const done = steps.filter(s => s.status === 'done').length;
+  return `You are a helpful task management coach. The user is working on this task:
+- Name: ${task.name || 'Untitled'}
+- Status: ${task.status || 'active'}
+- Priority: ${task.priority || 'medium'}${task.dueDate ? `\n- Due: ${task.dueDate}` : ''}${task.description ? `\n- Description: ${task.description}` : ''}
+- Steps: ${steps.length ? `${done}/${steps.length} done` : 'none yet'}${task.notes ? `\n- Notes: ${task.notes}` : ''}
+Be concise and practical. Suggest concrete next actions.`;
+};
+
 function ChatModalInner({
-  company, t, onClose, onOpenSettings, onSaveToCompany,
+  company, task, t, onClose, onOpenSettings, onSaveToCompany, onSaveToTask,
   systemPromptOverride,
   simulationTitle,
   autoStart,
+  variant = 'job',
 }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -109,13 +124,25 @@ function ChatModalInner({
 
   const aiReady = isAIReady();
 
-  const systemPrompt = systemPromptOverride || (company
-    ? `You are a helpful job search assistant. The user is tracking their application to ${company.name || 'a company'}${company.role ? ` for the role of ${company.role}` : ''}${company.location ? ` in ${company.location}` : ''}. Current status: ${company.status || 'unknown'}. Number of interviews: ${company.interviews?.length || 0}. Be concise and practical.`
-    : 'You are a helpful job search assistant. Be concise and practical.');
+  const isTaskMode = variant === 'tasks';
+  const systemPrompt = systemPromptOverride || (isTaskMode
+    ? buildTaskCoachPrompt(task)
+    : company
+      ? `You are a helpful job search assistant. The user is tracking their application to ${company.name || 'a company'}${company.role ? ` for the role of ${company.role}` : ''}${company.location ? ` in ${company.location}` : ''}. Current status: ${company.status || 'unknown'}. Number of interviews: ${company.interviews?.length || 0}. Be concise and practical.`
+      : 'You are a helpful job search assistant. Be concise and practical.');
 
   const subtitle = simulationTitle
     ? String(simulationTitle)
-    : (company ? `${company.name || ''}${company.role ? ` — ${company.role}` : ''}` : '');
+    : isTaskMode
+      ? (task?.name ? String(task.name) : t('chat.taskGeneral', 'General coaching'))
+      : (company ? `${company.name || ''}${company.role ? ` — ${company.role}` : ''}` : '');
+
+  const headerTitle = simulationTitle
+    ? (isTaskMode ? t('chat.coachingTitle', 'AI Coaching') : t('chat.simulationTitle', 'Mock Interview'))
+    : (isTaskMode ? t('chat.titleTasks', 'Task Coach') : t('chat.title', 'AI Chat'));
+
+  const saveHandler = onSaveToTask || onSaveToCompany;
+  const saveTarget = task || company;
 
   useEffect(() => {
     mountedRef.current = true;
@@ -200,8 +227,8 @@ function ChatModalInner({
   }, [autoStart, aiReady, send]);
 
   const handleSave = (content) => {
-    if (onSaveToCompany && company?.id) {
-      onSaveToCompany(company.id, content);
+    if (saveHandler && saveTarget?.id) {
+      saveHandler(saveTarget.id, content);
     }
   };
 
@@ -209,11 +236,13 @@ function ChatModalInner({
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="bg-white w-full sm:max-w-lg sm:rounded-2xl shadow-2xl flex flex-col h-[90vh] sm:h-[600px] overflow-hidden">
 
-        <div className="bg-gradient-to-r from-indigo-600 to-purple-700 px-4 py-3 flex items-center justify-between flex-shrink-0">
+        <div className={`bg-gradient-to-r px-4 py-3 flex items-center justify-between flex-shrink-0 ${
+          isTaskMode ? 'from-emerald-600 to-green-600' : 'from-indigo-600 to-purple-700'
+        }`}>
           <div className="flex items-center gap-2 text-white">
             <span className="text-base">{simulationTitle ? '🎭' : <MessageSquare size={16} />}</span>
             <div>
-              <p className="font-bold text-sm">{simulationTitle ? t('chat.simulationTitle', 'Mock Interview') : t('chat.title', 'AI Chat')}</p>
+              <p className="font-bold text-sm">{headerTitle}</p>
               {subtitle && <p className="text-indigo-200 text-xs">{subtitle}</p>}
             </div>
           </div>
@@ -229,12 +258,14 @@ function ChatModalInner({
               }
               <p className="text-sm">
                 {simulationTitle
-                  ? t('chat.simulationEmpty', 'Starting your mock interview...')
+                  ? (isTaskMode
+                    ? t('chat.coachingEmpty', 'Starting your coaching session...')
+                    : t('chat.simulationEmpty', 'Starting your mock interview...'))
                   : t('chat.empty', 'Start the conversation...')}
               </p>
-              {!simulationTitle && company?.name && (
+              {!simulationTitle && saveTarget?.name && (
                 <p className="text-xs mt-1 text-gray-300">
-                  {t('chat.context', 'Context')}: {company.name}
+                  {t('chat.context', 'Context')}: {saveTarget.name}
                 </p>
               )}
               {!simulationTitle && (
@@ -249,7 +280,7 @@ function ChatModalInner({
               key={`${msg.role}-${i}-${msg.streaming ? 's' : 'd'}`}
               msg={msg}
               t={t}
-              onSave={onSaveToCompany && company && !msg.streaming ? handleSave : null}
+              onSave={saveHandler && saveTarget && !msg.streaming ? handleSave : null}
             />
           ))}
           {error && (

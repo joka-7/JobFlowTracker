@@ -127,16 +127,22 @@ export default function TemplateLibrary({ t, onClose, onStartSimulation, isRecru
                         cat.label,
                       )}</span>
                     </button>
-                    {isActive && onStartSimulation && !isTasks && (
+                    {isActive && onStartSimulation && (
                       <button
                         onClick={() => onStartSimulation(key)}
                         className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all text-white flex items-center gap-1.5 ${
-                          isRecruiter
-                            ? 'bg-amber-500 hover:bg-amber-600 border-amber-500'
-                            : 'bg-indigo-600 hover:bg-indigo-700 border-indigo-600'
+                          isTasks
+                            ? 'bg-emerald-600 hover:bg-emerald-700 border-emerald-600'
+                            : isRecruiter
+                              ? 'bg-amber-500 hover:bg-amber-600 border-amber-500'
+                              : 'bg-indigo-600 hover:bg-indigo-700 border-indigo-600'
                         }`}
                       >
-                        🎭 {isRecruiter ? t('templates.practiceButtonRecruiter', 'Practice conducting') : t('templates.practiceButton', 'Mock interview')}
+                        🎭 {isTasks
+                          ? t('templates.practiceButtonTasks', 'Practice with AI coach')
+                          : isRecruiter
+                            ? t('templates.practiceButtonRecruiter', 'Practice conducting')
+                            : t('templates.practiceButton', 'Mock interview')}
                       </button>
                     )}
                   </div>
@@ -185,9 +191,19 @@ export default function TemplateLibrary({ t, onClose, onStartSimulation, isRecru
                   {onStartSimulation && (
                     <button
                       onClick={() => onStartSimulation(activeCategory)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors"
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-white text-xs font-bold rounded-lg transition-colors ${
+                        isTasks
+                          ? 'bg-emerald-600 hover:bg-emerald-700'
+                          : isRecruiter
+                            ? 'bg-amber-500 hover:bg-amber-600'
+                            : 'bg-indigo-600 hover:bg-indigo-700'
+                      }`}
                     >
-                      🎭 {isRecruiter ? t('templates.practiceButtonRecruiter', 'Practice conducting') : t('templates.practiceButton', 'Mock interview')}
+                      🎭 {isTasks
+                        ? t('templates.practiceButtonTasks', 'Practice with AI coach')
+                        : isRecruiter
+                          ? t('templates.practiceButtonRecruiter', 'Practice conducting')
+                          : t('templates.practiceButton', 'Mock interview')}
                     </button>
                   )}
                 </div>

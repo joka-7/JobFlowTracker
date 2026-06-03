@@ -4,8 +4,11 @@ import {
   Plus, Search, Download, Upload, Layout, List, BarChart2,
   Trash2, Edit2, ArrowLeft, ArrowRight, CheckCircle2, CheckCircle, Circle,
   Clock, AlertCircle, ChevronDown, Calendar, Cloud, CloudOff,
-  ClipboardList, X, GripVertical, Languages, MoreVertical, Settings, Smartphone,
+  ClipboardList, X, GripVertical, Languages, MoreVertical, Settings, Smartphone, Sparkles,
 } from 'lucide-react';
+import { initAI } from './services/aiAssistant';
+import { TASK_TEMPLATES } from './data/taskTemplates';
+import ChatModal from './components/ChatModal';
 import {
   signInWithGoogle, signOut, onAuthChange, loadAllItems,
   updateItem, deleteItem, batchSaveItems, loadUserProfile, saveUserProfile,
@@ -118,6 +121,8 @@ export default function TasksApp({ onModeChange }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showAISettings, setShowAISettings] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [simulationData, setSimulationData] = useState(null);
   const [installPrompt, setInstallPrompt] = useState(null);
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
@@ -144,6 +149,14 @@ export default function TasksApp({ onModeChange }) {
     const handler = (e) => { e.preventDefault(); setInstallPrompt(e); };
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  useEffect(() => {
+    const provider = localStorage.getItem('aiProvider') || 'gemini';
+    const apiKey = localStorage.getItem('aiApiKey') || localStorage.getItem('anthropicApiKey') || '';
+    const model = localStorage.getItem('aiModel') || '';
+    const ollamaUrl = localStorage.getItem('ollamaUrl') || 'http://localhost:11434';
+    initAI(provider, apiKey, model, ollamaUrl);
   }, []);
 
   useEffect(() => {
@@ -355,6 +368,39 @@ export default function TasksApp({ onModeChange }) {
   };
 
   const selectedTask = selectedId ? tasks.find(t => t.id === selectedId) : null;
+
+  const handleSaveToTask = useCallback((taskId, text) => {
+    setTasks(prev => prev.map(t => {
+      if (t.id !== taskId) return t;
+      const merged = { ...t, notes: t.notes ? `${t.notes}\n\n---\n${text}` : text };
+      if (user) updateItem(user.uid, MODE, merged).catch(() => {});
+      return merged;
+    }));
+  }, [user]);
+
+  const handleStartSimulation = useCallback((categoryKey) => {
+    const cat = TASK_TEMPLATES[categoryKey];
+    if (!cat) return;
+    const questionList = cat.questions.map((q, i) => `${i + 1}. ${q}`).join('\n');
+    const taskCtx = selectedTask
+      ? `The user is working on task "${selectedTask.name}" (status: ${selectedTask.status}${selectedTask.dueDate ? `, due ${selectedTask.dueDate}` : ''}).`
+      : 'No specific task is selected — general task-management practice.';
+    const systemPrompt = `You are a supportive productivity coach running a ${cat.label} coaching session.
+${taskCtx}
+
+Work through these prompts one at a time:
+${questionList}
+
+Rules:
+- Ask ONE prompt at a time
+- After the user responds, reflect in 2-3 sentences and suggest one concrete next action
+- Then move to the next prompt
+- Keep tone practical and encouraging
+- When the user says "begin", welcome them briefly and ask prompt 1`;
+
+    setSimulationData({ systemPrompt, title: `${cat.icon} ${cat.label}` });
+    setShowTemplates(false);
+  }, [selectedTask]);
 
   const filteredTasks = useMemo(() => {
     let result = tasks;
@@ -1139,7 +1185,46 @@ export default function TasksApp({ onModeChange }) {
           t={t}
           libraryMode="tasks"
           onClose={() => setShowTemplates(false)}
+          onStartSimulation={handleStartSimulation}
         />
+      )}
+
+      {chatOpen && !simulationData && (
+        <ChatModal
+          t={t}
+          variant="tasks"
+          task={selectedTask}
+          language={lang}
+          onClose={() => setChatOpen(false)}
+          onOpenSettings={() => { setChatOpen(false); setShowAISettings(true); }}
+          onSaveToTask={selectedTask ? handleSaveToTask : null}
+        />
+      )}
+
+      {simulationData && (
+        <ChatModal
+          t={t}
+          variant="tasks"
+          task={selectedTask}
+          language={lang}
+          systemPromptOverride={simulationData.systemPrompt}
+          simulationTitle={simulationData.title}
+          autoStart={true}
+          onClose={() => setSimulationData(null)}
+          onOpenSettings={() => { setSimulationData(null); setShowAISettings(true); }}
+          onSaveToTask={selectedTask ? handleSaveToTask : null}
+        />
+      )}
+
+      {!chatOpen && !simulationData && (
+        <button
+          type="button"
+          onClick={() => setChatOpen(true)}
+          title={t('chat.titleTasks', 'Task Coach')}
+          className="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full shadow-lg flex items-center justify-center bg-gradient-to-br from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white hover:scale-110 transition-all"
+        >
+          <Sparkles size={20} />
+        </button>
       )}
     </div>
   );
