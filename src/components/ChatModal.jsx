@@ -1,6 +1,28 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Send, Loader2, Save, MessageSquare } from 'lucide-react';
+import { X, Send, Loader2, Save, MessageSquare, AlertTriangle } from 'lucide-react';
 import { streamChat, isAIReady } from '../services/aiAssistant';
+
+class ChatErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(err) { return { error: err }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white w-full sm:max-w-lg sm:rounded-2xl shadow-2xl flex flex-col p-6 gap-4">
+            <div className="flex items-center gap-2 text-red-600">
+              <AlertTriangle size={20} />
+              <p className="font-bold">Something went wrong in the chat</p>
+            </div>
+            <p className="text-sm text-gray-500">{this.state.error?.message}</p>
+            <button onClick={this.props.onClose} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold">Close</button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function MarkdownText({ text }) {
   if (!text) return null;
@@ -32,7 +54,7 @@ function Message({ msg, onSave, t }) {
           ? 'bg-indigo-600 text-white rounded-br-sm'
           : 'bg-gray-100 text-gray-800 rounded-bl-sm'
       }`}>
-        {msg.content.split('\n').map((line, i) => (
+        {String(msg.content ?? '').split('\n').map((line, i) => (
           <p key={i} className={i > 0 ? 'mt-1' : ''}><MarkdownText text={line} /></p>
         ))}
         {msg.streaming && (
@@ -57,11 +79,11 @@ function Message({ msg, onSave, t }) {
 // sentinel value used to trigger AI-first simulation without showing a user bubble
 const SIM_TRIGGER = '__sim_start__';
 
-export default function ChatModal({
+function ChatModalInner({
   company, language, t, onClose, onOpenSettings, onSaveToCompany,
-  systemPromptOverride, // simulation: overrides default system prompt
-  simulationTitle,      // simulation: header subtitle
-  autoStart,            // simulation: fires hidden trigger on mount so AI speaks first
+  systemPromptOverride,
+  simulationTitle,
+  autoStart,
 }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -252,5 +274,13 @@ export default function ChatModal({
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ChatModal(props) {
+  return (
+    <ChatErrorBoundary onClose={props.onClose}>
+      <ChatModalInner {...props} />
+    </ChatErrorBoundary>
   );
 }
