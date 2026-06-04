@@ -21,7 +21,7 @@ import RejectionAnalysis from './components/RejectionAnalysis';
 import TemplateLibrary from './components/TemplateLibrary';
 import ChatModal from './components/ChatModal';
 import Tooltip from './components/Tooltip';
-import ModeSwitcher from './components/ModeSwitcher';
+import ModeDropdown from './components/ModeDropdown';
 import CalendarView from './components/CalendarView';
 import { TEMPLATES } from './data/interviewTemplates';
 import {
@@ -932,7 +932,7 @@ Rules:
               <AppBrandMark size={28} />
             </div>
             <div className="min-w-0">
-              <h1 className="text-base sm:text-xl font-bold tracking-tight flex items-center gap-2 flex-wrap">
+              <h1 className="text-sm sm:text-xl font-bold tracking-tight leading-tight">
                 {tMode('header.title')}
                 {companies.length > 0 && (
                   <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 transition-all ${isSaved ? 'bg-green-500/20 text-green-100' : 'bg-yellow-500/50 text-yellow-50'}`}>
@@ -946,32 +946,33 @@ Rules:
           </div>
 
           <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-            <button onClick={openNewForm} className={`flex items-center gap-2 bg-white ${isRecruiter ? 'text-yellow-600 hover:bg-yellow-50 active:bg-yellow-100' : 'text-indigo-700 hover:bg-blue-50 active:bg-blue-100'} px-3 sm:px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-sm min-h-[40px]`}>
-              <Plus size={18} className="shrink-0" /> <span className="shrink-0 max-w-[5rem] truncate sm:max-w-none">{tMode('header.addCompany')}</span>
+            <button onClick={openNewForm} className={`flex items-center gap-1.5 bg-white ${isRecruiter ? 'text-yellow-600 hover:bg-yellow-50 active:bg-yellow-100' : 'text-indigo-700 hover:bg-blue-50 active:bg-blue-100'} px-2 sm:px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-xs sm:text-sm min-h-[40px]`}>
+              <Plus size={16} className="shrink-0" />
+              <span className="shrink-0">{tMode('header.addCompany')}</span>
             </button>
 
             {user ? (
               <button
                 onClick={handleSignOut}
                 title={t('header.driveOnTooltip')}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-colors border min-h-[40px] ${syncing ? 'bg-yellow-500/20 border-yellow-400/30 text-yellow-100' : 'bg-green-500/20 border-green-400/30 text-green-100 hover:bg-red-500/20 hover:border-red-400/30 hover:text-red-100'}`}
+                className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-bold transition-colors border min-h-[40px] ${syncing ? 'bg-yellow-500/20 border-yellow-400/30 text-yellow-100' : 'bg-green-500/20 border-green-400/30 text-green-100 hover:bg-red-500/20 hover:border-red-400/30 hover:text-red-100'}`}
               >
                 <Cloud size={16} className={syncing ? 'animate-pulse' : ''} />
-                <span className="shrink-0 max-w-[5rem] truncate sm:max-w-none">{syncing ? t('header.driveSyncing') : user.displayName?.split(' ')[0] || t('header.driveOn')}</span>
+                <span className="hidden sm:inline shrink-0 max-w-[5rem] truncate sm:max-w-none">{syncing ? t('header.driveSyncing') : user.displayName?.split(' ')[0] || t('header.driveOn')}</span>
               </button>
             ) : (
               <button
                 onClick={handleSignIn}
                 title={t('header.connectDriveTooltip')}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-blue-100 transition-colors min-h-[40px]"
+                className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-blue-100 transition-colors min-h-[40px]"
               >
-                <CloudOff size={16} className="shrink-0" /> <span className="shrink-0 max-w-[5rem] truncate sm:max-w-none">{t('header.connectDrive')}</span>
+                <CloudOff size={16} className="shrink-0" /> <span className="hidden sm:inline shrink-0 max-w-[5rem] truncate sm:max-w-none">{t('header.connectDrive')}</span>
               </button>
             )}
 
             {onModeChange && (
-              <div className="hidden md:block shrink-0">
-                <ModeSwitcher currentMode={mode} onModeChange={onModeChange} labelSize="compact" />
+              <div className="hidden md:block">
+                <ModeDropdown currentMode={mode} onModeChange={onModeChange} isRTL={isRTL} />
               </div>
             )}
 
@@ -979,7 +980,7 @@ Rules:
               <button
                 type="button"
                 onClick={() => runInstall(t)}
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-bold bg-white text-indigo-700 shadow-sm min-h-[40px] transition-colors hover:bg-blue-50 active:bg-blue-100 shrink-0"
+                className="hidden sm:flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-bold bg-white text-indigo-700 shadow-sm min-h-[40px] transition-colors hover:bg-blue-50 active:bg-blue-100 shrink-0"
                 title={t('header.installApp')}
               >
                 <Smartphone size={16} className="shrink-0" />
@@ -1108,26 +1109,27 @@ Rules:
           </div>
 
           {onModeChange && (
-            <div className="md:hidden w-full overflow-x-auto scrollbar-none -mx-1 px-1">
-              <ModeSwitcher currentMode={mode} onModeChange={onModeChange} labelSize="full" />
+            <div className="md:hidden">
+              <ModeDropdown currentMode={mode} onModeChange={onModeChange} isRTL={isRTL} />
             </div>
           )}
         </div>
 
-        <div className="flex px-2 sm:px-6 gap-0.5 sm:gap-2 mt-2 overflow-x-auto scrollbar-none">
+        <div className="flex px-2 sm:px-6 gap-0.5 sm:gap-1 mt-2 overflow-x-auto scrollbar-none">
           {[
-            { key: 'board', icon: <Layout size={15} /> },
-            { key: 'list', icon: <List size={15} /> },
-            { key: 'timeline', icon: <Calendar size={15} /> },
-            { key: 'calendar', icon: <Calendar size={15} /> },
-            { key: 'stats', icon: <BarChart2 size={15} /> },
+            { key: 'board', icon: <Layout size={14} /> },
+            { key: 'list', icon: <List size={14} /> },
+            { key: 'timeline', icon: <Calendar size={14} /> },
+            { key: 'calendar', icon: <Calendar size={14} /> },
+            { key: 'stats', icon: <BarChart2 size={14} /> },
           ].map(({ key, icon }) => (
             <button
               key={key}
               onClick={() => navigateTo(key)}
-              className={`px-2.5 sm:px-4 py-2.5 rounded-t-lg font-medium flex items-center gap-1 sm:gap-2 transition-colors whitespace-nowrap flex-shrink-0 text-xs sm:text-sm min-h-[44px] touch-manipulation ${activeTab === key ? 'bg-gray-50 text-indigo-800' : 'bg-white/10 text-blue-100 hover:bg-white/20 active:bg-white/25'}`}
+              className={`px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-t-lg font-medium flex items-center gap-0.5 sm:gap-2 transition-colors whitespace-nowrap flex-shrink-0 text-[10px] sm:text-sm min-h-[34px] sm:min-h-[44px] touch-manipulation ${activeTab === key ? 'bg-gray-50 text-indigo-800' : 'bg-white/10 text-blue-100 hover:bg-white/20 active:bg-white/25'}`}
             >
-              {icon} <span className="shrink-0">{t(`tabs.${key}`, key)}</span>
+              <span className="hidden sm:inline-flex shrink-0">{icon}</span>
+              <span className="shrink-0">{t(`tabs.${key}`, key)}</span>
             </button>
           ))}
         </div>
