@@ -17,7 +17,7 @@ import {
   updateItem, deleteItem, batchSaveItems, loadUserProfile, saveUserProfile,
 } from './firebase';
 import { getStorageKey, STATUSES_TASKS, filterItemsForMode } from './statuses';
-import ModeSwitcher from './components/ModeSwitcher';
+import ModeDropdown from './components/ModeDropdown';
 import CalendarView from './components/CalendarView';
 import TemplateLibrary from './components/TemplateLibrary';
 import APIKeySettings from './components/APIKeySettings';
@@ -1124,9 +1124,7 @@ Rules:
             )}
 
             {onModeChange && (
-              <div className="hidden md:block shrink-0">
-                <ModeSwitcher currentMode={MODE} onModeChange={onModeChange} labelSize="compact" />
-              </div>
+              <ModeDropdown currentMode={MODE} onModeChange={onModeChange} isRTL={isRTL} />
             )}
 
             {canInstall && (
@@ -1258,23 +1256,18 @@ Rules:
           </div>
           </div>
 
-          {onModeChange && (
-            <div className="md:hidden w-full overflow-x-auto scrollbar-none -mx-1 px-1">
-              <ModeSwitcher currentMode={MODE} onModeChange={onModeChange} labelSize="full" />
-            </div>
-          )}
         </div>
 
         {/* Tab bar */}
-        <div className="flex px-2 sm:px-6 gap-0.5 sm:gap-2 mt-2 overflow-x-auto scrollbar-none">
+        <div className="flex px-2 sm:px-6 gap-0.5 sm:gap-1 mt-2 overflow-x-auto scrollbar-none">
           {TABS.map(({ id, icon: Icon, label }) => (
             <button
               key={id}
               type="button"
               onClick={() => navigateTo(id)}
-              className={`px-2.5 sm:px-4 py-2.5 rounded-t-lg font-medium flex items-center gap-1 sm:gap-2 transition-colors whitespace-nowrap flex-shrink-0 text-xs sm:text-sm min-h-[44px] touch-manipulation ${activeTab === id ? 'bg-gray-50 text-emerald-800' : 'bg-white/10 text-green-100 hover:bg-white/20 active:bg-white/25'}`}
+              className={`px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-t-lg font-medium flex items-center gap-0.5 sm:gap-2 transition-colors whitespace-nowrap flex-shrink-0 text-[10px] sm:text-sm min-h-[34px] sm:min-h-[44px] touch-manipulation ${activeTab === id ? 'bg-gray-50 text-emerald-800' : 'bg-white/10 text-green-100 hover:bg-white/20 active:bg-white/25'}`}
             >
-              <Icon size={15} className="shrink-0" />
+              <span className="hidden sm:inline-flex shrink-0"><Icon size={15} /></span>
               <span className="shrink-0">{label}</span>
             </button>
           ))}

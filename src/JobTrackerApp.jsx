@@ -21,7 +21,7 @@ import RejectionAnalysis from './components/RejectionAnalysis';
 import TemplateLibrary from './components/TemplateLibrary';
 import ChatModal from './components/ChatModal';
 import Tooltip from './components/Tooltip';
-import ModeSwitcher from './components/ModeSwitcher';
+import ModeDropdown from './components/ModeDropdown';
 import CalendarView from './components/CalendarView';
 import { TEMPLATES } from './data/interviewTemplates';
 import {
@@ -970,9 +970,7 @@ Rules:
             )}
 
             {onModeChange && (
-              <div className="hidden md:block shrink-0">
-                <ModeSwitcher currentMode={mode} onModeChange={onModeChange} labelSize="compact" />
-              </div>
+              <ModeDropdown currentMode={mode} onModeChange={onModeChange} isRTL={isRTL} />
             )}
 
             {canInstall && (
@@ -1107,27 +1105,23 @@ Rules:
           </div>
           </div>
 
-          {onModeChange && (
-            <div className="md:hidden w-full overflow-x-auto scrollbar-none -mx-1 px-1">
-              <ModeSwitcher currentMode={mode} onModeChange={onModeChange} labelSize="full" />
-            </div>
-          )}
         </div>
 
-        <div className="flex px-2 sm:px-6 gap-0.5 sm:gap-2 mt-2 overflow-x-auto scrollbar-none">
+        <div className="flex px-2 sm:px-6 gap-0.5 sm:gap-1 mt-2 overflow-x-auto scrollbar-none">
           {[
-            { key: 'board', icon: <Layout size={15} /> },
-            { key: 'list', icon: <List size={15} /> },
-            { key: 'timeline', icon: <Calendar size={15} /> },
-            { key: 'calendar', icon: <Calendar size={15} /> },
-            { key: 'stats', icon: <BarChart2 size={15} /> },
+            { key: 'board', icon: <Layout size={14} /> },
+            { key: 'list', icon: <List size={14} /> },
+            { key: 'timeline', icon: <Calendar size={14} /> },
+            { key: 'calendar', icon: <Calendar size={14} /> },
+            { key: 'stats', icon: <BarChart2 size={14} /> },
           ].map(({ key, icon }) => (
             <button
               key={key}
               onClick={() => navigateTo(key)}
-              className={`px-2.5 sm:px-4 py-2.5 rounded-t-lg font-medium flex items-center gap-1 sm:gap-2 transition-colors whitespace-nowrap flex-shrink-0 text-xs sm:text-sm min-h-[44px] touch-manipulation ${activeTab === key ? 'bg-gray-50 text-indigo-800' : 'bg-white/10 text-blue-100 hover:bg-white/20 active:bg-white/25'}`}
+              className={`px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-t-lg font-medium flex items-center gap-0.5 sm:gap-2 transition-colors whitespace-nowrap flex-shrink-0 text-[10px] sm:text-sm min-h-[34px] sm:min-h-[44px] touch-manipulation ${activeTab === key ? 'bg-gray-50 text-indigo-800' : 'bg-white/10 text-blue-100 hover:bg-white/20 active:bg-white/25'}`}
             >
-              {icon} <span className="shrink-0">{t(`tabs.${key}`, key)}</span>
+              <span className="hidden sm:inline-flex shrink-0">{icon}</span>
+              <span className="shrink-0">{t(`tabs.${key}`, key)}</span>
             </button>
           ))}
         </div>
