@@ -23,7 +23,7 @@ import TemplateLibrary from './components/TemplateLibrary';
 import APIKeySettings from './components/APIKeySettings';
 import { usePwaInstall } from './usePwaInstall';
 import AppBrandMark from './components/AppBrandMark';
-import WelcomeModal from './components/WelcomeModal';
+import Onboarding from './components/Onboarding';
 import { STORAGE_KEYS } from './storageKeys.js';
 
 const MODE = 'tasks';
@@ -455,13 +455,28 @@ Rules:
   const timelineEvents = useMemo(() => {
     const events = [];
     tasks.forEach(task => {
-      if (!task.dueDate) return;
-      events.push({
-        date: task.dueDate,
-        taskName: safeStr(task.name),
-        status: task.status,
-        notes: safeStr(task.notes),
-        parentId: task.id,
+      if (task.dueDate) {
+        events.push({
+          date: task.dueDate,
+          taskName: safeStr(task.name),
+          status: task.status,
+          notes: safeStr(task.notes),
+          parentId: task.id,
+          isStep: false,
+        });
+      }
+      (task.steps || []).forEach(step => {
+        if (!step.dueDate) return;
+        const overdue = task.dueDate && new Date(step.dueDate) > new Date(task.dueDate);
+        events.push({
+          date: step.dueDate,
+          taskName: safeStr(task.name),
+          stepTitle: safeStr(step.title),
+          stepStatus: step.status,
+          parentId: task.id,
+          isStep: true,
+          overdue,
+        });
       });
     });
     return events.sort((a, b) => new Date(safeStr(a.date)) - new Date(safeStr(b.date)));
@@ -592,7 +607,7 @@ Rules:
     </div>
   );
 
-  const renderStepRow = (step, editable, taskId) => {
+  const renderStepRow = (step, editable, taskId, taskDueDate) => {
     const cfg = STEP_STATUS_CONFIG[step.status] || STEP_STATUS_CONFIG.todo;
     const Icon = cfg.icon;
     return (
@@ -646,12 +661,19 @@ Rules:
               <input
                 type="date"
                 value={safeStr(step.dueDate)}
+                max={taskDueDate || undefined}
                 onChange={e => setFormData(prev => ({
                   ...prev,
                   steps: prev.steps.map(s => s.id === step.id ? { ...s, dueDate: e.target.value } : s),
                 }))}
-                className="text-xs text-gray-500 bg-transparent border-0 outline-none placeholder-gray-400"
+                className={`text-xs bg-transparent border-0 outline-none ${step.dueDate && taskDueDate && step.dueDate > taskDueDate ? 'text-red-500 font-semibold' : 'text-gray-500'}`}
               />
+            </div>
+          )}
+          {editable && step.dueDate && taskDueDate && step.dueDate > taskDueDate && (
+            <div className="flex items-center gap-1 mt-1 text-xs text-red-500">
+              <AlertCircle size={11} />
+              {tt('form.stepDateAfterTask', 'Date is after the task due date')}
             </div>
           )}
         </div>
@@ -757,7 +779,7 @@ Rules:
                 {steps.length === 0 && (
                   <p className="text-sm text-gray-400 italic py-2">{tt('form.noSteps', 'No steps yet.')}</p>
                 )}
-                {steps.map(step => renderStepRow(step, true, null))}
+                {steps.map(step => renderStepRow(step, true, null, formData.dueDate))}
               </div>
               <div className="flex gap-2">
                 <input
@@ -1067,23 +1089,33 @@ Rules:
           <div className={`relative ${timelineBorder} border-emerald-200 space-y-8`}>
             {timelineEvents.map((event, index) => (
               <div key={index} className="relative">
-                <div className={`absolute ${timelineDot} top-1 w-4 h-4 rounded-full bg-emerald-500 border-4 border-white shadow-sm`} />
+                <div className={`absolute ${timelineDot} top-1 w-4 h-4 rounded-full border-4 border-white shadow-sm ${event.overdue ? 'bg-red-500' : event.isStep ? 'bg-blue-400' : 'bg-emerald-500'}`} />
                 <button
                   type="button"
                   onClick={() => navigateTo('list', event.parentId)}
-                  className="w-full text-left bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+                  className={`w-full text-left bg-white p-5 rounded-xl shadow-sm border hover:shadow-md transition-shadow ${event.overdue ? 'border-red-200' : 'border-gray-100'}`}
                 >
                   <div className="flex justify-between items-start mb-2 gap-2">
-                    <span className="px-2 py-1 text-xs font-bold rounded-md bg-emerald-100 text-emerald-800">
-                      {tt('timeline.dueDate', 'Due date')}
+                    <span className={`px-2 py-1 text-xs font-bold rounded-md ${event.isStep ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800'}`}>
+                      {event.isStep ? tt('timeline.step', 'Step') : tt('timeline.dueDate', 'Due date')}
                     </span>
                     <span className="text-sm text-gray-500 font-medium bg-gray-50 px-2 py-1 rounded shrink-0">
                       {formatDate(event.date, lang)}
                     </span>
                   </div>
-                  <h3 className="font-bold text-lg text-gray-800 mb-1">{event.taskName}</h3>
-                  <p className="text-sm text-gray-500 capitalize">{tt(`status.${event.status}`, event.status)}</p>
-                  {event.notes && (
+                  <h3 className="font-bold text-lg text-gray-800 mb-0.5">{event.taskName}</h3>
+                  {event.isStep ? (
+                    <p className="text-sm text-gray-600">{event.stepTitle}</p>
+                  ) : (
+                    <p className="text-sm text-gray-500 capitalize">{tt(`status.${event.status}`, event.status)}</p>
+                  )}
+                  {event.overdue && (
+                    <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-red-600 bg-red-50 px-2 py-1 rounded-lg">
+                      <AlertCircle size={13} />
+                      {tt('timeline.stepOverdue', 'Step date is after task due date!')}
+                    </div>
+                  )}
+                  {!event.isStep && event.notes && (
                     <p className="text-gray-600 text-sm mt-2 whitespace-pre-wrap line-clamp-3">{event.notes}</p>
                   )}
                 </button>
@@ -1335,14 +1367,14 @@ Rules:
       )}
 
       {showTasksWelcome && (
-        <WelcomeModal
-          title={tt('welcome.title', 'Welcome to Task Manager')}
-          subtitle={tt('welcome.subtitle', 'Plan work in steps and track progress')}
-          description={tt('welcome.desc', 'Create tasks with checklists and AI coaching.')}
-          skipLabel={tt('welcome.skip', 'Skip')}
-          startLabel={tt('welcome.getStarted', 'Get started')}
+        <Onboarding
+          t={t}
+          i18n={i18n}
+          isRTL={isRTL}
+          isTasks={true}
           onClose={() => setShowTasksWelcome(false)}
-          onComplete={() => localStorage.setItem(STORAGE_KEYS.tasksWelcome, '1')}
+          openNewForm={() => { setShowTasksWelcome(false); openNewForm(); }}
+          openAISettings={() => { setShowTasksWelcome(false); setShowAISettings(true); }}
         />
       )}
 
