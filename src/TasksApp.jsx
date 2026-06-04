@@ -1133,7 +1133,7 @@ Rules:
               <button
                 type="button"
                 onClick={() => runInstall(t)}
-                className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs sm:text-sm font-bold bg-white text-emerald-700 shadow-sm min-h-[40px] transition-colors hover:bg-green-50 active:bg-green-100 shrink-0"
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs sm:text-sm font-bold bg-white text-emerald-700 shadow-sm min-h-[40px] transition-colors hover:bg-green-50 active:bg-green-100 shrink-0"
                 title={t('header.installApp')}
               >
                 <Smartphone size={16} className="shrink-0" />
