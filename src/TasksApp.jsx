@@ -1101,7 +1101,9 @@ Rules:
 
             <div className="flex items-center gap-2 shrink-0">
             <button onClick={openNewForm} className="flex items-center gap-2 bg-white text-emerald-700 hover:bg-green-50 active:bg-green-100 px-3 sm:px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-sm min-h-[44px] touch-manipulation">
-              <Plus size={18} className="shrink-0" /> <span className="shrink-0 max-w-[5rem] truncate sm:max-w-none">{tt('header.addTask', 'Add Task')}</span>
+              <Plus size={18} className="shrink-0" />
+              <span className="sm:hidden shrink-0">Add T</span>
+              <span className="hidden sm:inline shrink-0">{tt('header.addTask', 'Add Task')}</span>
             </button>
 
             {user ? (
