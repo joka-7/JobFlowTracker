@@ -1,16 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import { safeStr, sanitizeTrackerRecords } from '../sanitize';
 
 // --- safeUrl (mirrors JobTrackerApp.jsx) ---
-const safeStr = (val) => {
-  if (val === null || val === undefined) return '';
-  if (typeof val === 'string') return val;
-  if (typeof val === 'number' || typeof val === 'boolean') return String(val);
-  if (typeof val === 'object') {
-    try { return JSON.stringify(val); } catch { return ''; }
-  }
-  return String(val);
-};
-
 const safeUrl = (val) => {
   try {
     const str = safeStr(val).trim();
@@ -22,36 +13,7 @@ const safeUrl = (val) => {
   } catch { return null; }
 };
 
-// --- sanitizeImport (mirrors JobTrackerApp.jsx handleImport) ---
-const sanitizeImport = (importedArray) =>
-  importedArray.map((c, idx) => ({
-    id: c.id ? String(c.id).slice(0, 64) : Date.now().toString() + idx,
-    name: safeStr(c.name || c.company || 'Unnamed'),
-    role: safeStr(c.role || c.position || ''),
-    status: safeStr(c.status || ''),
-    location: safeStr(c.location || ''),
-    website: safeStr(c.website || ''),
-    linkedinCompany: safeStr(c.linkedinCompany || ''),
-    linkedinCandidate: safeStr(c.linkedinCandidate || ''),
-    description: safeStr(c.description || ''),
-    products: safeStr(c.products || ''),
-    currentRole: safeStr(c.currentRole || ''),
-    expectedSalary: safeStr(c.expectedSalary || ''),
-    source: safeStr(c.source || ''),
-    generalNotes: safeStr(c.generalNotes || ''),
-    priority: safeStr(c.priority || 'medium'),
-    interviews: Array.isArray(c.interviews) ? c.interviews.slice(0, 100).map(inv => ({
-      type: safeStr(inv.type || inv.round || ''),
-      date: safeStr(inv.date || ''),
-      interviewer: safeStr(inv.interviewer || ''),
-      summary: safeStr(inv.summary || ''),
-    })) : [],
-    rejection: c.rejection && typeof c.rejection === 'object' ? {
-      date: safeStr(c.rejection.date || ''),
-      method: safeStr(c.rejection.method || ''),
-      notes: safeStr(c.rejection.notes || ''),
-    } : { date: '', method: '', notes: '' },
-  }));
+const sanitizeImport = sanitizeTrackerRecords;
 
 // ─── safeUrl tests ───────────────────────────────────────────────────────────
 

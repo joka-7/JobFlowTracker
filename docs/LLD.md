@@ -33,8 +33,6 @@ All state lives in `JobTrackerApp.jsx` using React `useState`. No external state
 | `showAISettings` | `boolean` | Controls visibility of the APIKeySettings modal. |
 | `showTemplates` | `boolean` | Controls visibility of the TemplateLibrary modal. |
 | `rejectionCompany` | `Company \| null` | When set, opens the RejectionAnalysis modal for the given company. |
-| `shareMode` | `boolean` | True when viewing via `?share=uid`. Hides all edit controls and shows the amber read-only banner. |
-| `shareCopied` | `boolean` | True for 3 seconds after the share URL is copied to clipboard. Drives the share button icon (link → checkmark). |
 | `dragCompanyId` | `React.ref<string \| null>` | Ref (not state) storing the ID of the card being dragged. Avoids re-renders during drag. |
 
 ### Derived values (useMemo)
@@ -222,8 +220,6 @@ File: `src/firebase.js`
 | `updateCompany(uid, company)` | `(uid: string, company: Company) => Promise<void>` | `setDoc` on `/users/{uid}/companies/{company.id}`. Creates or fully overwrites. |
 | `deleteFirestoreCompany(uid, id)` | `(uid: string, id: string) => Promise<void>` | `deleteDoc` on a single company document. |
 | `batchSaveCompanies(uid, companies)` | `(uid: string, companies: Company[]) => Promise<void>` | Writes all companies in chunks of 490 using `writeBatch`. Used for JSON import and legacy migration. |
-| `publishShare(uid, companies)` | `(uid: string, companies: Company[]) => Promise<void>` | `setDoc` on `/shares/{uid}` with `{ companies, sharedAt: ISO string }`. |
-| `loadSharedData(uid)` | `(uid: string) => Promise<{ companies, sharedAt } \| null>` | `getDoc` on `/shares/{uid}`. No auth required (public read). Returns `null` if not found. |
 | `loadUserData(uid)` | `(uid: string) => Promise<Company[] \| null>` | Legacy alias for `loadAllCompanies`. |
 | `saveUserData(uid, companies)` | `(uid: string, companies: Company[]) => Promise<void>` | Legacy alias for `batchSaveCompanies`. |
 
