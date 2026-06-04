@@ -946,10 +946,9 @@ Rules:
           </div>
 
           <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-            <button onClick={openNewForm} className={`flex items-center gap-2 bg-white ${isRecruiter ? 'text-yellow-600 hover:bg-yellow-50 active:bg-yellow-100' : 'text-indigo-700 hover:bg-blue-50 active:bg-blue-100'} px-3 sm:px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-sm min-h-[40px]`}>
-              <Plus size={18} className="shrink-0" />
-              <span className="sm:hidden shrink-0">Add C</span>
-              <span className="hidden sm:inline shrink-0">{tMode('header.addCompany')}</span>
+            <button onClick={openNewForm} className={`flex items-center gap-1.5 bg-white ${isRecruiter ? 'text-yellow-600 hover:bg-yellow-50 active:bg-yellow-100' : 'text-indigo-700 hover:bg-blue-50 active:bg-blue-100'} px-2 sm:px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-xs sm:text-sm min-h-[40px]`}>
+              <Plus size={16} className="shrink-0" />
+              <span className="shrink-0">{tMode('header.addCompany')}</span>
             </button>
 
             {user ? (
