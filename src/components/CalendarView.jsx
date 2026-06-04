@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Calendar, Briefcase, BookOpen, CheckSquare, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Briefcase, BookOpen, CheckSquare, ListChecks, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const TYPE_STYLES = {
@@ -21,6 +21,12 @@ const TYPE_STYLES = {
     border: 'border-green-300',
     icon: CheckSquare,
   },
+  step: {
+    bg: 'bg-blue-500',
+    light: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+    border: 'border-blue-300',
+    icon: ListChecks,
+  },
 };
 
 function toLocalDateStr(date) {
@@ -30,7 +36,9 @@ function toLocalDateStr(date) {
   return `${y}-${m}-${d}`;
 }
 
-export default function CalendarView({ events = [], onEventClick, isRTL = false }) {
+const DEFAULT_LEGEND_TYPES = ['interview', 'assignment', 'task'];
+
+export default function CalendarView({ events = [], onEventClick, isRTL = false, legendTypes }) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language === 'he' ? 'he-IL' : i18n.language === 'fr' ? 'fr-FR' : 'en-US';
 
@@ -79,6 +87,11 @@ export default function CalendarView({ events = [], onEventClick, isRTL = false 
   }, [currentMonth]);
 
   const selectedEvents = selectedDay ? (eventsByDay[selectedDay] || []) : [];
+
+  const legendEntries = useMemo(() => {
+    const types = legendTypes ?? DEFAULT_LEGEND_TYPES;
+    return types.filter((type) => TYPE_STYLES[type]);
+  }, [legendTypes]);
 
   function prevMonth() {
     setCurrentMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1));
@@ -193,8 +206,8 @@ export default function CalendarView({ events = [], onEventClick, isRTL = false 
 
         {/* Legend */}
         <div className="flex items-center gap-4 mt-3 flex-wrap">
-          {Object.entries(TYPE_STYLES).map(([type, style]) => {
-            const Icon = style.icon;
+          {legendEntries.map((type) => {
+            const style = TYPE_STYLES[type];
             return (
               <div key={type} className="flex items-center gap-1 text-xs text-gray-700">
                 <span className={`w-2 h-2 rounded-full ${style.bg}`} />

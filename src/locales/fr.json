@@ -64,7 +64,8 @@
     "type": {
       "interview": "Entretien",
       "assignment": "Exercice",
-      "task": "Tâche"
+      "task": "Tâche",
+      "step": "Étape"
     }
   },
   "board": {

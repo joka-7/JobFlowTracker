@@ -64,7 +64,8 @@
     "type": {
       "interview": "Interview",
       "assignment": "Assignment",
-      "task": "Task"
+      "task": "Task",
+      "step": "Step"
     }
   },
   "board": {
