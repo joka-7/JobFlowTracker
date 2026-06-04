@@ -6,7 +6,7 @@ import {
   Clock, AlertCircle, ChevronDown, Calendar, Cloud, CloudOff,
   ClipboardList, X, GripVertical, Languages, MoreVertical, Settings, Smartphone, Sparkles,
 } from 'lucide-react';
-import { initAI } from './services/aiAssistant';
+import { initAI, getGoalsTasksSystemPrompt } from './services/aiAssistant';
 import { TASK_TEMPLATES } from './data/taskTemplates';
 import {
   getLocalizedQuestions, getLocalizedCategoryLabel, formatQuestionList,
@@ -130,6 +130,7 @@ export default function TasksApp({ onModeChange }) {
   const [showTemplates, setShowTemplates] = useState(false);
   const [showAISettings, setShowAISettings] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [showGoalsFinder, setShowGoalsFinder] = useState(false);
   const [simulationData, setSimulationData] = useState(null);
   const [showTasksWelcome, setShowTasksWelcome] = useState(
     () => !localStorage.getItem(STORAGE_KEYS.tasksWelcome),
@@ -1173,6 +1174,13 @@ Rules:
                 📚
               </button>
               <button
+                onClick={() => setShowGoalsFinder(true)}
+                title={t('ai.goalsAndTasks', 'Goals & Tasks')}
+                className="p-2 hover:bg-white/20 rounded text-white transition-colors"
+              >
+                🎯
+              </button>
+              <button
                 onClick={() => setShowAISettings(true)}
                 title={t('header.aiSettings', 'AI Settings')}
                 className="p-2 hover:bg-white/20 rounded text-white transition-colors"
@@ -1224,6 +1232,9 @@ Rules:
                     </label>
                     <button type="button" data-testid="open-templates" onClick={() => { setShowTemplates(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <span>📚</span> {t('templates.titleTasks', 'Task Planning Prompts')}
+                    </button>
+                    <button onClick={() => { setShowGoalsFinder(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                      <span>🎯</span> {t('ai.goalsAndTasks', 'Goals & Tasks')}
                     </button>
                     <button onClick={() => { setShowAISettings(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <Settings size={16} className="text-gray-500" /> {t('header.aiSettings', 'AI Settings')}
@@ -1350,7 +1361,22 @@ Rules:
         />
       )}
 
-      {!chatOpen && !simulationData && (
+      {showGoalsFinder && (
+        <ChatModal
+          key="goals-tasks-finder"
+          t={t}
+          variant="tasks"
+          language={lang}
+          sessionKey="goals-tasks-finder"
+          systemPromptOverride={getGoalsTasksSystemPrompt(tasks, lang)}
+          simulationTitle={t('ai.goalsAndTasks', 'Goals & Tasks')}
+          autoStart={true}
+          onClose={() => setShowGoalsFinder(false)}
+          onOpenSettings={() => { setShowGoalsFinder(false); setShowAISettings(true); }}
+        />
+      )}
+
+      {!chatOpen && !simulationData && !showGoalsFinder && (
         <button
           type="button"
           onClick={() => setChatOpen(true)}

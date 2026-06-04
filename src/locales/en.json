@@ -242,7 +242,10 @@
     "changeSettings": "Change AI settings",
     "scheduleButton": "Interview prep schedule",
     "scheduleNoDate": "Add an interview date first",
-    "resumeButton": "Tailor resume for this role"
+    "resumeButton": "Tailor resume for this role",
+    "findJobs": "Find Jobs with AI",
+    "findCandidates": "Find Candidates with AI",
+    "goalsAndTasks": "Goals & Tasks AI"
   },
   "resume": {
     "title": "Resume Tailoring",

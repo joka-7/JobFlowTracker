@@ -242,7 +242,10 @@
     "changeSettings": "שנה הגדרות AI",
     "scheduleButton": "לוח זמנים להכנה לראיון",
     "scheduleNoDate": "הוסף תאריך ראיון קודם",
-    "resumeButton": "התאם קורות חיים לתפקיד"
+    "resumeButton": "התאם קורות חיים לתפקיד",
+    "findJobs": "מצא משרות עם AI",
+    "findCandidates": "מצא מועמדים עם AI",
+    "goalsAndTasks": "יעדים ומשימות AI"
   },
   "resume": {
     "title": "התאמת קורות חיים",

@@ -7,7 +7,7 @@ import {
   Cloud, CloudOff, Languages, BarChart2, Settings, MoreVertical, Smartphone
 } from 'lucide-react';
 import { signInWithGoogle, signOut, onAuthChange, loadAllItems, updateItem, deleteItem, batchSaveItems, loadUserProfile, saveUserProfile } from './firebase';
-import { initAI } from './services/aiAssistant';
+import { initAI, getJobFinderSystemPrompt, getCandidateFinderSystemPrompt } from './services/aiAssistant';
 import {
   getStatuses, getTerminalStatuses, getRejectedStatuses, getFunnelOrder,
   getStorageKey, INTERVIEW_TYPE_KEYS, filterItemsForMode,
@@ -180,6 +180,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
   const [showAISettings, setShowAISettings] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [simulationData, setSimulationData] = useState(null); // { systemPrompt, title }
+  const [showAIFinder, setShowAIFinder] = useState(false);
   const [rejectionCompany, setRejectionCompany] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { canInstall, runInstall } = usePwaInstall();
@@ -1019,6 +1020,13 @@ Rules:
                 📚
               </button>
               <button
+                onClick={() => setShowAIFinder(true)}
+                title={isRecruiter ? t('ai.findCandidates', 'Find Candidates') : t('ai.findJobs', 'Find Jobs')}
+                className="p-2 hover:bg-white/20 rounded text-white transition-colors"
+              >
+                {isRecruiter ? '👥' : '🔍'}
+              </button>
+              <button
                 onClick={() => setShowAISettings(true)}
                 title={t('header.aiSettings', 'AI Settings')}
                 className="p-2 hover:bg-white/20 rounded text-white transition-colors"
@@ -1071,6 +1079,9 @@ Rules:
                     </label>
                     <button type="button" data-testid="open-templates" onClick={() => { setShowTemplates(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <span>📚</span> {t('templates.title', 'Interview Templates')}
+                    </button>
+                    <button onClick={() => { setShowAIFinder(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                      <span>{isRecruiter ? '👥' : '🔍'}</span> {isRecruiter ? t('ai.findCandidates', 'Find Candidates') : t('ai.findJobs', 'Find Jobs')}
                     </button>
                     <button onClick={() => { setShowAISettings(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <Settings size={16} className="text-gray-500" /> {t('header.aiSettings', 'AI Settings')}
@@ -1655,6 +1666,24 @@ Rules:
           autoStart={true}
           onClose={() => setSimulationData(null)}
           onOpenSettings={() => setShowAISettings(true)}
+        />
+      )}
+
+      {showAIFinder && (
+        <ChatModal
+          key={isRecruiter ? 'candidate-finder' : 'job-finder'}
+          t={t}
+          language={i18n.language}
+          sessionKey={isRecruiter ? 'candidate-finder' : 'job-finder'}
+          systemPromptOverride={
+            isRecruiter
+              ? getCandidateFinderSystemPrompt(companies, i18n.language)
+              : getJobFinderSystemPrompt(companies, i18n.language)
+          }
+          simulationTitle={isRecruiter ? t('ai.findCandidates', 'Find Candidates') : t('ai.findJobs', 'Find Jobs')}
+          autoStart={true}
+          onClose={() => setShowAIFinder(false)}
+          onOpenSettings={() => { setShowAIFinder(false); setShowAISettings(true); }}
         />
       )}
     </div>
