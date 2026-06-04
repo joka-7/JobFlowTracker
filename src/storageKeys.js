@@ -31,6 +31,7 @@ export const E2E_MODE_INIT = {
   },
   recruiter: {
     [STORAGE_KEYS.appMode]: APP_MODES.recruiter,
+    [STORAGE_KEYS.recruiterOnboarding]: '1',
     ...E2E_AI_STORAGE,
   },
   tasks: {
