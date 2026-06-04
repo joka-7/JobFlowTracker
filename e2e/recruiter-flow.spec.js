@@ -40,8 +40,12 @@ test.describe('Recruiter mode flows', () => {
     await expect(page.getByText('Candidates', { exact: true })).toBeVisible();
   });
 
-  test('AI assistant panel is not visible in recruiter mode', async ({ page }) => {
+  test('AI assistant panel (interview prep) is not visible in recruiter mode', async ({ page }) => {
     await expect(page.locator('text=Interview prep')).toHaveCount(0);
+  });
+
+  test('Find Candidates AI button is visible in recruiter mode', async ({ page }) => {
+    await expect(page.getByTitle(/Find Candidates/i)).toBeVisible();
   });
 
   test('recruiter-only fields are saved and shown in detail view', async ({ page }) => {
