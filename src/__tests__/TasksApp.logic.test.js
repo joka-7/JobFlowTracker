@@ -123,3 +123,61 @@ describe('TasksApp – step management', () => {
     expect(updated[0].title).toBe('Step');
   });
 });
+
+describe('TasksApp – timeline step overdue detection', () => {
+  const buildTimelineEvents = (tasks) => {
+    const events = [];
+    tasks.forEach(task => {
+      if (task.dueDate) {
+        events.push({ date: task.dueDate, isStep: false, taskName: task.name });
+      }
+      (task.steps || []).forEach(step => {
+        if (!step.dueDate) return;
+        const overdue = task.dueDate && new Date(step.dueDate) > new Date(task.dueDate);
+        events.push({ date: step.dueDate, isStep: true, stepTitle: step.title, taskName: task.name, overdue });
+      });
+    });
+    return events.sort((a, b) => new Date(a.date) - new Date(b.date));
+  };
+
+  it('marks step as overdue when its date is after task due date', () => {
+    const tasks = [{
+      id: '1', name: 'Task', dueDate: '2026-06-10',
+      steps: [{ id: 's1', title: 'Step', dueDate: '2026-06-15', status: 'todo' }],
+    }];
+    const events = buildTimelineEvents(tasks);
+    const stepEvent = events.find(e => e.isStep);
+    expect(stepEvent.overdue).toBe(true);
+  });
+
+  it('does not mark step as overdue when date is before task due date', () => {
+    const tasks = [{
+      id: '1', name: 'Task', dueDate: '2026-06-20',
+      steps: [{ id: 's1', title: 'Step', dueDate: '2026-06-10', status: 'todo' }],
+    }];
+    const events = buildTimelineEvents(tasks);
+    const stepEvent = events.find(e => e.isStep);
+    expect(stepEvent.overdue).toBeFalsy();
+  });
+
+  it('does not mark step as overdue when task has no due date', () => {
+    const tasks = [{
+      id: '1', name: 'Task', dueDate: '',
+      steps: [{ id: 's1', title: 'Step', dueDate: '2026-12-31', status: 'todo' }],
+    }];
+    const events = buildTimelineEvents(tasks);
+    const stepEvent = events.find(e => e.isStep);
+    expect(stepEvent.overdue).toBeFalsy();
+  });
+
+  it('includes both task and step events sorted by date', () => {
+    const tasks = [{
+      id: '1', name: 'Task', dueDate: '2026-06-20',
+      steps: [{ id: 's1', title: 'Step A', dueDate: '2026-06-05', status: 'todo' }],
+    }];
+    const events = buildTimelineEvents(tasks);
+    expect(events).toHaveLength(2);
+    expect(events[0].date).toBe('2026-06-05');
+    expect(events[1].date).toBe('2026-06-20');
+  });
+});
