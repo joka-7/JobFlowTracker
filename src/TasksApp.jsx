@@ -1086,7 +1086,7 @@ Rules:
                 <AppBrandMark size={24} className="sm:w-7 sm:h-7" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-base sm:text-xl font-bold tracking-tight flex items-center gap-2 flex-wrap">
+                <h1 className="text-sm sm:text-xl font-bold tracking-tight leading-tight">
                   {tt('header.title', 'Task Manager')}
                   {tasks.length > 0 && (
                     <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 transition-all ${isSaved ? 'bg-green-500/20 text-green-100' : 'bg-yellow-500/50 text-yellow-50'}`}>
