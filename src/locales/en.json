@@ -434,10 +434,10 @@
     "modeSelection": {
       "title": "How will you use JobFlowTracker?",
       "subtitle": "Choose your role — this cannot be changed later",
-      "jobSeekerTitle": "I'm a Job Seeker",
+      "jobSeekerTitle": "Job Search",
       "jobSeekerShort": "Jobs",
       "jobSeekerDesc": "Track companies, applications, and interviews",
-      "recruiterTitle": "I'm a Recruiter",
+      "recruiterTitle": "Recruiting",
       "recruiterShort": "Recruit",
       "recruiterDesc": "Track candidates through your hiring pipeline",
       "fixedNote": "You can switch modes anytime from the header"
