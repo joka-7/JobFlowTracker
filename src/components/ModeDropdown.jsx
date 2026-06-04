@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Briefcase, Users, ClipboardList, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { getEnabledModes } from '../storageKeys';
 
-const MODES = [
+const ALL_MODES = [
   { id: 'jobseeker', Icon: Briefcase, labelKey: 'recruiter.modeSelection.jobSeekerTitle', short: 'Job Search' },
   { id: 'recruiter', Icon: Users, labelKey: 'recruiter.modeSelection.recruiterTitle', short: 'Recruiting' },
   { id: 'tasks', Icon: ClipboardList, labelKey: 'tasks.modeSelection.title', short: 'Tasks' },
@@ -12,6 +13,11 @@ export default function ModeDropdown({ currentMode, onModeChange, isRTL }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+
+  const enabledIds = getEnabledModes();
+  const MODES = enabledIds ? ALL_MODES.filter((m) => enabledIds.includes(m.id)) : ALL_MODES;
+
+  if (MODES.length <= 1) return null;
 
   useEffect(() => {
     if (!open) return;

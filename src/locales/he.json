@@ -281,7 +281,10 @@
     "ollamaNote": "ודא ש-Ollama פועל מקומית עם CORS מאופשר.",
     "save": "שמור והפעל AI",
     "saved": "נשמר!",
-    "clearKey": "הסר"
+    "clearKey": "הסר",
+    "modesTitle": "מצבים מופעלים",
+    "modesNote": "רק המצבים הנבחרים יופיעו במחליף המצבים.",
+    "modesAtLeastOne": "לפחות מצב אחד חייב להישאר מופעל."
   },
   "rejection": {
     "analysisTitle": "ניתוח דחייה",
@@ -432,14 +435,15 @@
   "recruiter": {
     "modeSelection": {
       "title": "איך תשתמש ב-JobFlowTracker?",
-      "subtitle": "בחר את התפקיד שלך — לא ניתן לשנות בהמשך",
+      "subtitle": "בחר את המצבים הרצויים — ניתן לשנות בהגדרות בכל עת",
       "jobSeekerTitle": "חיפוש עבודה",
       "jobSeekerShort": "חיפוש",
       "jobSeekerDesc": "מעקב אחר חברות, מועמדויות וראיונות",
       "recruiterTitle": "גיוס עובדים",
       "recruiterShort": "גיוס",
       "recruiterDesc": "מעקב אחר מועמדים בתהליך הגיוס",
-      "fixedNote": "ניתן להחליף מוד בכל עת מהכותרת"
+      "fixedNote": "ניתן לנהל מצבים מופעלים בכל עת בהגדרות",
+      "getStarted": "התחל"
     },
     "status": {
       "applied": "מועמדות התקבלה",

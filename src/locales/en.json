@@ -281,7 +281,10 @@
     "ollamaNote": "Make sure Ollama is running locally with CORS enabled.",
     "save": "Save & Enable AI",
     "saved": "Saved!",
-    "clearKey": "Remove"
+    "clearKey": "Remove",
+    "modesTitle": "Enabled Modes",
+    "modesNote": "Only selected modes appear in the mode switcher.",
+    "modesAtLeastOne": "At least one mode must remain enabled."
   },
   "rejection": {
     "analysisTitle": "Rejection Analysis",
@@ -432,14 +435,15 @@
   "recruiter": {
     "modeSelection": {
       "title": "How will you use JobFlowTracker?",
-      "subtitle": "Choose your role — this cannot be changed later",
+      "subtitle": "Select the modes you want — you can add or remove them later in Settings",
       "jobSeekerTitle": "Job Search",
       "jobSeekerShort": "Jobs",
       "jobSeekerDesc": "Track companies, applications, and interviews",
       "recruiterTitle": "Recruiting",
       "recruiterShort": "Recruit",
       "recruiterDesc": "Track candidates through your hiring pipeline",
-      "fixedNote": "You can switch modes anytime from the header"
+      "fixedNote": "You can manage enabled modes anytime in Settings",
+      "getStarted": "Get Started"
     },
     "status": {
       "applied": "Application Received",

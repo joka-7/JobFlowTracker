@@ -1,10 +1,17 @@
 import React, { useState } from 'react';
-import { X, Key, Eye, EyeOff, ExternalLink, CheckCircle, Trash2, ChevronDown } from 'lucide-react';
+import { X, Key, Eye, EyeOff, ExternalLink, CheckCircle, Trash2, ChevronDown, Briefcase, Users, ClipboardList } from 'lucide-react';
 import { loadAIConfigFromStorage, isAIReady, PROVIDERS } from '../services/aiAssistant';
+import { STORAGE_KEYS, APP_MODES, getEnabledModes } from '../storageKeys';
 
 const PROVIDER_ORDER = ['gemini', 'groq', 'ollama', 'anthropic', 'openai'];
 
-export default function APIKeySettings({ t, onClose }) {
+const MODE_DEFS = [
+  { id: APP_MODES.jobseeker, Icon: Briefcase, labelKey: 'recruiter.modeSelection.jobSeekerTitle', fallback: 'Job Search' },
+  { id: APP_MODES.recruiter, Icon: Users, labelKey: 'recruiter.modeSelection.recruiterTitle', fallback: 'Recruiting' },
+  { id: APP_MODES.tasks, Icon: ClipboardList, labelKey: 'tasks.modeSelection.title', fallback: 'Tasks' },
+];
+
+export default function APIKeySettings({ t, onClose, currentMode, onModeChange }) {
   const saved = {
     provider: localStorage.getItem('aiProvider') || 'gemini',
     apiKey: localStorage.getItem('aiApiKey') || '',
@@ -18,6 +25,18 @@ export default function APIKeySettings({ t, onClose }) {
   const [ollamaUrl, setOllamaUrl] = useState(saved.ollamaUrl);
   const [visible, setVisible] = useState(false);
   const [done, setDone] = useState(false);
+
+  const savedEnabled = getEnabledModes();
+  const [enabledModes, setEnabledModes] = useState(
+    savedEnabled ?? [APP_MODES.jobseeker, APP_MODES.recruiter, APP_MODES.tasks]
+  );
+
+  const toggleEnabledMode = (modeId) => {
+    if (enabledModes.length === 1 && enabledModes.includes(modeId)) return;
+    setEnabledModes((prev) =>
+      prev.includes(modeId) ? prev.filter((m) => m !== modeId) : [...prev, modeId]
+    );
+  };
 
   const pInfo = PROVIDERS[provider];
   const isOllama = provider === 'ollama';
@@ -38,6 +57,18 @@ export default function APIKeySettings({ t, onClose }) {
     localStorage.setItem('aiModel', effectiveModel);
     if (isOllama) localStorage.setItem('ollamaUrl', ollamaUrl.trim());
     loadAIConfigFromStorage();
+
+    localStorage.setItem(STORAGE_KEYS.enabledModes, JSON.stringify(enabledModes));
+
+    if (currentMode && !enabledModes.includes(currentMode) && onModeChange) {
+      const nextMode = [APP_MODES.jobseeker, APP_MODES.recruiter, APP_MODES.tasks]
+        .find((m) => enabledModes.includes(m));
+      if (nextMode) {
+        localStorage.setItem(STORAGE_KEYS.appMode, nextMode);
+        onModeChange(nextMode);
+      }
+    }
+
     setDone(true);
     setTimeout(() => { setDone(false); onClose(); }, 900);
   };
@@ -163,6 +194,39 @@ export default function APIKeySettings({ t, onClose }) {
               <ExternalLink size={14} /> {pInfo.infoText}
             </a>
           )}
+
+          {/* Enabled Modes */}
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">
+              {t('settings.modesTitle', 'Enabled Modes')}
+            </label>
+            <p className="text-xs text-gray-500 mb-2">
+              {t('settings.modesNote', 'Only selected modes appear in the mode switcher.')}
+            </p>
+            <div className="flex gap-2 flex-wrap">
+              {MODE_DEFS.map(({ id, Icon, labelKey, fallback }) => {
+                const active = enabledModes.includes(id);
+                const isLast = enabledModes.length === 1 && active;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => toggleEnabledMode(id)}
+                    disabled={isLast}
+                    title={isLast ? t('settings.modesAtLeastOne', 'At least one mode must remain enabled') : undefined}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
+                      active
+                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                        : 'border-gray-200 bg-white text-gray-400 hover:border-gray-300'
+                    } ${isLast ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                  >
+                    <Icon size={14} />
+                    {t(labelKey, fallback)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           <div className="flex gap-3 pt-1">
             <button

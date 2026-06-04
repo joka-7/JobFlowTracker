@@ -1,8 +1,9 @@
 import React from 'react';
 import { Briefcase, Users, ClipboardList } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { getEnabledModes } from '../storageKeys';
 
-const MODES = [
+const ALL_MODES = [
   { id: 'jobseeker', Icon: Briefcase, labelKey: 'recruiter.modeSelection.jobSeekerTitle', shortKey: 'recruiter.modeSelection.jobSeekerShort', short: 'Jobs' },
   { id: 'recruiter', Icon: Users, labelKey: 'recruiter.modeSelection.recruiterTitle', shortKey: 'recruiter.modeSelection.recruiterShort', short: 'Recruit' },
   { id: 'tasks', Icon: ClipboardList, labelKey: 'tasks.modeSelection.title', shortKey: 'tasks.modeSelection.short', short: 'Tasks' },
@@ -11,6 +12,11 @@ const MODES = [
 /** @param {'compact' | 'full'} labelSize — compact in desktop toolbar; full on mobile mode row */
 export default function ModeSwitcher({ currentMode, onModeChange, labelSize = 'full' }) {
   const { t } = useTranslation();
+
+  const enabledIds = getEnabledModes();
+  const MODES = enabledIds ? ALL_MODES.filter((m) => enabledIds.includes(m.id)) : ALL_MODES;
+
+  if (MODES.length <= 1) return null;
 
   const handleSwitch = (modeId) => {
     if (modeId === currentMode) return;
