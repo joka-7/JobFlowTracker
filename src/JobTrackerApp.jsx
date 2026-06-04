@@ -21,7 +21,7 @@ import RejectionAnalysis from './components/RejectionAnalysis';
 import TemplateLibrary from './components/TemplateLibrary';
 import ChatModal from './components/ChatModal';
 import Tooltip from './components/Tooltip';
-import ModeDropdown from './components/ModeDropdown';
+import ModeSwitcher from './components/ModeSwitcher';
 import CalendarView from './components/CalendarView';
 import { TEMPLATES } from './data/interviewTemplates';
 import {
@@ -989,7 +989,7 @@ Rules:
 
             {onModeChange && (
               <div className="hidden md:block">
-                <ModeDropdown currentMode={mode} onModeChange={onModeChange} isRTL={isRTL} />
+                <ModeSwitcher currentMode={mode} onModeChange={onModeChange} labelSize="compact" />
               </div>
             )}
 
@@ -1127,7 +1127,7 @@ Rules:
 
           {onModeChange && (
             <div className="md:hidden">
-              <ModeDropdown currentMode={mode} onModeChange={onModeChange} isRTL={isRTL} />
+              <ModeSwitcher currentMode={mode} onModeChange={onModeChange} labelSize="compact" />
             </div>
           )}
         </div>
