@@ -1,5 +1,8 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut, onAuthStateChanged } from 'firebase/auth';
+import {
+  getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
+  browserPopupRedirectResolver, signOut as firebaseSignOut, onAuthStateChanged,
+} from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
 import { getCollectionName } from './statuses';
 
@@ -17,9 +20,56 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
+/** User-facing message for Firebase Google sign-in failures (header "Connect Drive"). */
+export function formatSignInError(err) {
+  const code = err?.code || '';
+  const msg = err?.message || '';
+  if (code === 'auth/popup-blocked') {
+    return 'Popup blocked. Allow popups for this site, then try again.';
+  }
+  if (code === 'auth/popup-closed-by-user') return 'Sign-in cancelled.';
+  if (code === 'auth/unauthorized-domain') {
+    const host = typeof window !== 'undefined' ? window.location.hostname : '';
+    return host
+      ? `Add "${host}" in Firebase → Authentication → Settings → Authorized domains.`
+      : 'This site is not in Firebase Authentication → Authorized domains.';
+  }
+  if (/referrer|API key|API_KEY/i.test(msg)) {
+    return 'Google API key blocked this site. In Cloud Console set Browser key → Application restrictions to None (see SECURITY.md).';
+  }
+  if (/requested action is invalid/i.test(msg)) {
+    return 'Google sign-in config error. Check Firebase Authorized domains and API key restrictions (SECURITY.md).';
+  }
+  return msg || 'Sign-in failed.';
+}
+
+/** Call once on app load after Google redirect sign-in. */
+export async function completeRedirectSignIn() {
+  const result = await getRedirectResult(auth);
+  return result?.user ?? null;
+}
+
+function shouldFallbackToRedirect(err) {
+  const code = err?.code || '';
+  const msg = err?.message || '';
+  return code === 'auth/popup-blocked'
+    || code === 'auth/popup-closed-by-user'
+    || code === 'auth/internal-error'
+    || /requested action is invalid/i.test(msg)
+    || /not authorized|auth site/i.test(msg);
+}
+
 export async function signInWithGoogle() {
-  const result = await signInWithPopup(auth, provider);
-  return result.user;
+  try {
+    const result = await signInWithPopup(auth, provider, browserPopupRedirectResolver);
+    return result.user;
+  } catch (err) {
+    if (shouldFallbackToRedirect(err)) {
+      await signInWithRedirect(auth, provider);
+      return null;
+    }
+    throw err;
+  }
 }
 
 export async function signOut() {
