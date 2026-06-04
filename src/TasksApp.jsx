@@ -17,7 +17,7 @@ import {
   updateItem, deleteItem, batchSaveItems, loadUserProfile, saveUserProfile,
 } from './firebase';
 import { getStorageKey, STATUSES_TASKS, filterItemsForMode } from './statuses';
-import ModeDropdown from './components/ModeDropdown';
+import ModeSwitcher from './components/ModeSwitcher';
 import CalendarView from './components/CalendarView';
 import TemplateLibrary from './components/TemplateLibrary';
 import APIKeySettings from './components/APIKeySettings';
@@ -1126,7 +1126,7 @@ Rules:
 
             {onModeChange && (
               <div className="hidden md:block">
-                <ModeDropdown currentMode={MODE} onModeChange={onModeChange} isRTL={isRTL} />
+                <ModeSwitcher currentMode={MODE} onModeChange={onModeChange} labelSize="compact" />
               </div>
             )}
 
