@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { PROVIDERS, initAI, isAIReady, loadAIConfigFromStorage, getCurrentProvider, getInterviewPrep, analyzeRejection, analyzePatterns, debriefInterview, buildApiMessages } from '../services/aiAssistant.js';
+import { PROVIDERS, initAI, isAIReady, loadAIConfigFromStorage, getCurrentProvider, getInterviewPrep, analyzeRejection, analyzePatterns, debriefInterview, buildApiMessages, getJobFinderSystemPrompt, getCandidateFinderSystemPrompt, getGoalsTasksSystemPrompt } from '../services/aiAssistant.js';
 
 vi.mock('@anthropic-ai/sdk', () => ({ default: vi.fn() }));
 
@@ -613,5 +613,174 @@ describe('debriefInterview prompt', () => {
     await debriefInterview('My notes', null, 'en', () => {});
 
     expect(mockFetch.mock.calls[0][0]).toContain('http://localhost:11434');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 8. getJobFinderSystemPrompt
+// ---------------------------------------------------------------------------
+
+describe('getJobFinderSystemPrompt', () => {
+  it('returns a non-empty string', () => {
+    const prompt = getJobFinderSystemPrompt([], 'en');
+    expect(typeof prompt).toBe('string');
+    expect(prompt.length).toBeGreaterThan(50);
+  });
+
+  it('includes English language instruction for language=en', () => {
+    const prompt = getJobFinderSystemPrompt([], 'en');
+    expect(prompt).toContain('Respond in English');
+  });
+
+  it('includes Hebrew language instruction for language=he', () => {
+    const prompt = getJobFinderSystemPrompt([], 'he');
+    expect(prompt).toContain('ענה בעברית');
+  });
+
+  it('includes French language instruction for language=fr', () => {
+    const prompt = getJobFinderSystemPrompt([], 'fr');
+    expect(prompt).toContain('Réponds en français');
+  });
+
+  it('includes applied roles from companies data', () => {
+    const companies = [
+      { name: 'Acme', role: 'Backend Engineer', location: 'Tel Aviv' },
+      { name: 'Beta', role: 'Frontend Developer', location: 'Remote' },
+    ];
+    const prompt = getJobFinderSystemPrompt(companies, 'en');
+    expect(prompt).toContain('Backend Engineer');
+    expect(prompt).toContain('Frontend Developer');
+  });
+
+  it('includes company names from pipeline', () => {
+    const companies = [{ name: 'UniqueCompanyAlpha', role: 'Dev' }];
+    const prompt = getJobFinderSystemPrompt(companies, 'en');
+    expect(prompt).toContain('UniqueCompanyAlpha');
+  });
+
+  it('works with empty companies array', () => {
+    expect(() => getJobFinderSystemPrompt([], 'en')).not.toThrow();
+  });
+
+  it('deduplicates roles', () => {
+    const companies = [
+      { name: 'A', role: 'Engineer' },
+      { name: 'B', role: 'Engineer' },
+      { name: 'C', role: 'Engineer' },
+    ];
+    const prompt = getJobFinderSystemPrompt(companies, 'en');
+    const matches = (prompt.match(/Engineer/g) || []).length;
+    expect(matches).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 9. getCandidateFinderSystemPrompt
+// ---------------------------------------------------------------------------
+
+describe('getCandidateFinderSystemPrompt', () => {
+  it('returns a non-empty string', () => {
+    const prompt = getCandidateFinderSystemPrompt([], 'en');
+    expect(typeof prompt).toBe('string');
+    expect(prompt.length).toBeGreaterThan(50);
+  });
+
+  it('includes English language instruction for language=en', () => {
+    const prompt = getCandidateFinderSystemPrompt([], 'en');
+    expect(prompt).toContain('Respond in English');
+  });
+
+  it('includes Hebrew language instruction for language=he', () => {
+    const prompt = getCandidateFinderSystemPrompt([], 'he');
+    expect(prompt).toContain('ענה בעברית');
+  });
+
+  it('includes open position roles from candidates data', () => {
+    const candidates = [
+      { name: 'Alice', role: 'Senior Backend Engineer', status: 'screening' },
+      { name: 'Bob', role: 'Product Designer', status: 'applied' },
+    ];
+    const prompt = getCandidateFinderSystemPrompt(candidates, 'en');
+    expect(prompt).toContain('Senior Backend Engineer');
+    expect(prompt).toContain('Product Designer');
+  });
+
+  it('includes active candidate count', () => {
+    const candidates = [
+      { name: 'Alice', role: 'Dev', status: 'screening' },
+      { name: 'Bob', role: 'Dev', status: 'rejected' },
+      { name: 'Carol', role: 'Dev', status: 'technical' },
+    ];
+    const prompt = getCandidateFinderSystemPrompt(candidates, 'en');
+    // 2 active (Alice and Carol), 1 rejected
+    expect(prompt).toContain('2');
+  });
+
+  it('works with empty candidates array', () => {
+    expect(() => getCandidateFinderSystemPrompt([], 'en')).not.toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 10. getGoalsTasksSystemPrompt
+// ---------------------------------------------------------------------------
+
+describe('getGoalsTasksSystemPrompt', () => {
+  it('returns a non-empty string', () => {
+    const prompt = getGoalsTasksSystemPrompt([], 'en');
+    expect(typeof prompt).toBe('string');
+    expect(prompt.length).toBeGreaterThan(50);
+  });
+
+  it('includes English language instruction for language=en', () => {
+    const prompt = getGoalsTasksSystemPrompt([], 'en');
+    expect(prompt).toContain('Respond in English');
+  });
+
+  it('includes Hebrew language instruction for language=he', () => {
+    const prompt = getGoalsTasksSystemPrompt([], 'he');
+    expect(prompt).toContain('ענה בעברית');
+  });
+
+  it('includes active task names', () => {
+    const tasks = [
+      { name: 'Learn TypeScript', status: 'active' },
+      { name: 'Build side project', status: 'active' },
+      { name: 'Old task', status: 'completed' },
+    ];
+    const prompt = getGoalsTasksSystemPrompt(tasks, 'en');
+    expect(prompt).toContain('Learn TypeScript');
+    expect(prompt).toContain('Build side project');
+  });
+
+  it('includes completed task names', () => {
+    const tasks = [
+      { name: 'Finished course', status: 'completed' },
+    ];
+    const prompt = getGoalsTasksSystemPrompt(tasks, 'en');
+    expect(prompt).toContain('Finished course');
+  });
+
+  it('does not include cancelled task names', () => {
+    const tasks = [
+      { name: 'CancelledTaskXYZ', status: 'cancelled' },
+      { name: 'Active task', status: 'active' },
+    ];
+    const prompt = getGoalsTasksSystemPrompt(tasks, 'en');
+    expect(prompt).not.toContain('CancelledTaskXYZ');
+  });
+
+  it('works with empty tasks array', () => {
+    expect(() => getGoalsTasksSystemPrompt([], 'en')).not.toThrow();
+  });
+
+  it('mentions SMART goals', () => {
+    const prompt = getGoalsTasksSystemPrompt([], 'en');
+    expect(prompt).toContain('SMART');
+  });
+
+  it('mentions volunteering', () => {
+    const prompt = getGoalsTasksSystemPrompt([], 'en');
+    expect(prompt.toLowerCase()).toContain('volunteer');
   });
 });

@@ -82,9 +82,22 @@ See [docs/RECRUITER_MODE.md](docs/RECRUITER_MODE.md) for full recruiter details.
 - "Next step" preview on board cards
 - Board, List+Detail, and Stats views
 
-### AI Assistant (5 providers, job seeker only)
+### AI Assistant (5 providers, all modes)
 Supports Google Gemini, Groq (free tier), Ollama (free/local), Anthropic Claude, and OpenAI.
 
+**Job Seeker — 🔍 Find Jobs button:**
+- Suggests job boards, LinkedIn search strategies, and networking tactics based on your applied roles
+- Helps craft outreach and referral messages
+
+**Recruiter — 👥 Find Candidates button:**
+- Generates LinkedIn Boolean search strings and sourcing strategies tailored to open positions
+- Suggests sourcing channels (GitHub, Stack Overflow, Wellfound) and InMail templates
+
+**Task Manager — 🎯 Goals & Tasks button:**
+- Helps define SMART goals and break them into actionable steps
+- Finds open-source projects and volunteering opportunities matching your interests
+
+**Job Seeker — AI Assistant panel (per company):**
 - **Interview prep** — 3 focused preparation tips generated before each interview
 - **Rejection analysis** — constructive improvement suggestions after a rejection
 - **Pattern analysis** — identifies trends and themes across all your applications
@@ -139,7 +152,7 @@ Click **Save**. The company appears on the Kanban board and in the list.
 
 Click **Add Candidate** (or press `N`). Fill in candidate name, position, hiring stage, and optional recruiter-specific fields (LinkedIn, current role, expected salary, source).
 
-Data syncs to `users/{uid}/candidates/` when signed in. AI Assistant is not shown in recruiter mode.
+Data syncs to `users/{uid}/candidates/` when signed in. Use the **👥 Find Candidates** button in the header to get AI-powered sourcing strategies for your open positions.
 
 ### 2c. Task Manager — Adding Your First Task
 
