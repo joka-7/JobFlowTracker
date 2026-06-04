@@ -3,8 +3,8 @@ import { Briefcase, Users, ClipboardList, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const MODES = [
-  { id: 'jobseeker', Icon: Briefcase, labelKey: 'recruiter.modeSelection.jobSeekerTitle', short: 'Job Seeker' },
-  { id: 'recruiter', Icon: Users, labelKey: 'recruiter.modeSelection.recruiterTitle', short: 'Recruiter' },
+  { id: 'jobseeker', Icon: Briefcase, labelKey: 'recruiter.modeSelection.jobSeekerTitle', short: 'Job Search' },
+  { id: 'recruiter', Icon: Users, labelKey: 'recruiter.modeSelection.recruiterTitle', short: 'Recruiting' },
   { id: 'tasks', Icon: ClipboardList, labelKey: 'tasks.modeSelection.title', short: 'Tasks' },
 ];
 
