@@ -23,7 +23,7 @@ import TemplateLibrary from './components/TemplateLibrary';
 import APIKeySettings from './components/APIKeySettings';
 import { usePwaInstall } from './usePwaInstall';
 import AppBrandMark from './components/AppBrandMark';
-import WelcomeModal from './components/WelcomeModal';
+import Onboarding from './components/Onboarding';
 import { STORAGE_KEYS } from './storageKeys.js';
 
 const MODE = 'tasks';
@@ -1367,14 +1367,14 @@ Rules:
       )}
 
       {showTasksWelcome && (
-        <WelcomeModal
-          title={tt('welcome.title', 'Welcome to Task Manager')}
-          subtitle={tt('welcome.subtitle', 'Plan work in steps and track progress')}
-          description={tt('welcome.desc', 'Create tasks with checklists and AI coaching.')}
-          skipLabel={tt('welcome.skip', 'Skip')}
-          startLabel={tt('welcome.getStarted', 'Get started')}
+        <Onboarding
+          t={t}
+          i18n={i18n}
+          isRTL={isRTL}
+          isTasks={true}
           onClose={() => setShowTasksWelcome(false)}
-          onComplete={() => localStorage.setItem(STORAGE_KEYS.tasksWelcome, '1')}
+          openNewForm={() => { setShowTasksWelcome(false); openNewForm(); }}
+          openAISettings={() => { setShowTasksWelcome(false); setShowAISettings(true); }}
         />
       )}
 
