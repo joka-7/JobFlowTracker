@@ -174,9 +174,10 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
   const [syncing, setSyncing] = useState(false);
   const dragCompanyId = useRef(null);
 
-  const [showOnboarding, setShowOnboarding] = useState(
-    () => !isRecruiter && !localStorage.getItem(STORAGE_KEYS.jobSeekerOnboarding),
-  );
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    const key = isRecruiter ? STORAGE_KEYS.recruiterOnboarding : STORAGE_KEYS.jobSeekerOnboarding;
+    return !localStorage.getItem(key);
+  });
   const [showAISettings, setShowAISettings] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [simulationData, setSimulationData] = useState(null); // { systemPrompt, title }
@@ -680,14 +681,12 @@ Rules:
               <Upload size={16} /> {tMode('board.loadButton')}
             </button>
 
-            {!isRecruiter && (
             <button
               onClick={() => setShowOnboarding(true)}
               className="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm py-2.5 px-6 rounded-xl border border-indigo-200 flex items-center justify-center gap-2 mb-4"
             >
               💡 {tMode('board.viewTutorial', 'View Tutorial')}
             </button>
-            )}
 
             <div className="grid grid-cols-2 gap-3 text-left text-xs text-gray-500">
               <div className="bg-indigo-50 p-3 rounded-lg">
@@ -1051,7 +1050,6 @@ Rules:
               >
                 <Settings size={18} />
               </button>
-              {!isRecruiter && (
               <button
                 onClick={() => setShowOnboarding(true)}
                 title={tMode('board.viewTutorial', 'View Tutorial')}
@@ -1059,7 +1057,6 @@ Rules:
               >
                 💡
               </button>
-              )}
             </div>
 
             {/* Mobile overflow menu */}
@@ -1104,11 +1101,9 @@ Rules:
                     <button onClick={() => { setShowAISettings(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <Settings size={16} className="text-gray-500" /> {t('header.aiSettings', 'AI Settings')}
                     </button>
-                    {!isRecruiter && (
                     <button onClick={() => { setShowOnboarding(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <span>💡</span> {tMode('board.viewTutorial', 'View Tutorial')}
                     </button>
-                    )}
                     {canInstall && (
                       <button
                         type="button"
@@ -1636,6 +1631,7 @@ Rules:
           openNewForm={() => { setShowOnboarding(false); openNewForm(); }}
           triggerFileInput={() => { setShowOnboarding(false); triggerFileInput(); }}
           openAISettings={() => { setShowOnboarding(false); setShowAISettings(true); }}
+          isRecruiter={isRecruiter}
         />
       )}
 
