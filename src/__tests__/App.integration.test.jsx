@@ -60,6 +60,7 @@ describe('App integration', () => {
   it('selecting recruiter in mode screen navigates to recruiter app', () => {
     render(<App />);
     fireEvent.click(screen.getByRole('heading', { name: /Recruiting/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Get Started|התחל|Commencer/i }));
     expect(localStorage.getItem('appMode')).toBe('recruiter');
     expect(screen.getByRole('heading', { name: 'Recruiter Pipeline', exact: true })).toBeInTheDocument();
   });
