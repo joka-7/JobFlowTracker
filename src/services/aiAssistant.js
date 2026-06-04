@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { delimUserField } from '../utils/promptSafety';
 
 export const PROVIDERS = {
   gemini: {
@@ -368,9 +369,9 @@ const LANG = { en: 'Respond in English.', he: 'ענה בעברית.', fr: 'Répo
 
 export async function getInterviewPrep(company, interviewType, language = 'en', onChunk) {
   const interviewCount = company.interviews?.length || 0;
-  const prompt = `You are a job search coach helping someone prepare for a ${interviewType} interview at ${company.name}.
-${company.role ? `Role: ${company.role}` : ''}
-${company.location ? `Location: ${company.location}` : ''}
+  const prompt = `You are a job search coach helping someone prepare for a ${interviewType} interview at ${delimUserField(company.name)}.
+${company.role ? `Role: ${delimUserField(company.role)}` : ''}
+${company.location ? `Location: ${delimUserField(company.location)}` : ''}
 ${interviewCount > 0 ? `Previous interviews at this company: ${interviewCount}` : 'First interview at this company'}
 
 Give exactly 3 focused preparation tips. For each tip:
@@ -386,7 +387,7 @@ export async function analyzeRejection(company, language = 'en', onChunk) {
   const interviews = Array.isArray(company.interviews) ? company.interviews : [];
   const r = company.rejection || {};
   const interviewTypes = interviews.map(i => i.type).filter(Boolean);
-  const prompt = `You are a supportive job search coach. Someone was rejected from ${company.name}${company.role ? ` for the ${company.role} role` : ''}.
+  const prompt = `You are a supportive job search coach. Someone was rejected from ${delimUserField(company.name)}${company.role ? ` for the ${delimUserField(company.role)} role` : ''}.
 
 Rejection details:
 - Method: ${r.method || 'Unknown'}
@@ -408,7 +409,7 @@ export async function analyzePatterns(companies, language = 'en', onChunk) {
   const active = companies.filter(c => !['rejected', 'ghosted', 'withdrawn'].includes(c.status)).length;
   const totalInterviews = companies.reduce((acc, c) => acc + (c.interviews?.length || 0), 0);
   const sample = companies.slice(0, 20).map(c => ({
-    name: c.name, status: c.status,
+    name: delimUserField(c.name, 120), status: c.status,
     interviews: c.interviews?.length || 0,
     rejectionMethod: c.rejection?.method || '',
   }));
@@ -448,8 +449,8 @@ export async function getSchedulingAdvice(company, language = 'en', onChunk) {
 
   const prompt = `You are an interview prep coach. Create a day-by-day preparation timeline for an upcoming interview.
 
-Company: ${company.name}
-Role: ${company.role || 'Not specified'}
+Company: ${delimUserField(company.name)}
+Role: ${delimUserField(company.role || 'Not specified')}
 Upcoming interviews:
 ${interviewLines}
 
@@ -466,9 +467,9 @@ ${LANG[language] || LANG.en}`;
 export async function getResumeAdvice(company, resumeText, language = 'en', onChunk) {
   const prompt = `You are a job application coach helping tailor a resume for a specific role.
 
-Company: ${company.name}
-${company.role ? `Role: ${company.role}` : ''}
-${company.location ? `Location: ${company.location}` : ''}
+Company: ${delimUserField(company.name)}
+${company.role ? `Role: ${delimUserField(company.role)}` : ''}
+${company.location ? `Location: ${delimUserField(company.location)}` : ''}
 
 Resume content:
 ---
@@ -488,9 +489,9 @@ ${LANG[language] || LANG.en}`;
 
 export function getJobFinderSystemPrompt(companies = [], language = 'en') {
   const langInstruction = LANG[language] || LANG.en;
-  const appliedRoles = [...new Set(companies.map(c => c.role).filter(Boolean))].slice(0, 10);
-  const appliedCompanies = companies.map(c => c.name).filter(Boolean).slice(0, 10);
-  const activeLocations = [...new Set(companies.map(c => c.location).filter(Boolean))].slice(0, 5);
+  const appliedRoles = [...new Set(companies.map(c => delimUserField(c.role, 120)).filter(Boolean))].slice(0, 10);
+  const appliedCompanies = companies.map(c => delimUserField(c.name, 120)).filter(Boolean).slice(0, 10);
+  const activeLocations = [...new Set(companies.map(c => delimUserField(c.location, 120)).filter(Boolean))].slice(0, 5);
 
   return `You are an expert job search advisor helping someone find their next job opportunity.
 
@@ -513,7 +514,7 @@ ${langInstruction}`;
 
 export function getCandidateFinderSystemPrompt(candidates = [], language = 'en') {
   const langInstruction = LANG[language] || LANG.en;
-  const openPositions = [...new Set(candidates.map(c => c.role).filter(Boolean))].slice(0, 10);
+  const openPositions = [...new Set(candidates.map(c => delimUserField(c.role, 120)).filter(Boolean))].slice(0, 10);
   const activeCandidates = candidates.filter(c => !['rejected', 'withdrawn'].includes(c.status)).length;
 
   return `You are an expert talent acquisition specialist and sourcing strategist helping a recruiter find qualified candidates.

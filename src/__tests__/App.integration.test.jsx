@@ -15,8 +15,6 @@ vi.mock('../firebase', () => ({
   batchSaveItems: vi.fn(),
   loadUserProfile: vi.fn().mockResolvedValue({}),
   saveUserProfile: vi.fn(),
-  publishShare: vi.fn(),
-  loadSharedData: vi.fn(),
 }));
 
 vi.mock('../services/aiAssistant', () => ({

@@ -28,6 +28,7 @@ import {
   getLocalizedQuestions, getLocalizedCategoryLabel, formatQuestionList,
 } from './utils/templateQuestions';
 import { usePwaInstall } from './usePwaInstall';
+import { sanitizeTrackerRecords, parseTrackerImportPayload } from './sanitize';
 
 const Linkedin = ({ size = 16, ...p }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
@@ -156,7 +157,10 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
       const saved = window.localStorage.getItem(getStorageKey(mode));
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return filterItemsForMode(parsed, mode);
+        if (Array.isArray(parsed)) {
+          const sanitized = sanitizeTrackerRecords(parsed);
+          return filterItemsForMode(sanitized, mode);
+        }
       }
       return [];
     } catch { return []; }
@@ -200,7 +204,17 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
     prevModeRef.current = mode;
     try {
       const saved = window.localStorage.getItem(getStorageKey(mode));
-      setCompanies(saved ? filterItemsForMode(JSON.parse(saved), mode) : []);
+      if (!saved) {
+        setCompanies([]);
+      } else {
+        try {
+          const parsed = JSON.parse(saved);
+          const sanitized = Array.isArray(parsed) ? sanitizeTrackerRecords(parsed) : [];
+          setCompanies(filterItemsForMode(sanitized, mode));
+        } catch {
+          setCompanies([]);
+        }
+      }
     } catch { setCompanies([]); }
     setSelectedId(null);
     setIsEditing(false);
@@ -505,42 +519,10 @@ Rules:
       reader.onload = (event) => {
         try {
           const importedRaw = JSON.parse(event.target.result);
-          let importedArray = [];
-          if (Array.isArray(importedRaw)) {
-            importedArray = importedRaw;
-          } else if (importedRaw && typeof importedRaw === 'object') {
-            const potentialArray = Object.values(importedRaw).find(val => Array.isArray(val));
-            importedArray = potentialArray ? potentialArray : [importedRaw];
-          }
-          if (importedArray.length > 0 && importedArray.length <= 10000) {
-            const sanitizedData = importedArray.map((c, idx) => ({
-              id: c.id ? String(c.id).slice(0, 64) : Date.now().toString() + idx,
-              name: safeStr(c.name || c.company || tMode('alert.unnamedCompany')),
-              role: safeStr(c.role || c.position || ''),
-              status: safeStr(c.status || ''),
-              location: safeStr(c.location || ''),
-              website: safeStr(c.website || ''),
-              linkedinCompany: safeStr(c.linkedinCompany || ''),
-              linkedinCandidate: safeStr(c.linkedinCandidate || ''),
-              description: safeStr(c.description || ''),
-              products: safeStr(c.products || ''),
-              currentRole: safeStr(c.currentRole || ''),
-              expectedSalary: safeStr(c.expectedSalary || ''),
-              source: safeStr(c.source || ''),
-              generalNotes: safeStr(c.generalNotes || ''),
-              priority: safeStr(c.priority || 'medium'),
-              interviews: Array.isArray(c.interviews) ? c.interviews.slice(0, 100).map(inv => ({
-                type: safeStr(inv.type || inv.round || ''),
-                date: safeStr(inv.date || ''),
-                interviewer: safeStr(inv.interviewer || ''),
-                summary: safeStr(inv.summary || ''),
-              })) : [],
-              rejection: c.rejection && typeof c.rejection === 'object' ? {
-                date: safeStr(c.rejection.date || ''),
-                method: safeStr(c.rejection.method || ''),
-                notes: safeStr(c.rejection.notes || ''),
-              } : { date: '', method: '', notes: '' },
-            }));
+          const sanitizedData = parseTrackerImportPayload(importedRaw, {
+            unnamedLabel: tMode('alert.unnamedCompany'),
+          });
+          if (sanitizedData) {
             setCompanies(filterItemsForMode(sanitizedData, mode));
             showToast(tMode('toast.imported'));
             if (user) batchSaveItems(user.uid, mode, sanitizedData).catch(console.error);

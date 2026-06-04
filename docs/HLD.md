@@ -61,7 +61,7 @@ JobFlowTracker is a single-page application (SPA) for tracking a job search, a r
          │    companies/      │    └────────────────────────────┘
          │    candidates/     │
          │    tasks/          │    ┌──────────────────────┐
-         │  /shares/{uid}     │    │   Vercel CDN         │
+         │                    │    │   Vercel CDN         │
          └────────────────────┘    │  (static hosting)    │
                                    └──────────────────────┘
 ```
@@ -158,21 +158,6 @@ Steps are cycled without entering edit mode. A click on a step's status icon in 
 
 Cycle order: `todo → in_progress → done → blocked → todo`
 
-### 4.5 Share Flow (job seeker only)
-
-```
-Signed-in user clicks share button
-  → publishShare(uid, companies)
-      → setDoc(/shares/{uid}, { companies, sharedAt })
-  → constructs URL: <origin>?share=<uid>
-  → navigator.clipboard.writeText(url)
-
-Recipient visits ?share=<uid>
-  → setShareMode(true)  [disables all edit controls]
-  → loadSharedData(uid) → getDoc(/shares/{uid})  [public read]
-  → setCompanies(data.companies)
-```
-
 ---
 
 ## 5. AI Integration
@@ -204,7 +189,6 @@ All functions accumulate a `full` string and call `onChunk(full)` on each token.
 /users/{uid}/companies/{companyId}    — read/write: only if request.auth.uid == uid
 /users/{uid}/candidates/{candidateId} — read/write: only if request.auth.uid == uid
 /users/{uid}/tasks/{taskId}           — read/write: only if request.auth.uid == uid
-/shares/{uid}                         — read: public; write: only if request.auth.uid == uid
 ```
 
 ### API Keys

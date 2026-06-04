@@ -25,6 +25,7 @@ import { usePwaInstall } from './usePwaInstall';
 import AppBrandMark from './components/AppBrandMark';
 import Onboarding from './components/Onboarding';
 import { STORAGE_KEYS } from './storageKeys.js';
+import { sanitizeTaskRecords, parseTaskStoragePayload } from './sanitize';
 
 const MODE = 'tasks';
 
@@ -104,14 +105,8 @@ export default function TasksApp({ onModeChange }) {
   const BackArrow = isRTL ? ArrowRight : ArrowLeft;
 
   const [tasks, setTasks] = useState(() => {
-    try {
-      const saved = localStorage.getItem(getStorageKey(MODE));
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return filterItemsForMode(parsed, MODE);
-      }
-    } catch { /* ignore */ }
-    return [];
+    const sanitized = parseTaskStoragePayload(localStorage.getItem(getStorageKey(MODE)));
+    return filterItemsForMode(sanitized, MODE);
   });
 
   const [selectedId, setSelectedId] = useState(null);
@@ -361,17 +356,9 @@ export default function TasksApp({ onModeChange }) {
       try {
         const data = JSON.parse(ev.target.result);
         if (!Array.isArray(data)) throw new Error('not array');
-        const sanitized = data.map(t => ({
-          id: String(t.id || Date.now()),
-          name: safeStr(t.name) || 'Unnamed',
-          description: safeStr(t.description),
-          status: STATUSES_TASKS.find(s => s.id === t.status) ? t.status : 'active',
-          priority: ['high', 'medium', 'low'].includes(t.priority) ? t.priority : 'medium',
-          dueDate: safeStr(t.dueDate),
-          steps: Array.isArray(t.steps) ? t.steps : [],
-          notes: safeStr(t.notes),
-        }));
-        saveTasks(sanitized);
+        const sanitized = sanitizeTaskRecords(data);
+        if (sanitized.length === 0) throw new Error('empty');
+        saveTasks(filterItemsForMode(sanitized, MODE));
         showToast(tt('toast.imported', 'File loaded!'));
       } catch {
         alert(tt('alert.importError', 'Error importing file.'));

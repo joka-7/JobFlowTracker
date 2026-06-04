@@ -97,7 +97,9 @@ test.describe('Chat and mock interview (browser e2e)', () => {
     await page.getByRole('button', { name: /Set API key to enable AI/i }).click();
     await expect(page.getByText('AI Settings')).toBeVisible();
     await page.locator('input[type="password"]').fill('e2e-test-key-saved-in-ui');
-    await page.getByRole('button', { name: /Save & Enable AI/i }).click();
+    const saveAiBtn = page.getByRole('button', { name: /Save & Enable AI/i });
+    await saveAiBtn.scrollIntoViewIfNeeded();
+    await saveAiBtn.click();
     await expect(page.getByText('AI Settings')).toHaveCount(0, { timeout: 5_000 });
 
     await expect(page.getByRole('textbox')).toBeVisible({ timeout: 5_000 });

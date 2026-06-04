@@ -51,7 +51,7 @@ export default function APIKeySettings({ t, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col overflow-hidden">
         <div className="bg-gradient-to-r from-purple-600 to-indigo-700 p-5 text-white flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-lg">
             <Key size={20} /> {t('settings.title', 'AI Settings')}
@@ -59,7 +59,12 @@ export default function APIKeySettings({ t, onClose }) {
           <button onClick={onClose} className="text-white/70 hover:text-white"><X size={20} /></button>
         </div>
 
-        <div className="p-6 space-y-5">
+        <div className="p-6 space-y-5 overflow-y-auto flex-1 min-h-0">
+          <div className="flex gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 text-sm">
+            <span className="flex-shrink-0" aria-hidden>⚠️</span>
+            <p>{t('settings.securityNotice', 'API keys are stored in this browser only. Anyone with access to this device, or a malicious extension, could read them. Job and chat data you send is transmitted to your chosen AI provider under your account.')}</p>
+          </div>
+
           {alreadySet && (
             <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm">
               <CheckCircle size={16} className="text-green-600 flex-shrink-0" />
