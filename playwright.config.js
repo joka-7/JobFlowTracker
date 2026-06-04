@@ -2,8 +2,8 @@ import { defineConfig, devices } from '@playwright/test';
 import { existsSync } from 'fs';
 
 const BROWSER_CANDIDATES = [
+  '/opt/pw-browsers/chromium-1223/chrome-linux64/chrome',
   '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
-  '/opt/pw-browsers/chromium-1155/chrome-linux/chrome',
 ];
 const executablePath = BROWSER_CANDIDATES.find(p => existsSync(p));
 
