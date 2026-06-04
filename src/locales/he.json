@@ -41,7 +41,7 @@
     "connectDrive": "חבר Drive",
     "driveOnTooltip": "Drive מסנכרן — לחץ לניתוק",
     "connectDriveTooltip": "חבר Google Drive לסנכרון בין מכשירים",
-    "aiSettings": "הגדרות AI",
+    "aiSettings": "הגדרות",
     "installApp": "התקנת אפליקציה",
     "iosInstallHint": "ב-iPhone/iPad: הקש Share (□↑) ב-Safari, ואז «הוסף למסך הבית».",
     "androidInstallHint": "התקנה עובדת ב-Chrome באתר החי (HTTPS). תפריט ⋮ → «התקן אפליקציה» או «הוסף למסך הבית».",
@@ -270,7 +270,7 @@
     "taskGeneral": "אימון כללי"
   },
   "settings": {
-    "title": "הגדרות AI",
+    "title": "הגדרות",
     "keyActive": "AI פעיל",
     "providerLabel": "ספק AI",
     "apiKeyLabel": "מפתח API",

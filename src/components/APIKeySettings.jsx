@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Key, Eye, EyeOff, ExternalLink, CheckCircle, Trash2, ChevronDown, Briefcase, Users, ClipboardList } from 'lucide-react';
+import { X, Key, Eye, EyeOff, ExternalLink, CheckCircle, Trash2, Settings, Briefcase, Users, ClipboardList } from 'lucide-react';
 import { loadAIConfigFromStorage, isAIReady, PROVIDERS } from '../services/aiAssistant';
 import { STORAGE_KEYS, APP_MODES, getEnabledModes } from '../storageKeys';
 
@@ -85,7 +85,7 @@ export default function APIKeySettings({ t, onClose, currentMode, onModeChange }
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col overflow-hidden">
         <div className="bg-gradient-to-r from-purple-600 to-indigo-700 p-5 text-white flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-lg">
-            <Key size={20} /> {t('settings.title', 'AI Settings')}
+            <Settings size={20} /> {t('settings.title', 'Settings')}
           </div>
           <button onClick={onClose} className="text-white/70 hover:text-white"><X size={20} /></button>
         </div>

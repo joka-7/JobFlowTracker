@@ -41,7 +41,7 @@
     "connectDrive": "Connecter Drive",
     "driveOnTooltip": "Drive synchronisé — cliquer pour déconnecter",
     "connectDriveTooltip": "Connecter Google Drive pour synchroniser sur tous les appareils",
-    "aiSettings": "Paramètres IA",
+    "aiSettings": "Paramètres",
     "installApp": "Installer l'app",
     "iosInstallHint": "Sur iPhone/iPad : touchez Partager (□↑) dans Safari, puis « Sur l'écran d'accueil ».",
     "androidInstallHint": "L'installation fonctionne dans Chrome sur le site en ligne (HTTPS). Menu ⋮ → « Installer l'application ».",
@@ -263,7 +263,7 @@
     "taskGeneral": "Coaching général"
   },
   "settings": {
-    "title": "Paramètres IA",
+    "title": "Paramètres",
     "keyActive": "IA active",
     "providerLabel": "Fournisseur IA",
     "apiKeyLabel": "Clé API",
