@@ -6,7 +6,10 @@ import {
   ArrowLeft, ArrowRight, Download, Upload, Filter, Layout, List, Activity, AlertTriangle,
   Cloud, CloudOff, Languages, BarChart2, Settings, MoreVertical, Smartphone
 } from 'lucide-react';
-import { signInWithGoogle, signOut, onAuthChange, loadAllItems, updateItem, deleteItem, batchSaveItems, loadUserProfile, saveUserProfile } from './firebase';
+import {
+  signInWithGoogle, signOut, onAuthChange, loadAllItems, updateItem, deleteItem,
+  batchSaveItems, loadUserProfile, saveUserProfile, formatSignInError,
+} from './firebase';
 import { initAI, getJobFinderSystemPrompt, getCandidateFinderSystemPrompt } from './services/aiAssistant';
 import {
   getStatuses, getTerminalStatuses, getRejectedStatuses, getFunnelOrder,
@@ -302,9 +305,11 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
 
   const handleSignIn = async () => {
     try {
-      await signInWithGoogle();
-    } catch {
-      showToast(tMode('toast.driveFailed'));
+      const signedIn = await signInWithGoogle();
+      if (!signedIn) return;
+    } catch (e) {
+      console.error('Google sign-in failed:', e);
+      showToast(formatSignInError(e));
     }
   };
 

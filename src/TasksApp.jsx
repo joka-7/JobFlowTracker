@@ -13,7 +13,7 @@ import {
 } from './utils/templateQuestions';
 import ChatModal from './components/ChatModal';
 import {
-  signInWithGoogle, signOut, onAuthChange, loadAllItems,
+  signInWithGoogle, signOut, onAuthChange, loadAllItems, formatSignInError,
   updateItem, deleteItem, batchSaveItems, loadUserProfile, saveUserProfile,
 } from './firebase';
 import { getStorageKey, STATUSES_TASKS, filterItemsForMode } from './statuses';
@@ -1180,7 +1180,12 @@ Rules:
               </button>
             ) : (
               <button
-                onClick={() => signInWithGoogle().catch(() => {})}
+                onClick={() => signInWithGoogle()
+                  .then((u) => { if (!u) return; })
+                  .catch((e) => {
+                    console.error('Google sign-in failed:', e);
+                    alert(formatSignInError(e));
+                  })}
                 title={t('header.connectDriveTooltip')}
                 className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-green-100 transition-colors min-h-[44px] touch-manipulation"
               >

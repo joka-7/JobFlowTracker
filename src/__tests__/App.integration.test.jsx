@@ -7,6 +7,7 @@ import App from '../App';
 vi.mock('../firebase', () => ({
   auth: {},
   onAuthChange: (cb) => { cb(null); return () => {}; },
+  completeRedirectSignIn: vi.fn().mockResolvedValue(null),
   signInWithGoogle: vi.fn(),
   signOut: vi.fn(),
   loadAllItems: vi.fn().mockResolvedValue(null),
