@@ -9,8 +9,8 @@ test.describe('Mode selection (first launch)', () => {
 
   test('shows job seeker and recruiter choices', async ({ page }) => {
     await expect(page.getByText(/How will you use JobFlowTracker/i)).toBeVisible();
-    await expect(page.getByRole('heading', { name: /Job Seeker/i })).toBeVisible();
-    await expect(page.getByRole('heading', { name: /Recruiter/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Job Search/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Recruiting/i })).toBeVisible();
   });
 
   test('choosing job seeker persists appMode and loads job seeker UI', async ({ page }) => {

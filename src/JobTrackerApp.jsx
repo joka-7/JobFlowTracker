@@ -194,6 +194,23 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
     initAI(provider, apiKey, model, ollamaUrl);
   }, [isRecruiter]);
 
+  const prevModeRef = useRef(mode);
+  useEffect(() => {
+    if (prevModeRef.current === mode) return;
+    prevModeRef.current = mode;
+    try {
+      const saved = window.localStorage.getItem(getStorageKey(mode));
+      setCompanies(saved ? filterItemsForMode(JSON.parse(saved), mode) : []);
+    } catch { setCompanies([]); }
+    setSelectedId(null);
+    setIsEditing(false);
+    setFormData(makeInitialFormState(mode === 'recruiter'));
+    setStatusFilter('all');
+    setSearchQuery('');
+    setActiveTab('board');
+    setShowOnboarding(mode !== 'recruiter' && !localStorage.getItem(STORAGE_KEYS.jobSeekerOnboarding));
+  }, [mode]);
+
   const initialFormState = makeInitialFormState(isRecruiter);
   const [formData, setFormData] = useState(initialFormState);
 

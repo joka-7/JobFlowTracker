@@ -434,10 +434,10 @@
     "modeSelection": {
       "title": "איך תשתמש ב-JobFlowTracker?",
       "subtitle": "בחר את התפקיד שלך — לא ניתן לשנות בהמשך",
-      "jobSeekerTitle": "אני מחפש עבודה",
+      "jobSeekerTitle": "חיפוש עבודה",
       "jobSeekerShort": "חיפוש",
       "jobSeekerDesc": "מעקב אחר חברות, מועמדויות וראיונות",
-      "recruiterTitle": "אני מגייס",
+      "recruiterTitle": "גיוס עובדים",
       "recruiterShort": "גיוס",
       "recruiterDesc": "מעקב אחר מועמדים בתהליך הגיוס",
       "fixedNote": "ניתן להחליף מוד בכל עת מהכותרת"

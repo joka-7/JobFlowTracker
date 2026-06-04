@@ -38,8 +38,8 @@ describe('App integration', () => {
   it('shows mode selection when appMode is unset and no legacy data', () => {
     render(<App />);
     expect(screen.getByText(/How will you use JobFlowTracker/i)).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Job Seeker/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Recruiter/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Job Search/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Recruiting/i })).toBeInTheDocument();
   });
 
   it('loads recruiter UI when appMode is recruiter', () => {
@@ -60,7 +60,7 @@ describe('App integration', () => {
 
   it('selecting recruiter in mode screen navigates to recruiter app', () => {
     render(<App />);
-    fireEvent.click(screen.getByRole('heading', { name: /Recruiter/i }));
+    fireEvent.click(screen.getByRole('heading', { name: /Recruiting/i }));
     expect(localStorage.getItem('appMode')).toBe('recruiter');
     expect(screen.getByRole('heading', { name: 'Recruiter Pipeline', exact: true })).toBeInTheDocument();
   });

@@ -11,14 +11,14 @@ describe('ModeSelection', () => {
   it('renders job seeker and recruiter options', () => {
     const onSelect = vi.fn();
     render(<ModeSelection onSelect={onSelect} />);
-    expect(screen.getByText(/Job Seeker|מחפש עבודה|Je suis candidat/i)).toBeTruthy();
-    expect(screen.getByText(/Recruiter|מגייס|recruteur/i)).toBeTruthy();
+    expect(screen.getByText(/Job Search|חיפוש עבודה|Recherche d'emploi/i)).toBeTruthy();
+    expect(screen.getByText(/Recruiting|גיוס עובדים|Recrutement/i)).toBeTruthy();
   });
 
   it('selecting job seeker saves appMode and calls onSelect', () => {
     const onSelect = vi.fn();
     render(<ModeSelection onSelect={onSelect} />);
-    fireEvent.click(screen.getByText(/Job Seeker|מחפש עבודה|Je suis candidat/i));
+    fireEvent.click(screen.getByText(/Job Search|חיפוש עבודה|Recherche d'emploi/i));
     expect(localStorage.getItem('appMode')).toBe('jobseeker');
     expect(onSelect).toHaveBeenCalledWith('jobseeker');
   });
@@ -26,7 +26,7 @@ describe('ModeSelection', () => {
   it('selecting recruiter saves appMode and calls onSelect', () => {
     const onSelect = vi.fn();
     render(<ModeSelection onSelect={onSelect} />);
-    fireEvent.click(screen.getByText(/Recruiter|מגייס|recruteur/i));
+    fireEvent.click(screen.getByText(/Recruiting|גיוס עובדים|Recrutement/i));
     expect(localStorage.getItem('appMode')).toBe('recruiter');
     expect(onSelect).toHaveBeenCalledWith('recruiter');
   });
