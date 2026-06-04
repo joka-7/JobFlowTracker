@@ -1155,6 +1155,7 @@ Rules:
         <div className="flex-1 overflow-auto calendar-page min-h-0">
           <CalendarView
             events={calendarEvents}
+            legendTypes={['interview', 'assignment']}
             isRTL={isRTL}
             onEventClick={ev => { selectCompany({ id: ev.parentId }); navigateTo('list', ev.parentId); }}
           />

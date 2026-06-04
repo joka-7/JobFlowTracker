@@ -64,7 +64,8 @@
     "type": {
       "interview": "ראיון",
       "assignment": "מטלה",
-      "task": "משימה"
+      "task": "משימה",
+      "step": "שלב"
     }
   },
   "board": {

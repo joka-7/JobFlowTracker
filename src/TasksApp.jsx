@@ -443,14 +443,31 @@ Rules:
     return { total, active, completed, totalSteps, doneSteps, byStatus };
   }, [tasks]);
 
-  const calendarEvents = useMemo(() =>
-    tasks.filter(t => t.dueDate).map(t => ({
-      date: t.dueDate,
-      title: t.name,
-      type: 'task',
-      parentId: t.id,
-    }))
-  , [tasks]);
+  const calendarEvents = useMemo(() => {
+    const events = [];
+    tasks.forEach(task => {
+      const taskName = safeStr(task.name) || 'Untitled';
+      if (task.dueDate) {
+        events.push({
+          date: task.dueDate,
+          title: taskName,
+          type: 'task',
+          parentId: task.id,
+        });
+      }
+      (task.steps || []).forEach(step => {
+        if (!step.dueDate) return;
+        const stepTitle = safeStr(step.title);
+        events.push({
+          date: step.dueDate,
+          title: stepTitle ? `${taskName} – ${stepTitle}` : taskName,
+          type: 'step',
+          parentId: task.id,
+        });
+      });
+    });
+    return events;
+  }, [tasks]);
 
   const timelineEvents = useMemo(() => {
     const events = [];
@@ -1352,6 +1369,7 @@ Rules:
           <div className="flex-1 overflow-auto calendar-page min-h-0">
             <CalendarView
               events={calendarEvents}
+              legendTypes={['task', 'step']}
               isRTL={isRTL}
               onEventClick={ev => { navigateTo('list', ev.parentId); }}
             />

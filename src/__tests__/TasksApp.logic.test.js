@@ -124,6 +124,54 @@ describe('TasksApp – step management', () => {
   });
 });
 
+describe('TasksApp – calendar events', () => {
+  const safeStr = (v) => (v === null || v === undefined ? '' : String(v));
+
+  const buildCalendarEvents = (tasks) => {
+    const events = [];
+    tasks.forEach(task => {
+      const taskName = safeStr(task.name) || 'Untitled';
+      if (task.dueDate) {
+        events.push({ date: task.dueDate, title: taskName, type: 'task', parentId: task.id });
+      }
+      (task.steps || []).forEach(step => {
+        if (!step.dueDate) return;
+        const stepTitle = safeStr(step.title);
+        events.push({
+          date: step.dueDate,
+          title: stepTitle ? `${taskName} – ${stepTitle}` : taskName,
+          type: 'step',
+          parentId: task.id,
+        });
+      });
+    });
+    return events;
+  };
+
+  it('includes task due dates and step due dates', () => {
+    const tasks = [{
+      id: '1', name: 'Launch', dueDate: '2026-06-20',
+      steps: [{ id: 's1', title: 'Draft', dueDate: '2026-06-05', status: 'todo' }],
+    }];
+    const events = buildCalendarEvents(tasks);
+    expect(events).toHaveLength(2);
+    expect(events.find(e => e.type === 'task')).toMatchObject({ title: 'Launch', date: '2026-06-20' });
+    expect(events.find(e => e.type === 'step')).toMatchObject({
+      title: 'Launch – Draft',
+      date: '2026-06-05',
+      parentId: '1',
+    });
+  });
+
+  it('omits steps without due dates', () => {
+    const tasks = [{
+      id: '1', name: 'Solo', dueDate: '',
+      steps: [{ id: 's1', title: 'No date', dueDate: '', status: 'todo' }],
+    }];
+    expect(buildCalendarEvents(tasks)).toHaveLength(0);
+  });
+});
+
 describe('TasksApp – timeline step overdue detection', () => {
   const buildTimelineEvents = (tasks) => {
     const events = [];
