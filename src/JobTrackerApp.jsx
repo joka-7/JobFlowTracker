@@ -1020,13 +1020,6 @@ Rules:
                 📚
               </button>
               <button
-                onClick={() => setShowAIFinder(true)}
-                title={isRecruiter ? t('ai.findCandidates', 'Find Candidates') : t('ai.findJobs', 'Find Jobs')}
-                className="p-2 hover:bg-white/20 rounded text-white transition-colors"
-              >
-                {isRecruiter ? '👥' : '🔍'}
-              </button>
-              <button
                 onClick={() => setShowAISettings(true)}
                 title={t('header.aiSettings', 'AI Settings')}
                 className="p-2 hover:bg-white/20 rounded text-white transition-colors"
@@ -1043,6 +1036,15 @@ Rules:
               </button>
               )}
             </div>
+
+            {/* AI Finder — always visible on all screen sizes */}
+            <button
+              onClick={() => setShowAIFinder(true)}
+              title={isRecruiter ? t('ai.findCandidates', 'Find Candidates') : t('ai.findJobs', 'Find Jobs')}
+              className="p-2 bg-white/10 hover:bg-white/20 active:bg-white/30 rounded-lg text-white transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center"
+            >
+              <span className="text-lg">{isRecruiter ? '👥' : '🔍'}</span>
+            </button>
 
             {/* Mobile overflow menu */}
             <div className="md:hidden relative">
@@ -1079,9 +1081,6 @@ Rules:
                     </label>
                     <button type="button" data-testid="open-templates" onClick={() => { setShowTemplates(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <span>📚</span> {t('templates.title', 'Interview Templates')}
-                    </button>
-                    <button onClick={() => { setShowAIFinder(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
-                      <span>{isRecruiter ? '👥' : '🔍'}</span> {isRecruiter ? t('ai.findCandidates', 'Find Candidates') : t('ai.findJobs', 'Find Jobs')}
                     </button>
                     <button onClick={() => { setShowAISettings(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <Settings size={16} className="text-gray-500" /> {t('header.aiSettings', 'AI Settings')}

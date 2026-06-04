@@ -1174,13 +1174,6 @@ Rules:
                 📚
               </button>
               <button
-                onClick={() => setShowGoalsFinder(true)}
-                title={t('ai.goalsAndTasks', 'Goals & Tasks')}
-                className="p-2 hover:bg-white/20 rounded text-white transition-colors"
-              >
-                🎯
-              </button>
-              <button
                 onClick={() => setShowAISettings(true)}
                 title={t('header.aiSettings', 'AI Settings')}
                 className="p-2 hover:bg-white/20 rounded text-white transition-colors"
@@ -1196,6 +1189,15 @@ Rules:
                 💡
               </button>
             </div>
+
+            {/* Goals & Tasks AI — always visible on all screen sizes */}
+            <button
+              onClick={() => setShowGoalsFinder(true)}
+              title={t('ai.goalsAndTasks', 'Goals & Tasks')}
+              className="p-2 bg-white/10 hover:bg-white/20 active:bg-white/30 rounded-lg text-white transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center"
+            >
+              <span className="text-lg">🎯</span>
+            </button>
 
             {/* Mobile overflow menu */}
             <div className="md:hidden relative">
@@ -1232,9 +1234,6 @@ Rules:
                     </label>
                     <button type="button" data-testid="open-templates" onClick={() => { setShowTemplates(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <span>📚</span> {t('templates.titleTasks', 'Task Planning Prompts')}
-                    </button>
-                    <button onClick={() => { setShowGoalsFinder(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
-                      <span>🎯</span> {t('ai.goalsAndTasks', 'Goals & Tasks')}
                     </button>
                     <button onClick={() => { setShowAISettings(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <Settings size={16} className="text-gray-500" /> {t('header.aiSettings', 'AI Settings')}
