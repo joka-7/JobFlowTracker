@@ -21,7 +21,7 @@ import RejectionAnalysis from './components/RejectionAnalysis';
 import TemplateLibrary from './components/TemplateLibrary';
 import ChatModal from './components/ChatModal';
 import Tooltip from './components/Tooltip';
-import ModeSwitcher from './components/ModeSwitcher';
+import ModeDropdown from './components/ModeDropdown';
 import CalendarView from './components/CalendarView';
 import { TEMPLATES } from './data/interviewTemplates';
 import {
@@ -192,6 +192,23 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
     const ollamaUrl = localStorage.getItem('ollamaUrl') || 'http://localhost:11434';
     initAI(provider, apiKey, model, ollamaUrl);
   }, [isRecruiter]);
+
+  const prevModeRef = useRef(mode);
+  useEffect(() => {
+    if (prevModeRef.current === mode) return;
+    prevModeRef.current = mode;
+    try {
+      const saved = window.localStorage.getItem(getStorageKey(mode));
+      setCompanies(saved ? filterItemsForMode(JSON.parse(saved), mode) : []);
+    } catch { setCompanies([]); }
+    setSelectedId(null);
+    setIsEditing(false);
+    setFormData(makeInitialFormState(mode === 'recruiter'));
+    setStatusFilter('all');
+    setSearchQuery('');
+    setActiveTab('board');
+    setShowOnboarding(mode !== 'recruiter' && !localStorage.getItem(STORAGE_KEYS.jobSeekerOnboarding));
+  }, [mode]);
 
   const initialFormState = makeInitialFormState(isRecruiter);
   const [formData, setFormData] = useState(initialFormState);
@@ -972,7 +989,7 @@ Rules:
 
             {onModeChange && (
               <div className="hidden md:block">
-                <ModeSwitcher currentMode={mode} onModeChange={onModeChange} labelSize="compact" />
+                <ModeDropdown currentMode={mode} onModeChange={onModeChange} isRTL={isRTL} />
               </div>
             )}
 
@@ -1110,7 +1127,7 @@ Rules:
 
           {onModeChange && (
             <div className="md:hidden">
-              <ModeSwitcher currentMode={mode} onModeChange={onModeChange} labelSize="compact" />
+              <ModeDropdown currentMode={mode} onModeChange={onModeChange} isRTL={isRTL} />
             </div>
           )}
         </div>
