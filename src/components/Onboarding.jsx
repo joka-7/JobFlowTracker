@@ -32,18 +32,25 @@ const STEPS = [
 ];
 
 const stepContent = {
-  welcome: (t) => (
+  welcome: (t, _o, _f, _a, isRecruiter) => (
     <div className="space-y-4 text-center">
       <p className="text-gray-600 text-lg leading-relaxed">
-        {t('onboarding.welcomeDesc', 'Track every company, interview, and rejection — all in one place. Your data stays private in your browser.')}
+        {isRecruiter
+          ? t('onboarding.recruiterWelcomeDesc', 'Manage your candidates pipeline — track every applicant, interview, and decision in one place.')
+          : t('onboarding.welcomeDesc', 'Track every company, interview, and rejection — all in one place. Your data stays private in your browser.')}
       </p>
       <div className="grid grid-cols-2 gap-3 mt-6 text-left">
-        {[
+        {(isRecruiter ? [
+          { icon: <Layout size={20} className="text-blue-500" />, text: t('onboarding.recruiterFeatureBoard', 'Kanban board with drag & drop') },
+          { icon: <List size={20} className="text-purple-500" />, text: t('onboarding.recruiterFeatureList', 'Detailed candidate profiles') },
+          { icon: <Activity size={20} className="text-green-500" />, text: t('onboarding.recruiterFeatureTimeline', 'Hiring timeline') },
+          { icon: <BarChart2 size={20} className="text-orange-500" />, text: t('onboarding.recruiterFeatureStats', 'Pipeline stats') },
+        ] : [
           { icon: <Layout size={20} className="text-blue-500" />, text: t('onboarding.featureBoard', 'Kanban board with drag & drop') },
           { icon: <List size={20} className="text-purple-500" />, text: t('onboarding.featureList', 'Detailed company profiles') },
           { icon: <Activity size={20} className="text-green-500" />, text: t('onboarding.featureTimeline', 'Interview timeline') },
           { icon: <BarChart2 size={20} className="text-orange-500" />, text: t('onboarding.featureStats', 'Stats & upcoming events') },
-        ].map(({ icon, text }, i) => (
+        ]).map(({ icon, text }, i) => (
           <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
             {icon}
             <span className="text-sm text-gray-700">{text}</span>
@@ -174,7 +181,7 @@ const stepContent = {
   ),
 };
 
-export default function Onboarding({ t, i18n, isRTL, onClose, openNewForm, triggerFileInput, openAISettings }) {
+export default function Onboarding({ t, i18n, isRTL, onClose, openNewForm, triggerFileInput, openAISettings, isRecruiter = false }) {
   const [step, setStep] = useState(0);
 
   const isFirst = step === 0;
@@ -182,8 +189,10 @@ export default function Onboarding({ t, i18n, isRTL, onClose, openNewForm, trigg
   const Back = isRTL ? ChevronRight : ChevronLeft;
   const Next = isRTL ? ChevronLeft : ChevronRight;
 
+  const storageKey = isRecruiter ? STORAGE_KEYS.recruiterOnboarding : STORAGE_KEYS.jobSeekerOnboarding;
+
   const handleClose = () => {
-    localStorage.setItem(STORAGE_KEYS.jobSeekerOnboarding, '1');
+    localStorage.setItem(storageKey, '1');
     onClose();
   };
 
@@ -194,7 +203,7 @@ export default function Onboarding({ t, i18n, isRTL, onClose, openNewForm, trigg
 
   const current = STEPS[step];
   const contentFn = stepContent[current.titleKey];
-  const content = contentFn ? contentFn(t, openNewForm, triggerFileInput, openAISettings) : null;
+  const content = contentFn ? contentFn(t, openNewForm, triggerFileInput, openAISettings, isRecruiter) : null;
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">

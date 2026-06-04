@@ -5,6 +5,7 @@
 export const STORAGE_KEYS = {
   appMode: 'appMode',
   jobSeekerOnboarding: 'hasCompletedOnboarding',
+  recruiterOnboarding: 'hasCompletedOnboarding_recruiter',
   tasksWelcome: 'hasCompletedOnboarding_tasks',
 };
 
