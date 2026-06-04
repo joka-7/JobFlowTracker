@@ -258,20 +258,27 @@ export default function TasksApp({ onModeChange }) {
     return () => window.removeEventListener('popstate', onPop);
   }, []);
 
+  const isSavingRef = useRef(false);
   const handleSave = async () => {
+    if (isSavingRef.current) return;
     if (!safeStr(formData.name).trim()) {
       alert(tt('form.requiredName', 'Task name is required'));
       return;
     }
-    const task = {
-      ...formData,
-      id: formData.id || Date.now().toString(),
-      name: safeStr(formData.name).trim(),
-    };
-    await saveTask(task);
-    setSelectedId(task.id);
-    setIsEditing(false);
-    showToast(tt('toast.saved', 'Task saved!'));
+    isSavingRef.current = true;
+    try {
+      const task = {
+        ...formData,
+        id: formData.id || Date.now().toString(),
+        name: safeStr(formData.name).trim(),
+      };
+      await saveTask(task);
+      setSelectedId(task.id);
+      setIsEditing(false);
+      showToast(tt('toast.saved', 'Task saved!'));
+    } finally {
+      isSavingRef.current = false;
+    }
   };
 
   const handleDelete = async (id) => {
@@ -616,6 +623,12 @@ Rules:
           {step.notes && !editable && (
             <p className="text-xs text-gray-500 mt-0.5">{safeStr(step.notes)}</p>
           )}
+          {step.dueDate && !editable && (
+            <div className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
+              <Calendar size={10} />
+              {formatDate(step.dueDate, lang)}
+            </div>
+          )}
           {editable && (
             <input
               value={safeStr(step.notes)}
@@ -623,9 +636,23 @@ Rules:
                 ...prev,
                 steps: prev.steps.map(s => s.id === step.id ? { ...s, notes: e.target.value } : s),
               }))}
-              className="w-full text-xs text-gray-500 bg-transparent border-0 outline-none mt-0.5 placeholder-gray-300"
-              placeholder={tt('form.stepNotesPlaceholder', 'Step notes...')}
+              className="w-full text-xs text-gray-500 bg-transparent border-0 outline-none mt-1 placeholder-gray-400"
+              placeholder={tt('form.stepNotesPlaceholder', 'Add description...')}
             />
+          )}
+          {editable && (
+            <div className="flex items-center gap-1 mt-1">
+              <Calendar size={10} className="text-gray-400 shrink-0" />
+              <input
+                type="date"
+                value={safeStr(step.dueDate)}
+                onChange={e => setFormData(prev => ({
+                  ...prev,
+                  steps: prev.steps.map(s => s.id === step.id ? { ...s, dueDate: e.target.value } : s),
+                }))}
+                className="text-xs text-gray-500 bg-transparent border-0 outline-none placeholder-gray-400"
+              />
+            </div>
           )}
         </div>
         <div className="flex items-center gap-1 shrink-0">
@@ -633,7 +660,8 @@ Rules:
           {editable && (
             <button
               onClick={() => handleDeleteStep(step.id)}
-              className="text-gray-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+              className="text-gray-300 hover:text-red-400 transition-colors"
+              title={tt('form.deleteStep', 'Delete step')}
             >
               <X size={14} />
             </button>
