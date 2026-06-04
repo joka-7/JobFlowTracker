@@ -1127,7 +1127,7 @@ Rules:
 
           {onModeChange && (
             <div className="md:hidden">
-              <ModeSwitcher currentMode={mode} onModeChange={onModeChange} labelSize="compact" />
+              <ModeDropdown currentMode={mode} onModeChange={onModeChange} isRTL={isRTL} />
             </div>
           )}
         </div>
