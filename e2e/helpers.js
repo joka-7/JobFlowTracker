@@ -20,6 +20,7 @@ export async function initRecruiterApp(page) {
   await page.addInitScript(() => {
     localStorage.clear();
     localStorage.setItem('appMode', 'recruiter');
+    localStorage.setItem('hasCompletedOnboarding_recruiter', '1');
   });
 }
 
