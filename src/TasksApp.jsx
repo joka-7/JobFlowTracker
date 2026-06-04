@@ -1124,7 +1124,9 @@ Rules:
             )}
 
             {onModeChange && (
-              <ModeDropdown currentMode={MODE} onModeChange={onModeChange} isRTL={isRTL} />
+              <div className="hidden md:block">
+                <ModeDropdown currentMode={MODE} onModeChange={onModeChange} isRTL={isRTL} />
+              </div>
             )}
 
             {canInstall && (
@@ -1256,6 +1258,11 @@ Rules:
           </div>
           </div>
 
+          {onModeChange && (
+            <div className="md:hidden">
+              <ModeDropdown currentMode={MODE} onModeChange={onModeChange} isRTL={isRTL} />
+            </div>
+          )}
         </div>
 
         {/* Tab bar */}

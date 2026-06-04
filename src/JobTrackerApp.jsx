@@ -970,7 +970,9 @@ Rules:
             )}
 
             {onModeChange && (
-              <ModeDropdown currentMode={mode} onModeChange={onModeChange} isRTL={isRTL} />
+              <div className="hidden md:block">
+                <ModeDropdown currentMode={mode} onModeChange={onModeChange} isRTL={isRTL} />
+              </div>
             )}
 
             {canInstall && (
@@ -1105,6 +1107,11 @@ Rules:
           </div>
           </div>
 
+          {onModeChange && (
+            <div className="md:hidden">
+              <ModeDropdown currentMode={mode} onModeChange={onModeChange} isRTL={isRTL} />
+            </div>
+          )}
         </div>
 
         <div className="flex px-2 sm:px-6 gap-0.5 sm:gap-1 mt-2 overflow-x-auto scrollbar-none">
