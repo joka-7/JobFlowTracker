@@ -14,11 +14,7 @@ export default function ModeDropdown({ currentMode, onModeChange, isRTL }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
-  const enabledIds = getEnabledModes();
-  const MODES = enabledIds ? ALL_MODES.filter((m) => enabledIds.includes(m.id)) : ALL_MODES;
-
-  if (MODES.length <= 1) return null;
-
+  // Must be before any conditional return — React rules of hooks
   useEffect(() => {
     if (!open) return;
     const handler = (e) => { if (!ref.current?.contains(e.target)) setOpen(false); };
@@ -26,9 +22,22 @@ export default function ModeDropdown({ currentMode, onModeChange, isRTL }) {
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
-  const current = MODES.find((m) => m.id === currentMode) ?? MODES[0];
+  const enabledIds = getEnabledModes();
+  const MODES = enabledIds ? ALL_MODES.filter((m) => enabledIds.includes(m.id)) : ALL_MODES;
+
+  const current = ALL_MODES.find((m) => m.id === currentMode) ?? MODES[0];
   const { Icon: CurrentIcon } = current;
   const currentLabel = t(current.labelKey, current.short);
+
+  // Single mode: show a non-interactive label so the user knows their context
+  if (MODES.length <= 1) {
+    return (
+      <div className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg bg-white/15 text-white text-xs font-bold border border-white/20 min-h-[40px]">
+        <CurrentIcon size={14} className="shrink-0" />
+        <span className="shrink-0 whitespace-nowrap">{currentLabel}</span>
+      </div>
+    );
+  }
 
   return (
     <div ref={ref} className="relative shrink-0">

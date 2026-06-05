@@ -280,6 +280,7 @@
     "ollamaUrl": "כתובת Ollama",
     "ollamaNote": "ודא ש-Ollama פועל מקומית עם CORS מאופשר.",
     "save": "שמור והפעל AI",
+    "saveSettings": "שמור הגדרות",
     "saved": "נשמר!",
     "clearKey": "הסר",
     "modesTitle": "מצבים מופעלים",

@@ -273,6 +273,7 @@
     "ollamaUrl": "URL Ollama",
     "ollamaNote": "Assurez-vous qu'Ollama fonctionne localement avec CORS activé.",
     "save": "Enregistrer et activer l'IA",
+    "saveSettings": "Enregistrer les paramètres",
     "saved": "Enregistré !",
     "clearKey": "Supprimer",
     "modesTitle": "Modes activés",

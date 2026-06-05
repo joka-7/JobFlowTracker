@@ -40,7 +40,7 @@ export default function APIKeySettings({ t, onClose, currentMode, onModeChange }
 
   const pInfo = PROVIDERS[provider];
   const isOllama = provider === 'ollama';
-  const canSave = isOllama || !!apiKey.trim();
+  const aiReady = isOllama || !!apiKey.trim();
 
   const handleProviderChange = (p) => {
     setProvider(p);
@@ -163,7 +163,7 @@ export default function APIKeySettings({ t, onClose, currentMode, onModeChange }
                   onChange={e => setApiKey(e.target.value)}
                   placeholder={pInfo?.placeholder || ''}
                   className="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 font-mono text-sm"
-                  onKeyDown={e => e.key === 'Enter' && canSave && handleSave()}
+                  onKeyDown={e => e.key === 'Enter' && handleSave()}
                 />
                 <button onClick={() => setVisible(v => !v)} className="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
                   {visible ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -231,12 +231,11 @@ export default function APIKeySettings({ t, onClose, currentMode, onModeChange }
           <div className="flex gap-3 pt-1">
             <button
               onClick={handleSave}
-              disabled={!canSave}
               className={`flex-1 py-2.5 rounded-lg font-bold text-white transition-colors ${
-                done ? 'bg-green-500' : canSave ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-300 cursor-not-allowed'
+                done ? 'bg-green-500' : 'bg-purple-600 hover:bg-purple-700'
               }`}
             >
-              {done ? `✓ ${t('settings.saved', 'Saved!')}` : t('settings.save', 'Save & Enable AI')}
+              {done ? `✓ ${t('settings.saved', 'Saved!')}` : aiReady ? t('settings.save', 'Save & Enable AI') : t('settings.saveSettings', 'Save Settings')}
             </button>
             {alreadySet && (
               <button onClick={handleClear} className="px-4 py-2.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors" title={t('settings.clearKey', 'Remove')}>

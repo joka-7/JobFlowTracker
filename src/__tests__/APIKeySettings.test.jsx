@@ -107,18 +107,14 @@ describe('APIKeySettings', () => {
     expect(screen.getByPlaceholderText('gsk_...')).toBeInTheDocument();
   });
 
-  it('Save button is disabled when no API key is entered for non-Ollama providers', () => {
-    // Default provider is gemini, no key in localStorage
+  it('Save button is always enabled (modes can be saved without an API key)', () => {
     render(<APIKeySettings {...defaultProps} />);
     const saveBtn = screen.getByRole('button', { name: /save/i });
-    expect(saveBtn).toBeDisabled();
+    expect(saveBtn).not.toBeDisabled();
   });
 
-  it('Save button becomes enabled when an API key is typed', async () => {
-    const user = userEvent.setup();
+  it('Save button shows "Save & Enable AI" when an API key is present', async () => {
     render(<APIKeySettings {...defaultProps} />);
-    const input = screen.getByRole('textbox', { hidden: true }) || document.querySelector('input[type="password"]');
-    // Use fireEvent for password input since userEvent may not find hidden inputs easily
     const passwordInput = document.querySelector('input[type="password"]');
     fireEvent.change(passwordInput, { target: { value: 'AIzaTest123' } });
     const saveBtn = screen.getByRole('button', { name: /save/i });

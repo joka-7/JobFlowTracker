@@ -280,6 +280,7 @@
     "ollamaUrl": "Ollama URL",
     "ollamaNote": "Make sure Ollama is running locally with CORS enabled.",
     "save": "Save & Enable AI",
+    "saveSettings": "Save Settings",
     "saved": "Saved!",
     "clearKey": "Remove",
     "modesTitle": "Enabled Modes",
