@@ -1389,7 +1389,12 @@ Rules:
       )}
 
       {showAISettings && (
-        <APIKeySettings t={t} onClose={() => setShowAISettings(false)} />
+        <APIKeySettings
+          t={t}
+          onClose={() => setShowAISettings(false)}
+          currentMode={MODE}
+          onModeChange={onModeChange}
+        />
       )}
 
       {showTemplates && (

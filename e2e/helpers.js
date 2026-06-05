@@ -26,11 +26,13 @@ export async function initRecruiterApp(page) {
 
 export async function chooseRecruiterMode(page) {
   await page.getByRole('heading', { name: /Recruiting/i }).click();
+  await page.getByRole('button', { name: /Get Started/i }).click();
   await page.getByRole('heading', { name: 'Recruiter Pipeline', exact: true }).waitFor();
 }
 
 export async function chooseJobSeekerMode(page) {
   await page.getByRole('heading', { name: /Job Search/i }).click();
+  await page.getByRole('button', { name: /Get Started/i }).click();
   await page.getByRole('heading', { name: 'Job Search Tracker', exact: true }).waitFor({ timeout: 15_000 });
 }
 

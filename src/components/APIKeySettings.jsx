@@ -1,10 +1,17 @@
 import React, { useState } from 'react';
-import { X, Key, Eye, EyeOff, ExternalLink, CheckCircle, Trash2, ChevronDown } from 'lucide-react';
+import { X, Key, Eye, EyeOff, ExternalLink, CheckCircle, Trash2, Settings, Briefcase, Users, ClipboardList } from 'lucide-react';
 import { loadAIConfigFromStorage, isAIReady, PROVIDERS } from '../services/aiAssistant';
+import { STORAGE_KEYS, APP_MODES, getEnabledModes } from '../storageKeys';
 
 const PROVIDER_ORDER = ['gemini', 'groq', 'ollama', 'anthropic', 'openai'];
 
-export default function APIKeySettings({ t, onClose }) {
+const MODE_DEFS = [
+  { id: APP_MODES.jobseeker, Icon: Briefcase, labelKey: 'recruiter.modeSelection.jobSeekerTitle', fallback: 'Job Search' },
+  { id: APP_MODES.recruiter, Icon: Users, labelKey: 'recruiter.modeSelection.recruiterTitle', fallback: 'Recruiting' },
+  { id: APP_MODES.tasks, Icon: ClipboardList, labelKey: 'tasks.modeSelection.title', fallback: 'Tasks' },
+];
+
+export default function APIKeySettings({ t, onClose, currentMode, onModeChange }) {
   const saved = {
     provider: localStorage.getItem('aiProvider') || 'gemini',
     apiKey: localStorage.getItem('aiApiKey') || '',
@@ -19,9 +26,21 @@ export default function APIKeySettings({ t, onClose }) {
   const [visible, setVisible] = useState(false);
   const [done, setDone] = useState(false);
 
+  const savedEnabled = getEnabledModes();
+  const [enabledModes, setEnabledModes] = useState(
+    savedEnabled ?? [APP_MODES.jobseeker, APP_MODES.recruiter, APP_MODES.tasks]
+  );
+
+  const toggleEnabledMode = (modeId) => {
+    if (enabledModes.length === 1 && enabledModes.includes(modeId)) return;
+    setEnabledModes((prev) =>
+      prev.includes(modeId) ? prev.filter((m) => m !== modeId) : [...prev, modeId]
+    );
+  };
+
   const pInfo = PROVIDERS[provider];
   const isOllama = provider === 'ollama';
-  const canSave = isOllama || !!apiKey.trim();
+  const aiReady = isOllama || !!apiKey.trim();
 
   const handleProviderChange = (p) => {
     setProvider(p);
@@ -38,6 +57,18 @@ export default function APIKeySettings({ t, onClose }) {
     localStorage.setItem('aiModel', effectiveModel);
     if (isOllama) localStorage.setItem('ollamaUrl', ollamaUrl.trim());
     loadAIConfigFromStorage();
+
+    localStorage.setItem(STORAGE_KEYS.enabledModes, JSON.stringify(enabledModes));
+
+    if (currentMode && !enabledModes.includes(currentMode) && onModeChange) {
+      const nextMode = [APP_MODES.jobseeker, APP_MODES.recruiter, APP_MODES.tasks]
+        .find((m) => enabledModes.includes(m));
+      if (nextMode) {
+        localStorage.setItem(STORAGE_KEYS.appMode, nextMode);
+        onModeChange(nextMode);
+      }
+    }
+
     setDone(true);
     setTimeout(() => { setDone(false); onClose(); }, 900);
   };
@@ -54,7 +85,7 @@ export default function APIKeySettings({ t, onClose }) {
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col overflow-hidden">
         <div className="bg-gradient-to-r from-purple-600 to-indigo-700 p-5 text-white flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-lg">
-            <Key size={20} /> {t('settings.title', 'AI Settings')}
+            <Settings size={20} /> {t('settings.title', 'Settings')}
           </div>
           <button onClick={onClose} className="text-white/70 hover:text-white"><X size={20} /></button>
         </div>
@@ -132,7 +163,7 @@ export default function APIKeySettings({ t, onClose }) {
                   onChange={e => setApiKey(e.target.value)}
                   placeholder={pInfo?.placeholder || ''}
                   className="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 font-mono text-sm"
-                  onKeyDown={e => e.key === 'Enter' && canSave && handleSave()}
+                  onKeyDown={e => e.key === 'Enter' && handleSave()}
                 />
                 <button onClick={() => setVisible(v => !v)} className="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
                   {visible ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -164,15 +195,47 @@ export default function APIKeySettings({ t, onClose }) {
             </a>
           )}
 
+          {/* Enabled Modes */}
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">
+              {t('settings.modesTitle', 'Enabled Modes')}
+            </label>
+            <p className="text-xs text-gray-500 mb-2">
+              {t('settings.modesNote', 'Only selected modes appear in the mode switcher.')}
+            </p>
+            <div className="flex gap-2 flex-wrap">
+              {MODE_DEFS.map(({ id, Icon, labelKey, fallback }) => {
+                const active = enabledModes.includes(id);
+                const isLast = enabledModes.length === 1 && active;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => toggleEnabledMode(id)}
+                    disabled={isLast}
+                    title={isLast ? t('settings.modesAtLeastOne', 'At least one mode must remain enabled') : undefined}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
+                      active
+                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                        : 'border-gray-200 bg-white text-gray-400 hover:border-gray-300'
+                    } ${isLast ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                  >
+                    <Icon size={14} />
+                    {t(labelKey, fallback)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="flex gap-3 pt-1">
             <button
               onClick={handleSave}
-              disabled={!canSave}
               className={`flex-1 py-2.5 rounded-lg font-bold text-white transition-colors ${
-                done ? 'bg-green-500' : canSave ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-300 cursor-not-allowed'
+                done ? 'bg-green-500' : 'bg-purple-600 hover:bg-purple-700'
               }`}
             >
-              {done ? `✓ ${t('settings.saved', 'Saved!')}` : t('settings.save', 'Save & Enable AI')}
+              {done ? `✓ ${t('settings.saved', 'Saved!')}` : aiReady ? t('settings.save', 'Save & Enable AI') : t('settings.saveSettings', 'Save Settings')}
             </button>
             {alreadySet && (
               <button onClick={handleClear} className="px-4 py-2.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors" title={t('settings.clearKey', 'Remove')}>

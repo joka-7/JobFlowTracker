@@ -41,7 +41,7 @@
     "connectDrive": "Connecter Drive",
     "driveOnTooltip": "Drive synchronisé — cliquer pour déconnecter",
     "connectDriveTooltip": "Connecter Google Drive pour synchroniser sur tous les appareils",
-    "aiSettings": "Paramètres IA",
+    "aiSettings": "Paramètres",
     "installApp": "Installer l'app",
     "iosInstallHint": "Sur iPhone/iPad : touchez Partager (□↑) dans Safari, puis « Sur l'écran d'accueil ».",
     "androidInstallHint": "L'installation fonctionne dans Chrome sur le site en ligne (HTTPS). Menu ⋮ → « Installer l'application ».",
@@ -263,7 +263,7 @@
     "taskGeneral": "Coaching général"
   },
   "settings": {
-    "title": "Paramètres IA",
+    "title": "Paramètres",
     "keyActive": "IA active",
     "providerLabel": "Fournisseur IA",
     "apiKeyLabel": "Clé API",
@@ -273,8 +273,12 @@
     "ollamaUrl": "URL Ollama",
     "ollamaNote": "Assurez-vous qu'Ollama fonctionne localement avec CORS activé.",
     "save": "Enregistrer et activer l'IA",
+    "saveSettings": "Enregistrer les paramètres",
     "saved": "Enregistré !",
-    "clearKey": "Supprimer"
+    "clearKey": "Supprimer",
+    "modesTitle": "Modes activés",
+    "modesNote": "Seuls les modes sélectionnés apparaissent dans le sélecteur.",
+    "modesAtLeastOne": "Au moins un mode doit rester activé."
   },
   "rejection": {
     "analysisTitle": "Analyse du refus",
@@ -432,14 +436,15 @@
   "recruiter": {
     "modeSelection": {
       "title": "Comment utiliserez-vous JobFlowTracker ?",
-      "subtitle": "Choisissez votre rôle — ce choix est définitif",
+      "subtitle": "Sélectionnez les modes souhaités — modifiables dans les Paramètres",
       "jobSeekerTitle": "Recherche d'emploi",
       "jobSeekerShort": "Emploi",
       "jobSeekerDesc": "Suivre entreprises, candidatures et entretiens",
       "recruiterTitle": "Recrutement",
       "recruiterShort": "Recrut.",
       "recruiterDesc": "Suivre les candidats dans votre pipeline de recrutement",
-      "fixedNote": "Vous pouvez changer de mode à tout moment depuis l'en-tête"
+      "fixedNote": "Gérez les modes activés à tout moment dans les Paramètres",
+      "getStarted": "Commencer"
     },
     "status": {
       "applied": "Candidature reçue",

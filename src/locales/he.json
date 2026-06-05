@@ -41,7 +41,7 @@
     "connectDrive": "חבר Drive",
     "driveOnTooltip": "Drive מסנכרן — לחץ לניתוק",
     "connectDriveTooltip": "חבר Google Drive לסנכרון בין מכשירים",
-    "aiSettings": "הגדרות AI",
+    "aiSettings": "הגדרות",
     "installApp": "התקנת אפליקציה",
     "iosInstallHint": "ב-iPhone/iPad: הקש Share (□↑) ב-Safari, ואז «הוסף למסך הבית».",
     "androidInstallHint": "התקנה עובדת ב-Chrome באתר החי (HTTPS). תפריט ⋮ → «התקן אפליקציה» או «הוסף למסך הבית».",
@@ -270,7 +270,7 @@
     "taskGeneral": "אימון כללי"
   },
   "settings": {
-    "title": "הגדרות AI",
+    "title": "הגדרות",
     "keyActive": "AI פעיל",
     "providerLabel": "ספק AI",
     "apiKeyLabel": "מפתח API",
@@ -280,8 +280,12 @@
     "ollamaUrl": "כתובת Ollama",
     "ollamaNote": "ודא ש-Ollama פועל מקומית עם CORS מאופשר.",
     "save": "שמור והפעל AI",
+    "saveSettings": "שמור הגדרות",
     "saved": "נשמר!",
-    "clearKey": "הסר"
+    "clearKey": "הסר",
+    "modesTitle": "מצבים מופעלים",
+    "modesNote": "רק המצבים הנבחרים יופיעו במחליף המצבים.",
+    "modesAtLeastOne": "לפחות מצב אחד חייב להישאר מופעל."
   },
   "rejection": {
     "analysisTitle": "ניתוח דחייה",
@@ -432,14 +436,15 @@
   "recruiter": {
     "modeSelection": {
       "title": "איך תשתמש ב-JobFlowTracker?",
-      "subtitle": "בחר את התפקיד שלך — לא ניתן לשנות בהמשך",
+      "subtitle": "בחר את המצבים הרצויים — ניתן לשנות בהגדרות בכל עת",
       "jobSeekerTitle": "חיפוש עבודה",
       "jobSeekerShort": "חיפוש",
       "jobSeekerDesc": "מעקב אחר חברות, מועמדויות וראיונות",
       "recruiterTitle": "גיוס עובדים",
       "recruiterShort": "גיוס",
       "recruiterDesc": "מעקב אחר מועמדים בתהליך הגיוס",
-      "fixedNote": "ניתן להחליף מוד בכל עת מהכותרת"
+      "fixedNote": "ניתן לנהל מצבים מופעלים בכל עת בהגדרות",
+      "getStarted": "התחל"
     },
     "status": {
       "applied": "מועמדות התקבלה",
