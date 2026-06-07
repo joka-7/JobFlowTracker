@@ -292,9 +292,10 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
   }, []);
 
   useEffect(() => {
-    // Ensure there is always a history entry to land on, so pressing back
-    // from the first in-app screen returns to the board instead of closing the app.
-    window.history.replaceState({ tab: 'board', selectedId: null }, '');
+    // Ensure the bottom-most entry has a null state (the "exit" sentinel below),
+    // so popstate's `if (!s)` branch can catch it and re-arm instead of letting
+    // the back gesture leave the document entirely.
+    window.history.replaceState(null, '');
     window.history.pushState({ tab: activeTab, selectedId }, '');
 
     const onPop = (e) => {
