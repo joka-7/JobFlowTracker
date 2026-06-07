@@ -701,7 +701,7 @@ Rules:
     if (isEditing) {
       const steps = formData.steps || [];
       return (
-        <div className="flex-1 overflow-y-auto p-3 sm:p-5 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-5 pb-24 custom-scrollbar">
           <div className="flex items-center justify-between mb-4 sm:mb-5">
             <h2 className="text-base sm:text-lg font-bold text-gray-800">
               {formData.id ? tt('form.editTitle', 'Edit Task') : tt('form.addTitle', 'Add New Task')}
@@ -709,11 +709,11 @@ Rules:
             <button
               type="button"
               onClick={() => { setIsEditing(false); if (!formData.id) setSelectedId(null); }}
-              className="text-gray-400 hover:text-red-500 transition-colors"
+              className="shrink-0 p-2 -m-2 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
               title={tt('form.cancel', 'Cancel')}
               aria-label={tt('form.cancel', 'Cancel')}
             >
-              <X size={20} />
+              <X size={22} />
             </button>
           </div>
           <div className="space-y-4">
