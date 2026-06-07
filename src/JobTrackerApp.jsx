@@ -292,15 +292,29 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
   }, []);
 
   useEffect(() => {
+    // Ensure there is always a history entry to land on, so pressing back
+    // from the first in-app screen returns to the board instead of closing the app.
+    window.history.replaceState({ tab: 'board', selectedId: null }, '');
+    window.history.pushState({ tab: activeTab, selectedId }, '');
+
     const onPop = (e) => {
       const s = e.state;
-      if (!s) return;
+      if (!s) {
+        // Reached the bottom of the stack (e.g. mobile back gesture trying to exit) —
+        // re-arm a history entry and fall back to the board instead of letting the app close.
+        window.history.pushState({ tab: 'board', selectedId: null }, '');
+        setActiveTab('board');
+        setSelectedId(null);
+        setIsEditing(false);
+        return;
+      }
       setActiveTab(s.tab || 'board');
       setSelectedId(s.selectedId || null);
       setIsEditing(false);
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSignIn = async () => {
@@ -440,6 +454,16 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
     setCompanies(prev => prev.map(c => String(c.id) === String(companyId) ? updated : c));
     if (user) updateItem(user.uid, mode, updated).catch(console.error);
   }, [companies, user, mode]);
+
+  const handleDeleteInterview = useCallback((companyId, interviewIndex) => {
+    if (!window.confirm(tMode('detail.deleteInterviewConfirm'))) return;
+    const target = companies.find(c => String(c.id) === String(companyId));
+    if (!target || !Array.isArray(target.interviews)) return;
+    const updated = { ...target, interviews: target.interviews.filter((_, i) => i !== interviewIndex) };
+    setCompanies(prev => prev.map(c => String(c.id) === String(companyId) ? updated : c));
+    if (user) updateItem(user.uid, mode, updated).catch(console.error);
+    showToast(tMode('toast.deleted'));
+  }, [companies, user, mode, showToast, tMode]);
 
   const handleRejectionNoteSave = useCallback((text) => {
     if (!rejectionCompany) return;
@@ -704,7 +728,10 @@ Rules:
             {timelineEvents.map((event, index) => (
               <div key={index} className="relative">
                 <div className={`absolute ${timelineDot} top-1 w-4 h-4 rounded-full bg-blue-500 border-4 border-white shadow-sm`}></div>
-                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                <div
+                  onClick={() => { selectCompany({ id: event.parentId }); navigateTo('list', event.parentId); }}
+                  className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+                >
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
                       <span className={`px-2 py-1 text-xs font-bold rounded-md ${event.eventType === 'interview' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}>
@@ -1241,7 +1268,7 @@ Rules:
                       {formData.id ? tMode('form.editTitle') : tMode('form.addTitle')}
                     </h2>
                     <div className="flex gap-2">
-                      <button onClick={() => formData.id ? setIsEditing(false) : setSelectedId(null)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition">{tMode('form.cancel')}</button>
+                      <button onClick={() => { setIsEditing(false); if (!formData.id) setSelectedId(null); }} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition">{tMode('form.cancel')}</button>
                       <button onClick={handleSave} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-sm transition">{tMode('form.save')}</button>
                     </div>
                   </div>
@@ -1563,8 +1590,16 @@ Rules:
                                 {company.interviews.map((interview, idx) => (
                                   <div key={idx} className="relative">
                                     <div className={`absolute ${timelineDot} top-1 w-4 h-4 rounded-full bg-indigo-500 border-4 border-white`}></div>
-                                    <div className="bg-slate-50 p-4 rounded-lg border border-gray-100">
-                                      <div className="flex justify-between items-start mb-2">
+                                    <div className="bg-slate-50 p-4 rounded-lg border border-gray-100 relative">
+                                      <button
+                                        onClick={() => handleDeleteInterview(company.id, idx)}
+                                        className={`absolute top-4 ${isRTL ? 'left-4' : 'right-4'} text-gray-400 hover:text-red-500`}
+                                        aria-label={tMode('detail.deleteInterview')}
+                                        title={tMode('detail.deleteInterview')}
+                                      >
+                                        <Trash2 size={16} />
+                                      </button>
+                                      <div className={`flex justify-between items-start mb-2 ${isRTL ? 'pl-8' : 'pr-8'}`}>
                                         <h4 className="font-bold text-gray-900">
                                           {interview.type ? tInterviewType(interview.type) : tMode('detail.processStage')}
                                         </h4>

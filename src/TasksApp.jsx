@@ -701,10 +701,22 @@ Rules:
     if (isEditing) {
       const steps = formData.steps || [];
       return (
-        <div className="flex-1 overflow-y-auto p-3 sm:p-5 custom-scrollbar">
-          <h2 className="text-base sm:text-lg font-bold text-gray-800 mb-4 sm:mb-5">
-            {formData.id ? tt('form.editTitle', 'Edit Task') : tt('form.addTitle', 'Add New Task')}
-          </h2>
+        <div className="flex-1 overflow-y-auto p-3 sm:p-5 pb-20 custom-scrollbar">
+          <div className="flex items-center justify-between mb-4 sm:mb-5">
+            <h2 className="text-base sm:text-lg font-bold text-gray-800">
+              {formData.id ? tt('form.editTitle', 'Edit Task') : tt('form.addTitle', 'Add New Task')}
+            </h2>
+            <button
+              type="button"
+              onClick={() => { setIsEditing(false); if (!formData.id) setSelectedId(null); }}
+              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors text-sm font-semibold"
+              title={tt('form.cancel', 'Cancel')}
+              aria-label={tt('form.cancel', 'Cancel')}
+            >
+              <X size={18} />
+              {tt('form.cancel', 'Cancel')}
+            </button>
+          </div>
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
@@ -1457,7 +1469,7 @@ Rules:
           type="button"
           onClick={() => setChatOpen(true)}
           title={t('chat.titleTasks', 'Task Coach')}
-          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 w-11 h-11 sm:w-12 sm:h-12 rounded-full shadow-lg flex items-center justify-center bg-gradient-to-br from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white hover:scale-110 transition-all"
+          className={`fixed ${isEditing ? 'bottom-20 sm:bottom-24' : 'bottom-4 sm:bottom-6'} right-4 sm:right-6 z-40 w-11 h-11 sm:w-12 sm:h-12 rounded-full shadow-lg flex items-center justify-center bg-gradient-to-br from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white hover:scale-110 transition-all`}
         >
           <Sparkles size={20} />
         </button>

@@ -188,7 +188,8 @@ export default function CalendarView({ events = [], onEventClick, isRTL = false,
                     return (
                       <div
                         key={i}
-                        className={`text-xs px-1 rounded truncate ${style.light}`}
+                        onClick={(e) => { e.stopPropagation(); onEventClick && onEventClick(ev); }}
+                        className={`text-xs px-1 rounded truncate cursor-pointer hover:opacity-75 ${style.light}`}
                         title={ev.title}
                       >
                         {ev.title}

@@ -141,12 +141,14 @@
     "personalNotes": "Notes personnelles",
     "processHistory": "Historique du processus",
     "processStage": "Étape du processus",
+    "deleteInterview": "Supprimer l'entretien",
     "noInterviews": "Aucun entretien enregistré. Cliquez sur « Modifier » pour en ajouter.",
     "selectCompany": "Sélectionnez une entreprise dans la liste",
     "selectCompanyHint": "ou utilisez les boutons JSON ci-dessus pour charger des données",
     "priorityLabel": "Priorité",
     "rejectionTitle": "Détails du refus",
-    "analyzeRejection": "Analyser avec IA"
+    "analyzeRejection": "Analyser avec IA",
+    "deleteInterviewConfirm": "Êtes-vous sûr de vouloir supprimer cet entretien ?"
   },
   "stats": {
     "title": "Statistiques",
@@ -531,12 +533,14 @@
       "personalNotes": "Notes de recrutement",
       "processHistory": "Historique des entretiens",
       "processStage": "Étape d'entretien",
+      "deleteInterview": "Supprimer l'entretien",
       "noInterviews": "Aucun entretien enregistré. Cliquez \"Modifier\" pour ajouter.",
       "selectCompany": "Sélectionnez un candidat dans la liste",
       "selectCompanyHint": "ou utilisez les boutons d'import JSON ci-dessus",
       "priorityLabel": "Priorité",
       "rejectionTitle": "Détails du refus",
-      "analyzeRejection": "Analyser avec l'IA"
+      "analyzeRejection": "Analyser avec l'IA",
+      "deleteInterviewConfirm": "Êtes-vous sûr de vouloir supprimer cet entretien ?"
     },
     "stats": {
       "title": "Statistiques",
