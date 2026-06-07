@@ -701,7 +701,7 @@ Rules:
     if (isEditing) {
       const steps = formData.steps || [];
       return (
-        <div className="flex-1 overflow-y-auto p-3 sm:p-5 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-5 pb-24 custom-scrollbar">
           <div className="flex items-center justify-between mb-4 sm:mb-5">
             <h2 className="text-base sm:text-lg font-bold text-gray-800">
               {formData.id ? tt('form.editTitle', 'Edit Task') : tt('form.addTitle', 'Add New Task')}
@@ -1464,7 +1464,7 @@ Rules:
         />
       )}
 
-      {!chatOpen && !simulationData && !showGoalsFinder && !isEditing && (
+      {!chatOpen && !simulationData && !showGoalsFinder && (
         <button
           type="button"
           onClick={() => setChatOpen(true)}
