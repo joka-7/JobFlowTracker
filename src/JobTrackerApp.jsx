@@ -1268,7 +1268,7 @@ Rules:
                       {formData.id ? tMode('form.editTitle') : tMode('form.addTitle')}
                     </h2>
                     <div className="flex gap-2">
-                      <button onClick={() => formData.id ? setIsEditing(false) : setSelectedId(null)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition">{tMode('form.cancel')}</button>
+                      <button onClick={() => { setIsEditing(false); if (!formData.id) setSelectedId(null); }} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition">{tMode('form.cancel')}</button>
                       <button onClick={handleSave} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-sm transition">{tMode('form.save')}</button>
                     </div>
                   </div>
