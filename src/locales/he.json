@@ -141,12 +141,14 @@
     "personalNotes": "הערות אישיות",
     "processHistory": "היסטוריית תהליך",
     "processStage": "שלב בתהליך",
+    "deleteInterview": "מחק ראיון",
     "noInterviews": "אין מידע על ראיונות לחברה זו. לחץ על \"ערוך פרטים\" כדי להוסיף.",
     "selectCompany": "בחר חברה מהרשימה",
     "selectCompanyHint": "או השתמש בלחצני העלאת JSON למעלה כדי לטעון נתונים",
     "priorityLabel": "עדיפות",
     "rejectionTitle": "פרטי דחייה",
-    "analyzeRejection": "ניתוח עם AI"
+    "analyzeRejection": "ניתוח עם AI",
+    "deleteInterviewConfirm": "האם אתה בטוח שברצונך למחוק ראיון זה?"
   },
   "stats": {
     "title": "סטטיסטיקות",
@@ -531,12 +533,14 @@
       "personalNotes": "הערות גיוס",
       "processHistory": "היסטוריית ראיונות",
       "processStage": "שלב בראיון",
+      "deleteInterview": "מחק ראיון",
       "noInterviews": "אין מידע על ראיונות. לחץ \"ערוך פרטים\" להוספה.",
       "selectCompany": "בחר מועמד מהרשימה",
       "selectCompanyHint": "או השתמש בכפתורי העלאת JSON למעלה",
       "priorityLabel": "עדיפות",
       "rejectionTitle": "פרטי דחייה",
-      "analyzeRejection": "ניתוח עם AI"
+      "analyzeRejection": "ניתוח עם AI",
+      "deleteInterviewConfirm": "האם אתה בטוח שברצונך למחוק ראיון זה?"
     },
     "stats": {
       "title": "סטטיסטיקות",

@@ -141,12 +141,14 @@
     "personalNotes": "Personal Notes",
     "processHistory": "Process History",
     "processStage": "Process Stage",
+    "deleteInterview": "Delete interview",
     "noInterviews": "No interview information for this company. Click \"Edit Details\" to add.",
     "selectCompany": "Select a company from the list",
     "selectCompanyHint": "or use the JSON upload buttons above to load data",
     "priorityLabel": "Priority",
     "rejectionTitle": "Rejection Details",
-    "analyzeRejection": "Analyze with AI"
+    "analyzeRejection": "Analyze with AI",
+    "deleteInterviewConfirm": "Are you sure you want to delete this interview?"
   },
   "stats": {
     "title": "Statistics",
@@ -531,12 +533,14 @@
       "personalNotes": "Hiring Notes",
       "processHistory": "Interview History",
       "processStage": "Interview Stage",
+      "deleteInterview": "Delete interview",
       "noInterviews": "No interviews recorded. Click \"Edit Details\" to add.",
       "selectCompany": "Select a candidate from the list",
       "selectCompanyHint": "or use the JSON upload buttons above to load data",
       "priorityLabel": "Priority",
       "rejectionTitle": "Rejection Details",
-      "analyzeRejection": "Analyze with AI"
+      "analyzeRejection": "Analyze with AI",
+      "deleteInterviewConfirm": "Are you sure you want to delete this interview?"
     },
     "stats": {
       "title": "Statistics",
