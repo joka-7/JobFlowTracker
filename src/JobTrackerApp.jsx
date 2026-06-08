@@ -28,9 +28,6 @@ import ModeDropdown from './components/ModeDropdown';
 import CalendarView from './components/CalendarView';
 import SearchFilter from './components/SearchFilter';
 import BulkActionsBar from './components/BulkActionsBar';
-import Toast from './components/Toast';
-import DeletionConfirm from './components/DeletionConfirm';
-import { useToast } from './useToast';
 import { TEMPLATES } from './data/interviewTemplates';
 import {
   getLocalizedQuestions, getLocalizedCategoryLabel, formatQuestionList,
@@ -196,13 +193,10 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { canInstall, runInstall } = usePwaInstall();
 
-  // UX Improvements: Search, Filter, Bulk Actions, Toast
+  // UX Improvements: Search, Filter, Bulk Actions
   const [searchText, setSearchText] = useState('');
   const [filterStatuses, setFilterStatuses] = useState([]);
   const [selectedItems, setSelectedItems] = useState(new Set());
-  const { toasts, addToast, removeToast } = useToast();
-  const [deletedItem, setDeletedItem] = useState(null);
-  const deletedItemTimeoutRef = useRef(null);
 
   useEffect(() => {
     const provider = localStorage.getItem('aiProvider') || 'gemini';
@@ -1796,19 +1790,6 @@ Rules:
           onOpenSettings={() => { setShowAIFinder(false); setShowAISettings(true); }}
         />
       )}
-
-      {/* Toast Notifications */}
-      {toasts.map(toast => (
-        <Toast
-          key={toast.id}
-          message={toast.message}
-          action={toast.action}
-          onAction={toast.onAction}
-          type={toast.type}
-          timeout={toast.timeout}
-          onClose={() => removeToast(toast.id)}
-        />
-      ))}
     </div>
   );
 }

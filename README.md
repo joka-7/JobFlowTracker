@@ -120,6 +120,8 @@ Supports Google Gemini, Groq (free tier), Ollama (free/local), Anthropic Claude,
 - **Onboarding wizard** — 5-step guided tour on first visit (job seeker only)
 - **3 languages** — English, Hebrew (RTL), French; persists across sessions
 - **Keyboard shortcuts** — `N` to add a company/candidate/task, `Esc` to close
+- **Search & multi-status filter** — free-text search plus toggleable status pills narrow the list view (job seeker / recruiter)
+- **Bulk actions** — select multiple companies/candidates with checkboxes to bulk change status, export, or delete (with confirmation) via the bulk actions bar
 
 ---
 
@@ -231,7 +233,7 @@ Once a provider is configured, open any company and click the **AI Assistant** b
 ```
 src/
 ├── App.jsx                  # Mode gate → ModeSelection, JobTrackerApp, or TasksApp
-├── JobTrackerApp.jsx        # Job seeker + recruiter UI (~1500 lines)
+├── JobTrackerApp.jsx        # Job seeker + recruiter UI (~1800 lines)
 ├── TasksApp.jsx             # Task manager UI with step management
 ├── statuses.js              # Status configs for all 3 modes, storage keys
 ├── firebase.js              # Auth + mode-aware Firestore helpers
@@ -241,6 +243,8 @@ src/
 │   ├── ModeSwitcher.jsx     # Header mode switcher (3 icon buttons)
 │   ├── AIAssistant.jsx      # Floating AI panel (job seeker only)
 │   ├── Onboarding.jsx       # First-visit wizard (job seeker only)
+│   ├── SearchFilter.jsx     # Search box + multi-status filter pills (list view)
+│   ├── BulkActionsBar.jsx   # Sticky bar for bulk status/export/delete on selection
 │   └── ...
 ├── locales/                 # en.json, he.json, fr.json
 ├── __tests__/               # Vitest unit + integration tests
