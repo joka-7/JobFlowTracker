@@ -26,6 +26,11 @@ import ChatModal from './components/ChatModal';
 import Tooltip from './components/Tooltip';
 import ModeDropdown from './components/ModeDropdown';
 import CalendarView from './components/CalendarView';
+import SearchFilter from './components/SearchFilter';
+import BulkActionsBar from './components/BulkActionsBar';
+import Toast from './components/Toast';
+import DeletionConfirm from './components/DeletionConfirm';
+import { useToast } from './useToast';
 import { TEMPLATES } from './data/interviewTemplates';
 import {
   getLocalizedQuestions, getLocalizedCategoryLabel, formatQuestionList,
@@ -193,6 +198,14 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { canInstall, runInstall } = usePwaInstall();
 
+  // UX Improvements: Search, Filter, Bulk Actions, Toast
+  const [searchText, setSearchText] = useState('');
+  const [filterStatuses, setFilterStatuses] = useState([]);
+  const [selectedItems, setSelectedItems] = useState(new Set());
+  const { toasts, addToast, removeToast } = useToast();
+  const [deletedItem, setDeletedItem] = useState(null);
+  const deletedItemTimeoutRef = useRef(null);
+
   useEffect(() => {
     const provider = localStorage.getItem('aiProvider') || 'gemini';
     const apiKey = localStorage.getItem('aiApiKey') || localStorage.getItem('anthropicApiKey') || '';
@@ -337,12 +350,22 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
     return companies.filter(c => {
       const nameStr = safeStr(c.name || c.company).toLowerCase();
       const roleStr = safeStr(c.role || c.position).toLowerCase();
-      const searchStr = safeStr(searchQuery).toLowerCase();
-      const matchSearch = nameStr.includes(searchStr) || roleStr.includes(searchStr);
-      const matchStatus = statusFilter === 'all' || safeStr(c.status) === statusFilter;
+      const locationStr = safeStr(c.location).toLowerCase();
+
+      // Use new searchText if available, fall back to searchQuery
+      const search = searchText || searchQuery;
+      const searchStr = safeStr(search).toLowerCase();
+      const matchSearch = !searchStr || nameStr.includes(searchStr) ||
+                          roleStr.includes(searchStr) ||
+                          locationStr.includes(searchStr);
+
+      // Use new filterStatuses if available, fall back to statusFilter
+      const statuses = filterStatuses.length > 0 ? filterStatuses : (statusFilter === 'all' ? [] : [statusFilter]);
+      const matchStatus = statuses.length === 0 || statuses.includes(safeStr(c.status));
+
       return matchSearch && matchStatus;
     });
-  }, [companies, searchQuery, statusFilter]);
+  }, [companies, searchQuery, statusFilter, searchText, filterStatuses]);
 
   useEffect(() => {
     setVisibleCount(25);
