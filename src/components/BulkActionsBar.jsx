@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trash2, Tag, Download, X } from 'lucide-react';
+import { Trash2, Download, X } from 'lucide-react';
 
 /**
  * Bulk Actions Bar
@@ -9,7 +9,6 @@ export default function BulkActionsBar({
   selectedCount,
   onBulkDelete,
   onBulkStatusUpdate,
-  onBulkTag,
   onBulkExport,
   onClearSelection,
   statusOptions = [],
@@ -60,15 +59,6 @@ export default function BulkActionsBar({
               )}
             </div>
           )}
-
-          {/* Tag/Label */}
-          <button
-            onClick={() => onBulkTag?.()}
-            className="px-3 py-2 text-sm font-medium bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors flex items-center gap-1"
-            disabled={loading}
-          >
-            <Tag size={16} /> Tag
-          </button>
 
           {/* Export */}
           <button
