@@ -88,6 +88,8 @@ JobFlowTracker is a single-page application (SPA) for tracking a job search, a r
 | `src/components/ResumeReview.jsx` | Modal | Resume paste, calls `getResumeAdvice`, streaming result |
 | `src/components/TemplateLibrary.jsx` | Modal | 80+ interview questions, 6 categories, full-text search |
 | `src/components/CalendarView.jsx` | View | Monthly calendar grid; receives `events[]`, shows color-coded chips per day, day-detail side panel, RTL-aware, i18n date formatting |
+| `src/components/SearchFilter.jsx` | List sub-component | Search input + toggleable multi-status filter pills; reports changes via `onSearch` / `onFilterChange` callbacks |
+| `src/components/BulkActionsBar.jsx` | List sub-component | Sticky bar shown when ≥1 item is checkbox-selected; bulk status update, export, delete (with its own confirm modal), and clear-selection actions |
 | `src/components/Tooltip.jsx` | Utility | Hover tooltip using Tailwind group/group-hover classes |
 | `src/data/interviewTemplates.js` | Data | `TEMPLATES` with 6 category keys |
 | `src/locales/en.json` | i18n | English strings (includes `tasks.*` namespace) |
