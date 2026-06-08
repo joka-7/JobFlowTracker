@@ -86,6 +86,15 @@ export async function initMockAI(page) {
   });
 }
 
+/** Configure Groq as AI provider for rate limiting tests. */
+export async function initGroqConfig(page) {
+  await page.addInitScript(() => {
+    localStorage.setItem('aiProvider', 'groq');
+    localStorage.setItem('aiApiKey', 'test-groq-key');
+    localStorage.setItem('aiModel', 'llama-3.1-8b-instant');
+  });
+}
+
 /** Mock Gemini streaming API — avoids real network and API keys in e2e. */
 export async function mockGeminiChatStream(page, replyText = 'Mock AI reply for e2e.') {
   const chunk = JSON.stringify({
