@@ -52,6 +52,15 @@ export const PROVIDERS = {
 
 let config = { provider: 'gemini', apiKey: '', model: '', ollamaUrl: 'http://localhost:11434' };
 
+// Rate limiting: track last call time per action (for testing purposes)
+let rateLimitingEnabled = false; // Disabled by default in tests
+export function _setRateLimitingEnabled(enabled) {
+  rateLimitingEnabled = enabled;
+}
+export function _resetRateLimitForTests() {
+  rateLimitingEnabled = false;
+}
+
 export function initAI(provider, apiKey, model, ollamaUrl) {
   const p = provider || 'gemini';
   config = {
