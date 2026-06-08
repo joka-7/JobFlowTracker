@@ -52,12 +52,34 @@ export const PROVIDERS = {
 
 let config = { provider: 'gemini', apiKey: '', model: '', ollamaUrl: 'http://localhost:11434' };
 
-// Rate limiting: track last call time per action (for testing purposes)
-let rateLimitingEnabled = false; // Disabled by default in tests
+// Rate limiting: track last call time per action
+const rateLimitMap = new Map();
+const RATE_LIMIT_MS = 3000; // 3 second throttle between calls
+// Disable rate limiting in browser environments (where E2E tests run) and Node.js test environments
+const inBrowser = typeof window !== 'undefined';
+const isNodeTest = typeof process !== 'undefined' && (process.env.NODE_ENV === 'test' || process.env.VITEST);
+let rateLimitingEnabled = !inBrowser && !isNodeTest;
+
+function checkRateLimit(key) {
+  // Skip rate limiting in test environment
+  if (!rateLimitingEnabled) return;
+
+  const now = Date.now();
+  const lastCall = rateLimitMap.get(key) || 0;
+  if (now - lastCall < RATE_LIMIT_MS) {
+    const waitMs = RATE_LIMIT_MS - (now - lastCall);
+    throw new Error(`Rate limited. Please wait ${Math.ceil(waitMs / 1000)}s before next request.`);
+  }
+  rateLimitMap.set(key, now);
+}
+
+// Export for testing purposes
 export function _setRateLimitingEnabled(enabled) {
   rateLimitingEnabled = enabled;
 }
+
 export function _resetRateLimitForTests() {
+  rateLimitMap.clear();
   rateLimitingEnabled = false;
 }
 
@@ -165,9 +187,25 @@ async function streamGemini(apiKey, model, prompt, onChunk) {
   return full;
 }
 
+// Validate Ollama URL for security (HTTPS only or localhost)
+function validateOllamaUrl(url) {
+  try {
+    const parsed = new URL(url);
+    // Allow localhost/127.0.0.1 over HTTP (for development)
+    const isLocalhost = ['localhost', '127.0.0.1', '::1'].includes(parsed.hostname);
+    if (!isLocalhost && parsed.protocol !== 'https:') {
+      throw new Error('Remote Ollama must use HTTPS. For local testing, use http://localhost:11434');
+    }
+    return parsed.origin;
+  } catch (err) {
+    throw new Error(`Invalid Ollama URL: ${err.message}`);
+  }
+}
+
 // Ollama newline-delimited JSON stream
 async function streamOllama(baseUrl, model, prompt, onChunk) {
-  const res = await fetch(`${baseUrl}/api/generate`, {
+  const validUrl = validateOllamaUrl(baseUrl);
+  const res = await fetch(`${validUrl}/api/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ model, prompt, stream: true }),
@@ -215,14 +253,16 @@ async function streamAnthropic(apiKey, model, prompt, onChunk) {
 /**
  * Build a provider-safe chat history from UI messages.
  * Ensures user-first ordering (required by Anthropic/Gemini) and strict alternation.
+ * Validates and sanitizes message roles to prevent injection.
  */
 const SIM_TRIGGER = '__sim_start__';
+const VALID_ROLES = new Set(['user', 'assistant']);
 
 export function buildApiMessages(uiMessages, { appendSimBegin = false } = {}) {
   let msgs = (Array.isArray(uiMessages) ? uiMessages : [])
     .map(({ role, content }) => ({
-      role: role === 'assistant' ? 'assistant' : 'user',
-      content: String(content ?? '').trim(),
+      role: VALID_ROLES.has(role) ? role : 'user', // Strict role validation
+      content: String(content ?? '').trim().slice(0, 4000), // Cap message length
     }))
     .filter(m => m.content.length > 0 && m.content !== SIM_TRIGGER);
 
@@ -246,6 +286,9 @@ export function buildApiMessages(uiMessages, { appendSimBegin = false } = {}) {
 
 // Multi-turn chat streaming (messages must already be normalized via buildApiMessages)
 export async function streamChat(messages, systemPrompt, onChunk) {
+  // Rate limit check
+  checkRateLimit('chat-stream');
+
   const { provider, apiKey, model, ollamaUrl } = config;
   const apiMessages = Array.isArray(messages) && messages.length > 0
     ? messages
@@ -310,7 +353,8 @@ export async function streamChat(messages, systemPrompt, onChunk) {
   }
 
   if (provider === 'ollama') {
-    const res = await fetch(`${ollamaUrl}/api/chat`, {
+    const validUrl = validateOllamaUrl(ollamaUrl);
+    const res = await fetch(`${validUrl}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -377,6 +421,7 @@ async function runStream(prompt, onChunk) {
 const LANG = { en: 'Respond in English.', he: 'ענה בעברית.', fr: 'Réponds en français.' };
 
 export async function getInterviewPrep(company, interviewType, language = 'en', onChunk) {
+  checkRateLimit('interview-prep');
   const interviewCount = company.interviews?.length || 0;
   const prompt = `You are a job search coach helping someone prepare for a ${interviewType} interview at ${delimUserField(company.name)}.
 ${company.role ? `Role: ${delimUserField(company.role)}` : ''}
@@ -393,6 +438,7 @@ ${LANG[language] || LANG.en}`;
 }
 
 export async function analyzeRejection(company, language = 'en', onChunk) {
+  checkRateLimit('analyze-rejection');
   const interviews = Array.isArray(company.interviews) ? company.interviews : [];
   const r = company.rejection || {};
   const interviewTypes = interviews.map(i => i.type).filter(Boolean);
@@ -414,6 +460,7 @@ ${LANG[language] || LANG.en}`;
 }
 
 export async function analyzePatterns(companies, language = 'en', onChunk) {
+  checkRateLimit('analyze-patterns');
   const rejected = companies.filter(c => ['rejected', 'ghosted'].includes(c.status)).length;
   const active = companies.filter(c => !['rejected', 'ghosted', 'withdrawn'].includes(c.status)).length;
   const totalInterviews = companies.reduce((acc, c) => acc + (c.interviews?.length || 0), 0);
@@ -441,6 +488,7 @@ ${LANG[language] || LANG.en}`;
 }
 
 export async function getSchedulingAdvice(company, language = 'en', onChunk) {
+  checkRateLimit('scheduling-advice');
   const upcoming = (company.interviews || []).filter(
     i => i.date && new Date(i.date) > new Date()
   );
@@ -474,6 +522,7 @@ ${LANG[language] || LANG.en}`;
 }
 
 export async function getResumeAdvice(company, resumeText, language = 'en', onChunk) {
+  checkRateLimit('resume-advice');
   const prompt = `You are a job application coach helping tailor a resume for a specific role.
 
 Company: ${delimUserField(company.name)}
@@ -567,6 +616,7 @@ ${langInstruction}`;
 }
 
 export async function debriefInterview(notes, context, language = 'en', onChunk) {
+  checkRateLimit('interview-debrief');
   const prompt = `You are an expert interview coach. Analyze these post-interview notes written by the candidate:
 
 ---

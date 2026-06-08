@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Search, Plus, MapPin, Globe, Calendar,
   User, CheckCircle, Clock, Trash2, Edit2,
-  ArrowLeft, ArrowRight, Download, Upload, Filter, Layout, List, Activity, AlertTriangle,
+  ArrowLeft, ArrowRight, Download, Upload, Layout, List, Activity, AlertTriangle,
   Cloud, CloudOff, Languages, BarChart2, Settings, MoreVertical, Smartphone
 } from 'lucide-react';
 import {
@@ -26,6 +26,8 @@ import ChatModal from './components/ChatModal';
 import Tooltip from './components/Tooltip';
 import ModeDropdown from './components/ModeDropdown';
 import CalendarView from './components/CalendarView';
+import SearchFilter from './components/SearchFilter';
+import BulkActionsBar from './components/BulkActionsBar';
 import { TEMPLATES } from './data/interviewTemplates';
 import {
   getLocalizedQuestions, getLocalizedCategoryLabel, formatQuestionList,
@@ -171,8 +173,6 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
 
   const [selectedId, setSelectedId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [visibleCount, setVisibleCount] = useState(25);
   const [activeTab, setActiveTab] = useState('board');
   const [toastMessage, setToastMessage] = useState('');
@@ -192,6 +192,11 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
   const [rejectionCompany, setRejectionCompany] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { canInstall, runInstall } = usePwaInstall();
+
+  // UX Improvements: Search, Filter, Bulk Actions
+  const [searchText, setSearchText] = useState('');
+  const [filterStatuses, setFilterStatuses] = useState([]);
+  const [selectedItems, setSelectedItems] = useState(new Set());
 
   useEffect(() => {
     const provider = localStorage.getItem('aiProvider') || 'gemini';
@@ -222,8 +227,8 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
     setSelectedId(null);
     setIsEditing(false);
     setFormData(makeInitialFormState(mode === 'recruiter'));
-    setStatusFilter('all');
-    setSearchQuery('');
+    setFilterStatuses([]);
+    setSearchText('');
     setActiveTab('board');
     setShowOnboarding(mode !== 'recruiter' && !localStorage.getItem(STORAGE_KEYS.jobSeekerOnboarding));
   }, [mode]);
@@ -337,16 +342,22 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
     return companies.filter(c => {
       const nameStr = safeStr(c.name || c.company).toLowerCase();
       const roleStr = safeStr(c.role || c.position).toLowerCase();
-      const searchStr = safeStr(searchQuery).toLowerCase();
-      const matchSearch = nameStr.includes(searchStr) || roleStr.includes(searchStr);
-      const matchStatus = statusFilter === 'all' || safeStr(c.status) === statusFilter;
+      const locationStr = safeStr(c.location).toLowerCase();
+
+      const searchStr = safeStr(searchText).toLowerCase();
+      const matchSearch = !searchStr || nameStr.includes(searchStr) ||
+                          roleStr.includes(searchStr) ||
+                          locationStr.includes(searchStr);
+
+      const matchStatus = filterStatuses.length === 0 || filterStatuses.includes(safeStr(c.status));
+
       return matchSearch && matchStatus;
     });
-  }, [companies, searchQuery, statusFilter]);
+  }, [companies, searchText, filterStatuses]);
 
   useEffect(() => {
     setVisibleCount(25);
-  }, [searchQuery, statusFilter]);
+  }, [searchText, filterStatuses]);
 
   const timelineEvents = useMemo(() => {
     let events = [];
@@ -443,6 +454,51 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
       showToast(tMode('toast.deleted'));
       if (user) deleteItem(user.uid, mode, id).catch(console.error);
     }
+  };
+
+  const toggleItemSelected = (id) => {
+    const key = String(id);
+    setSelectedItems(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const clearSelection = () => setSelectedItems(new Set());
+
+  const handleBulkDelete = () => {
+    const ids = selectedItems;
+    setCompanies(prev => prev.filter(c => !ids.has(String(c.id))));
+    if (selectedId && ids.has(String(selectedId))) {
+      setSelectedId(null);
+      setIsEditing(false);
+    }
+    if (user) ids.forEach(id => deleteItem(user.uid, mode, id).catch(console.error));
+    clearSelection();
+    showToast(tMode('toast.deleted'));
+  };
+
+  const handleBulkStatusUpdate = (statusId) => {
+    const ids = selectedItems;
+    const updated = companies.map(c => ids.has(String(c.id)) ? { ...c, status: statusId } : c);
+    setCompanies(updated);
+    if (user) batchSaveItems(user.uid, mode, updated.filter(c => ids.has(String(c.id)))).catch(console.error);
+    clearSelection();
+    showToast(tMode('toast.saved'));
+  };
+
+  const handleBulkExport = () => {
+    const selected = companies.filter(c => selectedItems.has(String(c.id)));
+    const dataStr = JSON.stringify(selected, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.download = `${isRecruiter ? 'recruiter-tracker' : 'job-tracker'}-selection-${new Date().toISOString().split('T')[0]}.json`;
+    link.href = url;
+    link.click();
+    showToast(tMode('toast.exported'));
   };
 
   const handleSaveToCompany = useCallback((companyId, text) => {
@@ -1180,28 +1236,14 @@ Rules:
       {activeTab === 'list' && (
         <div className="flex flex-1 overflow-hidden">
           <div className={`w-full md:w-1/3 lg:w-1/4 flex-shrink-0 bg-white ${isRTL ? 'border-l' : 'border-r'} border-gray-200 flex-col ${selectedId || isEditing ? 'hidden md:flex' : 'flex'}`}>
-            <div className="p-4 border-b border-gray-100 bg-gray-50 space-y-3">
-              <div className="relative">
-                <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-2.5 text-gray-400`} size={18} />
-                <input
-                  type="text"
-                  placeholder={tMode('list.searchPlaceholder')}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`w-full ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm`}
-                />
-              </div>
-              <div className="relative">
-                <Filter className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-2.5 text-gray-400`} size={16} />
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className={`w-full ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white text-sm`}
-                >
-                  <option value="all">{tMode('list.allStatuses')}</option>
-                  {STATUSES.map(s => <option key={s.id} value={s.id}>{tStatus(s.id)}</option>)}
-                </select>
-              </div>
+            <div className="p-4 border-b border-gray-100 bg-gray-50">
+              <SearchFilter
+                onSearch={setSearchText}
+                onFilterChange={setFilterStatuses}
+                placeholder={tMode('list.searchPlaceholder')}
+                filterOptions={STATUSES.map(s => ({ id: s.id, label: tStatus(s.id) }))}
+                mode={mode}
+              />
             </div>
 
             <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
@@ -1213,13 +1255,22 @@ Rules:
                     const statusInfo = STATUSES.find(s => s.id === company.status);
                     const priorityInfo = PRIORITIES.find(p => p.id === company.priority);
                     const isSelected = selectedId === company.id;
+                    const isChecked = selectedItems.has(String(company.id));
                     return (
                       <div
                         key={company.id}
                         onClick={() => selectCompany(company)}
-                        className={`p-3 sm:p-4 min-h-[56px] rounded-xl cursor-pointer transition-all ${isSelected ? 'bg-indigo-50 border-indigo-200 shadow-sm border ring-1 ring-indigo-500' : 'hover:bg-gray-50 active:bg-gray-100 border border-transparent'}`}
+                        className={`p-3 sm:p-4 min-h-[56px] rounded-xl cursor-pointer transition-all ${isSelected ? 'bg-indigo-50 border-indigo-200 shadow-sm border ring-1 ring-indigo-500' : 'hover:bg-gray-50 active:bg-gray-100 border border-transparent'} ${isChecked ? 'ring-1 ring-purple-400' : ''}`}
                       >
                         <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={() => toggleItemSelected(company.id)}
+                            className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500 flex-shrink-0"
+                            aria-label={tMode('list.selectItem', 'Select item')}
+                          />
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 ${getAvatarColor(company.name)}`}>
                             {getInitials(company.name)}
                           </div>
@@ -1250,6 +1301,15 @@ Rules:
                 </>
               )}
             </div>
+
+            <BulkActionsBar
+              selectedCount={selectedItems.size}
+              onBulkDelete={handleBulkDelete}
+              onBulkStatusUpdate={handleBulkStatusUpdate}
+              onBulkExport={handleBulkExport}
+              onClearSelection={clearSelection}
+              statusOptions={STATUSES.map(s => ({ id: s.id, label: tStatus(s.id) }))}
+            />
           </div>
 
           <div className={`flex-1 flex-col bg-slate-50 overflow-y-auto relative custom-scrollbar ${!selectedId && !isEditing ? 'hidden md:flex' : 'flex'}`}>

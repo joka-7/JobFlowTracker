@@ -21,9 +21,10 @@ All state lives in `JobTrackerApp.jsx` using React `useState`. No external state
 | `selectedId` | `string \| null` | ID of the entity shown in the detail/edit panel. |
 | `isEditing` | `boolean` | Whether the edit form is active. |
 | `formData` | `Company` | Working copy of the company being edited or viewed. Initialized from `initialFormState` or from the selected company. |
-| `searchQuery` | `string` | Live text in the list search field. Filters `filteredCompanies` via `useMemo`. |
-| `statusFilter` | `string` | Selected status dropdown value (`'all'` or a status ID). Filters `filteredCompanies` via `useMemo`. |
-| `visibleCount` | `number` | Number of companies shown in the list panel (pagination). Starts at 25; increments by 25 on "Load More". Resets to 25 when `searchQuery` or `statusFilter` changes. |
+| `searchText` | `string` | Live text from `SearchFilter`'s search input. Filters `filteredCompanies` via `useMemo` (matches name, role, location). |
+| `filterStatuses` | `string[]` | Active status filter pills from `SearchFilter` (multi-select). Empty array = no status filter. Filters `filteredCompanies` via `useMemo`. |
+| `selectedItems` | `Set<string>` | IDs (stringified) of companies checkbox-selected for bulk actions. Drives `BulkActionsBar` visibility and its bulk operations. |
+| `visibleCount` | `number` | Number of companies shown in the list panel (pagination). Starts at 25; increments by 25 on "Load More". Resets to 25 when `searchText` or `filterStatuses` changes. |
 | `activeTab` | `'board' \| 'list' \| 'timeline' \| 'stats'` | Which main view is rendered. |
 | `user` | `FirebaseUser \| null` | Currently authenticated Firebase user. `null` when signed out. |
 | `syncing` | `boolean` | True while `loadAllCompanies` is in flight after sign-in. Used to show pulsing cloud icon. |
@@ -39,7 +40,7 @@ All state lives in `JobTrackerApp.jsx` using React `useState`. No external state
 
 | Name | Dependencies | Description |
 |---|---|---|
-| `filteredCompanies` | `companies`, `searchQuery`, `statusFilter` | Companies matching both the search text and status filter. |
+| `filteredCompanies` | `companies`, `searchText`, `filterStatuses` | Companies matching both the search text (name/role/location, case-insensitive) and the active status filter pills (OR within the set; no filter = match all). |
 | `timelineEvents` | `companies`, `i18n.language` | Flattened array of all interview and homework deadline events across all companies, sorted descending by date. |
 | `stats` | `companies` | Totals: total, byStatus map, active count, response rate %, interview count. |
 | `upcomingEvents` | `timelineEvents` | Subset of `timelineEvents` with dates between today and +14 days, sorted ascending. |
@@ -396,6 +397,32 @@ The `language` parameter comes from `i18n.language` in `JobTrackerApp`.
 
 **Key behavior:** Wraps children in a `div` with Tailwind `group` class. Tooltip text is shown on `group-hover` using `opacity-0 group-hover:opacity-100` transition.
 
+### SearchFilter (`src/components/SearchFilter.jsx`)
+
+**Props:** `onSearch`, `onFilterChange`, `placeholder`, `filterOptions` (`{ id, label }[]`), `mode`
+
+**Key state:** `searchText`, `activeFilters` (string[]) — local UI state; the component is uncontrolled and reports changes upward via callbacks.
+
+**Key behavior:**
+- Search input calls `onSearch(text)` on every keystroke; parent stores it in `searchText` and uses it in `filteredCompanies`.
+- Status pills toggle membership in `activeFilters` and call `onFilterChange(filters)`; parent stores it in `filterStatuses`.
+- If `filterOptions` is empty, falls back to a built-in per-mode default list (`jobseeker`, `recruiter`, or generic statuses).
+- A clear (X) button appears once there is any active search text or filter; resets both and notifies the parent.
+
+### BulkActionsBar (`src/components/BulkActionsBar.jsx`)
+
+**Props:** `selectedCount`, `onBulkDelete`, `onBulkStatusUpdate`, `onBulkExport`, `onClearSelection`, `statusOptions` (`{ id, label }[]`), `loading`
+
+**Key state:** `showStatusMenu`, `showConfirmDelete`
+
+**Key behavior:**
+- Renders `null` when `selectedCount === 0`; otherwise shown as a sticky bar at the bottom of the list panel.
+- "Change Status" opens a dropdown of `statusOptions`; picking one calls `onBulkStatusUpdate(statusId)` (only rendered when `statusOptions.length > 0`).
+- "Export" calls `onBulkExport()` directly (no confirmation).
+- "Delete" opens an in-component confirm modal ("Delete N items? This action cannot be undone"); confirming calls `onBulkDelete()`.
+- "Clear" calls `onClearSelection()`.
+- In `JobTrackerApp`, the wired handlers are: `handleBulkStatusUpdate` (maps status across selected IDs and calls `batchSaveItems`), `handleBulkExport` (downloads a JSON file of just the selected items), `handleBulkDelete` (filters selected IDs out of `companies`, calls `deleteItem` per ID, clears the detail panel if the open item was deleted), `clearSelection` (resets the `selectedItems` Set).
+
 ---
 
 ## 7. i18n Structure
@@ -480,7 +507,7 @@ onClick={() => setVisibleCount(n => n + 25)}
 ```
 The button label shows the remaining count: `"Load more (N remaining)"`.
 
-**Reset:** A `useEffect` with `[searchQuery, statusFilter]` as dependencies resets `visibleCount` to 25 whenever the filter changes, ensuring the user does not see a "ghost" high page count after narrowing results.
+**Reset:** A `useEffect` with `[searchText, filterStatuses]` as dependencies resets `visibleCount` to 25 whenever the filter changes, ensuring the user does not see a "ghost" high page count after narrowing results.
 
 ---
 

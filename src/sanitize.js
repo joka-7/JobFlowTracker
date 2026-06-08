@@ -1,5 +1,17 @@
 import { STATUSES_TASKS } from './statuses';
 
+/** Generate a cryptographically random ID (fallback to timestamp if crypto unavailable) */
+export function generateId() {
+  if (typeof window !== 'undefined' && window.crypto?.getRandomValues) {
+    // Browser environment - use crypto
+    const arr = new Uint8Array(12);
+    window.crypto.getRandomValues(arr);
+    return Array.from(arr, byte => byte.toString(16).padStart(2, '0')).join('');
+  }
+  // Fallback: timestamp + random suffix
+  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
 export function safeStr(val) {
   if (val === null || val === undefined) return '';
   if (typeof val === 'string') return val;
@@ -38,8 +50,8 @@ function sanitizeRejection(rejection) {
 /** Whitelist fields for job seeker / recruiter tracker records (import + localStorage). */
 export function sanitizeTrackerRecords(importedArray, { unnamedLabel = 'Unnamed' } = {}) {
   if (!Array.isArray(importedArray)) return [];
-  return importedArray.slice(0, 10000).map((c, idx) => ({
-    id: c.id ? String(c.id).slice(0, 64) : `${Date.now()}${idx}`,
+  return importedArray.slice(0, 10000).map((c) => ({
+    id: c.id ? String(c.id).slice(0, 64) : generateId(),
     name: safeStr(c.name || c.company || unnamedLabel),
     role: safeStr(c.role || c.position || ''),
     status: safeStr(c.status || ''),
@@ -74,8 +86,8 @@ export function parseTrackerImportPayload(raw, { unnamedLabel = 'Unnamed' } = {}
 
 function sanitizeTaskSteps(steps) {
   if (!Array.isArray(steps)) return [];
-  return steps.slice(0, 200).map((s, idx) => ({
-    id: s.id ? String(s.id).slice(0, 64) : `${Date.now()}${idx}`,
+  return steps.slice(0, 200).map((s) => ({
+    id: s.id ? String(s.id).slice(0, 64) : generateId(),
     title: safeStr(s.title),
     status: STEP_STATUSES.has(s.status) ? s.status : 'todo',
     notes: safeStr(s.notes),
@@ -86,8 +98,8 @@ function sanitizeTaskSteps(steps) {
 /** Whitelist fields for tasks mode (import + localStorage). */
 export function sanitizeTaskRecords(rows) {
   if (!Array.isArray(rows)) return [];
-  return rows.slice(0, 10000).map((t, idx) => ({
-    id: t.id ? String(t.id).slice(0, 64) : `${Date.now()}${idx}`,
+  return rows.slice(0, 10000).map((t) => ({
+    id: t.id ? String(t.id).slice(0, 64) : generateId(),
     name: safeStr(t.name) || 'Unnamed',
     description: safeStr(t.description || ''),
     status: TASK_STATUS_IDS.has(t.status) ? t.status : 'active',
