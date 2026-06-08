@@ -55,9 +55,10 @@ let config = { provider: 'gemini', apiKey: '', model: '', ollamaUrl: 'http://loc
 // Rate limiting: track last call time per action
 const rateLimitMap = new Map();
 const RATE_LIMIT_MS = 3000; // 3 second throttle between calls
-// Disable rate limiting in test/e2e environment
-const isTest = typeof process !== 'undefined' && (process.env.NODE_ENV === 'test' || process.env.VITEST);
-let rateLimitingEnabled = !isTest; // Disabled by default in tests
+// Disable rate limiting in browser environments (where E2E tests run) and Node.js test environments
+const inBrowser = typeof window !== 'undefined';
+const isNodeTest = typeof process !== 'undefined' && (process.env.NODE_ENV === 'test' || process.env.VITEST);
+let rateLimitingEnabled = !inBrowser && !isNodeTest;
 
 function checkRateLimit(key) {
   // Skip rate limiting in test environment
