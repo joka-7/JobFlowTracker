@@ -1,7 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { PROVIDERS, initAI, isAIReady, loadAIConfigFromStorage, getCurrentProvider, getInterviewPrep, analyzeRejection, analyzePatterns, debriefInterview, buildApiMessages, getJobFinderSystemPrompt, getCandidateFinderSystemPrompt, getGoalsTasksSystemPrompt } from '../services/aiAssistant.js';
+import { PROVIDERS, initAI, isAIReady, loadAIConfigFromStorage, getCurrentProvider, getInterviewPrep, analyzeRejection, analyzePatterns, debriefInterview, buildApiMessages, getJobFinderSystemPrompt, getCandidateFinderSystemPrompt, getGoalsTasksSystemPrompt, _resetRateLimitForTests } from '../services/aiAssistant.js';
 
 vi.mock('@anthropic-ai/sdk', () => ({ default: vi.fn() }));
+
+// Disable rate limiting for tests
+beforeEach(() => {
+  _resetRateLimitForTests();
+});
 
 // ---------------------------------------------------------------------------
 // Helpers
