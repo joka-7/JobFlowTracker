@@ -55,7 +55,7 @@ export const RECRUITER_FUNNEL_ORDER = [
 ];
 
 export const JOBSEEKER_FUNNEL_ORDER = [
-  'applied', 'hr_call', 'tech_interview', 'manager_interview', 'offer',
+  'applied', 'hr_call', 'tech_interview', 'manager_interview', 'vp_ceo_interview', 'offer',
 ];
 
 export const getFunnelOrder = (mode) =>
