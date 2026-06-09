@@ -1,9 +1,11 @@
 export const STATUSES_JOBSEEKER = [
   { id: 'applied', color: 'bg-blue-100 text-blue-800 border-blue-200' },
   { id: 'hr_call', color: 'bg-purple-100 text-purple-800 border-purple-200' },
+  { id: 'initial_manager_interview', color: 'bg-cyan-100 text-cyan-800 border-cyan-200' },
   { id: 'tech_interview', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
   { id: 'manager_interview', color: 'bg-orange-100 text-orange-800 border-orange-200' },
   { id: 'vp_ceo_interview', color: 'bg-rose-100 text-rose-800 border-rose-200' },
+  { id: 'hr_interview', color: 'bg-pink-100 text-pink-800 border-pink-200' },
   { id: 'home_assignment', color: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
   { id: 'references', color: 'bg-teal-100 text-teal-800 border-teal-200' },
   { id: 'offer', color: 'bg-green-100 text-green-800 border-green-200' },
@@ -55,7 +57,7 @@ export const RECRUITER_FUNNEL_ORDER = [
 ];
 
 export const JOBSEEKER_FUNNEL_ORDER = [
-  'applied', 'hr_call', 'tech_interview', 'manager_interview', 'vp_ceo_interview', 'home_assignment', 'references', 'offer',
+  'applied', 'hr_call', 'initial_manager_interview', 'tech_interview', 'manager_interview', 'vp_ceo_interview', 'hr_interview', 'home_assignment', 'references', 'offer',
 ];
 
 export const getFunnelOrder = (mode) =>
@@ -82,8 +84,8 @@ export const getStorageKey = (mode) =>
   `jobTrackerAppV2Data_${mode}`;
 
 const JOBSEEKER_ONLY_STATUSES = new Set([
-  'hr_call', 'tech_interview', 'manager_interview', 'vp_ceo_interview', 'home_assignment',
-  'references', 'frozen', 'ghosted', 'offer',
+  'hr_call', 'initial_manager_interview', 'tech_interview', 'manager_interview', 'vp_ceo_interview',
+  'hr_interview', 'home_assignment', 'references', 'frozen', 'ghosted', 'offer',
 ]);
 
 const RECRUITER_ONLY_STATUSES = new Set([

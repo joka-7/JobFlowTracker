@@ -2,9 +2,11 @@
   "status": {
     "applied": "Candidature envoyée",
     "hr_call": "Appel RH",
+    "initial_manager_interview": "Premier entretien manager",
     "tech_interview": "Entretien technique",
     "manager_interview": "Entretien manager",
     "vp_ceo_interview": "Entretien VP / PDG",
+    "hr_interview": "Entretien RH final",
     "home_assignment": "Exercice à domicile",
     "references": "Vérification références",
     "offer": "Offre reçue",

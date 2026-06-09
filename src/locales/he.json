@@ -2,9 +2,11 @@
   "status": {
     "applied": "נשלחו קורות חיים",
     "hr_call": "שיחת משאבי אנוש",
+    "initial_manager_interview": "ראיון מנהל ראשוני",
     "tech_interview": "ראיון טכני",
     "manager_interview": "ראיון מנהל",
     "vp_ceo_interview": "ראיון סמנכ\"ל / מנכ\"ל",
+    "hr_interview": "ראיון HR סופי",
     "home_assignment": "עבודת בית",
     "references": "בדיקת ממליצים",
     "offer": "הצעת שכר",

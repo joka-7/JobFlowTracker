@@ -2,9 +2,11 @@
   "status": {
     "applied": "Applied",
     "hr_call": "HR Call",
+    "initial_manager_interview": "Initial Manager Interview",
     "tech_interview": "Technical Interview",
     "manager_interview": "Manager Interview",
     "vp_ceo_interview": "VP / CEO Interview",
+    "hr_interview": "HR Interview",
     "home_assignment": "Home Assignment",
     "references": "References Check",
     "offer": "Offer",

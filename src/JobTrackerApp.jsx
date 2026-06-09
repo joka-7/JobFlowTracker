@@ -856,13 +856,13 @@ Rules:
       'References Check': 'offer_extended',
     } : {
       'Intro Call / HR': 'hr_call',
-      'Initial Manager Interview': 'hr_call',
+      'Initial Manager Interview': 'initial_manager_interview',
       'Technical Interview': 'tech_interview',
       'Manager Interview': 'manager_interview',
       'VP / CEO Interview': 'vp_ceo_interview',
-      'HR Interview': 'vp_ceo_interview',
+      'HR Interview': 'hr_interview',
       'Salary Offer': 'offer',
-      'References Check': 'offer',
+      'References Check': 'references',
     };
     const funnelIdx = (id) => FUNNEL_ORDER.indexOf(id);
     const companiesReachedStage = (stageId) => {
