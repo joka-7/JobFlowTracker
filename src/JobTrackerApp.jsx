@@ -104,10 +104,12 @@ const getJourneySteps = (company) => {
 
 const STEP_SHORT = {
   'Intro Call / HR': 'HR',
+  'Initial Manager Interview': 'iMgr',
   'Technical Interview': 'Tech',
   'Manager Interview': 'Mgr',
   'Home Assignment / Task': 'Task',
   'VP / CEO Interview': 'VP',
+  'HR Interview': 'HRf',
   'References Check': 'Refs',
   'Salary Offer': 'Offer',
   'Other': 'Other',
@@ -128,6 +130,7 @@ const makeInitialFormState = (isRecruiter) => ({
   name: '', role: '', location: '', status: 'applied', priority: 'medium',
   website: '', linkedinCompany: '', linkedinHR: '', description: '', products: '',
   linkedinCandidate: '', currentRole: '', expectedSalary: '', source: '',
+  companySize: '', companySector: '', applicationSource: '',
   interviews: [], homeworks: [], contacts: [], generalNotes: '',
   rejection: { date: '', method: '', notes: '' },
   ...(isRecruiter ? {} : {}),
@@ -689,6 +692,13 @@ Rules:
                         <MapPin size={12} /> {safeStr(company.location)}
                       </div>
                     )}
+                    {(company.companySector || company.companySize || company.applicationSource) && (
+                      <div className="mt-1.5 flex flex-wrap gap-1">
+                        {company.companySector && <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-500 font-medium">{safeStr(company.companySector)}</span>}
+                        {company.companySize && <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 font-medium">👥 {safeStr(company.companySize)}</span>}
+                        {company.applicationSource && <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-500 font-medium">{t(`applicationSource.${company.applicationSource}`, company.applicationSource.replace(/_/g, ' '))}</span>}
+                      </div>
+                    )}
                     {journeySteps.length > 0 && (
                       <div className="mt-2 flex flex-wrap items-center gap-0.5">
                         {journeySteps.map((step, i) => (
@@ -837,18 +847,22 @@ Rules:
     const FUNNEL_ORDER = funnelOrder;
     const INTERVIEW_TYPE_TO_STAGE = isRecruiter ? {
       'Intro Call / HR': 'screening',
+      'Initial Manager Interview': 'screening',
       'Technical Interview': 'technical',
       'Manager Interview': 'final_interview',
       'VP / CEO Interview': 'final_interview',
+      'HR Interview': 'final_interview',
       'Salary Offer': 'offer_extended',
       'References Check': 'offer_extended',
     } : {
       'Intro Call / HR': 'hr_call',
+      'Initial Manager Interview': 'initial_manager_interview',
       'Technical Interview': 'tech_interview',
       'Manager Interview': 'manager_interview',
-      'VP / CEO Interview': 'manager_interview',
+      'VP / CEO Interview': 'vp_ceo_interview',
+      'HR Interview': 'hr_interview',
       'Salary Offer': 'offer',
-      'References Check': 'offer',
+      'References Check': 'references',
     };
     const funnelIdx = (id) => FUNNEL_ORDER.indexOf(id);
     const companiesReachedStage = (stageId) => {
@@ -1280,10 +1294,19 @@ Rules:
                               {priorityInfo && <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${priorityInfo.color}`}></div>}
                             </div>
                             <p className="text-sm text-gray-600 truncate">{safeStr(company.role)}</p>
-                            <div className="mt-1.5">
+                            <div className="mt-1.5 flex flex-wrap gap-1">
                               <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium border ${statusInfo?.color || 'bg-gray-100 border-gray-200'}`}>
                                 {statusInfo ? tStatus(statusInfo.id) : tStatus('unknown')}
                               </span>
+                              {company.companySector && (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-blue-600 font-medium">{safeStr(company.companySector)}</span>
+                              )}
+                              {company.companySize && (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 border border-gray-200 text-gray-500 font-medium">👥 {safeStr(company.companySize)}</span>
+                              )}
+                              {company.applicationSource && (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-50 border border-purple-100 text-purple-600 font-medium">{t(`applicationSource.${company.applicationSource}`, company.applicationSource.replace(/_/g, ' '))}</span>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1381,6 +1404,43 @@ Rules:
                     )}
                   </div>
 
+                  <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 mb-8">
+                    <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">🏢 {t('form.companyDetailsSection', 'Company Details')}</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">{t('form.companySize', 'Company Size')}</label>
+                        <select value={formData.companySize || ''} onChange={e => setFormData({...formData, companySize: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md bg-white">
+                          <option value="">—</option>
+                          <option value="1-10">1–10</option>
+                          <option value="11-50">11–50</option>
+                          <option value="51-200">51–200</option>
+                          <option value="201-500">201–500</option>
+                          <option value="501-1000">501–1,000</option>
+                          <option value="1001-5000">1,001–5,000</option>
+                          <option value="5001+">5,001+</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">{t('form.companySector', 'Sector')}</label>
+                        <input type="text" placeholder={t('form.companySectorPlaceholder', 'e.g. FinTech, HealthTech…')} value={safeStr(formData.companySector)} onChange={e => setFormData({...formData, companySector: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">{t('form.applicationSource', 'How did I start?')}</label>
+                        <select value={formData.applicationSource || ''} onChange={e => setFormData({...formData, applicationSource: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md bg-white">
+                          <option value="">—</option>
+                          <option value="me_linkedin">Me → LinkedIn</option>
+                          <option value="me_job_search">Me → Job Board</option>
+                          <option value="me_friend">Me → Friend Tip</option>
+                          <option value="me_article">Me → Article</option>
+                          <option value="friend_suggest">Friend Referred Me</option>
+                          <option value="headhunter">Headhunter</option>
+                          <option value="recruiting_company">Recruiting Agency</option>
+                          <option value="company_itself">Company Reached Out</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="mb-8">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="font-bold text-gray-800 flex items-center gap-2"><User size={18} /> {tMode('form.interviews')}</h3>
@@ -1400,17 +1460,15 @@ Rules:
                           <Trash2 size={16} />
                         </button>
                         <div className={`grid grid-cols-1 md:grid-cols-3 gap-3 mb-3 ${isRTL ? 'pr-6' : 'pl-6'}`}>
-                          <Tooltip text={t('tooltips.interviewType')} position="top">
-                            <select
-                              value={safeStr(interview.type)}
-                              onChange={e => { const a = [...formData.interviews]; a[index].type = e.target.value; setFormData({...formData, interviews: a}); }}
-                              className="w-full p-2 text-sm border rounded bg-white"
-                            >
-                              <option value="" disabled>{tMode('form.selectInterviewType')}</option>
-                              {INTERVIEW_TYPE_KEYS.map(key => <option key={key} value={key}>{tInterviewType(key)}</option>)}
-                              {interview.type && !INTERVIEW_TYPE_KEYS.includes(interview.type) && <option value={safeStr(interview.type)}>{safeStr(interview.type)}</option>}
-                            </select>
-                          </Tooltip>
+                          <select
+                            value={safeStr(interview.type)}
+                            onChange={e => { const a = [...formData.interviews]; a[index].type = e.target.value; setFormData({...formData, interviews: a}); }}
+                            className="w-full p-2 text-sm border rounded bg-white"
+                          >
+                            <option value="" disabled>{tMode('form.selectInterviewType')}</option>
+                            {INTERVIEW_TYPE_KEYS.map(key => <option key={key} value={key}>{tInterviewType(key)}</option>)}
+                            {interview.type && !INTERVIEW_TYPE_KEYS.includes(interview.type) && <option value={safeStr(interview.type)}>{safeStr(interview.type)}</option>}
+                          </select>
                           <input type="date" value={safeStr(interview.date)} onChange={e => { const a = [...formData.interviews]; a[index].date = e.target.value; setFormData({...formData, interviews: a}); }} className="w-full p-2 text-sm border rounded" />
                           <input type="text" placeholder={tMode('form.interviewerPlaceholder')} value={safeStr(interview.interviewer)} onChange={e => { const a = [...formData.interviews]; a[index].interviewer = e.target.value; setFormData({...formData, interviews: a}); }} className="w-full p-2 text-sm border rounded" />
                         </div>
@@ -1436,16 +1494,14 @@ Rules:
                         </div>
                         <div>
                           <label className="block text-sm font-bold text-gray-700 mb-1">{tMode('form.rejectionMethod', 'How Were You Notified')}</label>
-                          <Tooltip text={t('tooltips.rejectionMethod')} position="top">
-                            <select
-                              value={safeStr(formData.rejection?.method)}
-                              onChange={e => setFormData({...formData, rejection: {...(formData.rejection || {}), method: e.target.value}})}
-                              className="w-full p-2.5 border border-red-200 rounded-lg focus:ring-2 focus:ring-red-400 bg-white"
-                            >
-                              <option value="">{tMode('form.rejectionMethodSelect', 'Select...')}</option>
-                              {REJECTION_METHOD_KEYS.map(key => <option key={key} value={key}>{t(`rejectionMethod.${key}`, key)}</option>)}
-                            </select>
-                          </Tooltip>
+                          <select
+                            value={safeStr(formData.rejection?.method)}
+                            onChange={e => setFormData({...formData, rejection: {...(formData.rejection || {}), method: e.target.value}})}
+                            className="w-full p-2.5 border border-red-200 rounded-lg focus:ring-2 focus:ring-red-400 bg-white"
+                          >
+                            <option value="">{tMode('form.rejectionMethodSelect', 'Select...')}</option>
+                            {REJECTION_METHOD_KEYS.map(key => <option key={key} value={key}>{t(`rejectionMethod.${key}`, key)}</option>)}
+                          </select>
                         </div>
                       </div>
                       <div>
@@ -1499,6 +1555,21 @@ Rules:
                                 {company.location && (
                                   <span className="px-3 py-1 rounded-full text-sm bg-white border border-gray-200 text-gray-600 flex items-center gap-1">
                                     <MapPin size={14} /> {safeStr(company.location)}
+                                  </span>
+                                )}
+                                {company.companySize && (
+                                  <span className="px-3 py-1 rounded-full text-sm bg-white border border-gray-200 text-gray-600">
+                                    👥 {safeStr(company.companySize)}
+                                  </span>
+                                )}
+                                {company.companySector && (
+                                  <span className="px-3 py-1 rounded-full text-sm bg-white border border-gray-200 text-gray-600">
+                                    🏢 {safeStr(company.companySector)}
+                                  </span>
+                                )}
+                                {company.applicationSource && (
+                                  <span className="px-3 py-1 rounded-full text-sm bg-white border border-gray-200 text-gray-600">
+                                    {t(`applicationSource.${company.applicationSource}`, company.applicationSource.replace(/_/g, ' '))}
                                   </span>
                                 )}
                               </div>
