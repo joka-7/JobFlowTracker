@@ -4,6 +4,7 @@
     "hr_call": "HR Call",
     "tech_interview": "Technical Interview",
     "manager_interview": "Manager Interview",
+    "vp_ceo_interview": "VP / CEO Interview",
     "home_assignment": "Home Assignment",
     "references": "References Check",
     "offer": "Offer",
@@ -20,10 +21,12 @@
   },
   "interviewType": {
     "Intro Call / HR": "Intro Call / HR",
+    "Initial Manager Interview": "Initial Manager Interview",
     "Technical Interview": "Technical Interview",
     "Manager Interview": "Manager Interview",
     "Home Assignment / Task": "Home Assignment / Task",
     "VP / CEO Interview": "VP / CEO Interview",
+    "HR Interview": "HR Interview",
     "References Check": "References Check",
     "Salary Offer": "Salary Offer",
     "Other": "Other"
@@ -585,10 +588,12 @@
     },
     "interviewType": {
       "Intro Call / HR": "Initial Screen",
+      "Initial Manager Interview": "Initial Manager Interview",
       "Technical Interview": "Technical Interview",
       "Manager Interview": "Hiring Manager Interview",
       "Home Assignment / Task": "Take-Home Assignment",
       "VP / CEO Interview": "Executive Interview",
+      "HR Interview": "Final HR Interview",
       "References Check": "Reference Check",
       "Salary Offer": "Offer Discussion",
       "Other": "Other"

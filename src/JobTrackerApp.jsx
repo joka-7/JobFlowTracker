@@ -104,10 +104,12 @@ const getJourneySteps = (company) => {
 
 const STEP_SHORT = {
   'Intro Call / HR': 'HR',
+  'Initial Manager Interview': 'iMgr',
   'Technical Interview': 'Tech',
   'Manager Interview': 'Mgr',
   'Home Assignment / Task': 'Task',
   'VP / CEO Interview': 'VP',
+  'HR Interview': 'HRf',
   'References Check': 'Refs',
   'Salary Offer': 'Offer',
   'Other': 'Other',
@@ -845,16 +847,20 @@ Rules:
     const FUNNEL_ORDER = funnelOrder;
     const INTERVIEW_TYPE_TO_STAGE = isRecruiter ? {
       'Intro Call / HR': 'screening',
+      'Initial Manager Interview': 'screening',
       'Technical Interview': 'technical',
       'Manager Interview': 'final_interview',
       'VP / CEO Interview': 'final_interview',
+      'HR Interview': 'final_interview',
       'Salary Offer': 'offer_extended',
       'References Check': 'offer_extended',
     } : {
       'Intro Call / HR': 'hr_call',
+      'Initial Manager Interview': 'hr_call',
       'Technical Interview': 'tech_interview',
       'Manager Interview': 'manager_interview',
-      'VP / CEO Interview': 'manager_interview',
+      'VP / CEO Interview': 'vp_ceo_interview',
+      'HR Interview': 'vp_ceo_interview',
       'Salary Offer': 'offer',
       'References Check': 'offer',
     };
@@ -1454,17 +1460,15 @@ Rules:
                           <Trash2 size={16} />
                         </button>
                         <div className={`grid grid-cols-1 md:grid-cols-3 gap-3 mb-3 ${isRTL ? 'pr-6' : 'pl-6'}`}>
-                          <Tooltip text={t('tooltips.interviewType')} position="top">
-                            <select
-                              value={safeStr(interview.type)}
-                              onChange={e => { const a = [...formData.interviews]; a[index].type = e.target.value; setFormData({...formData, interviews: a}); }}
-                              className="w-full p-2 text-sm border rounded bg-white"
-                            >
-                              <option value="" disabled>{tMode('form.selectInterviewType')}</option>
-                              {INTERVIEW_TYPE_KEYS.map(key => <option key={key} value={key}>{tInterviewType(key)}</option>)}
-                              {interview.type && !INTERVIEW_TYPE_KEYS.includes(interview.type) && <option value={safeStr(interview.type)}>{safeStr(interview.type)}</option>}
-                            </select>
-                          </Tooltip>
+                          <select
+                            value={safeStr(interview.type)}
+                            onChange={e => { const a = [...formData.interviews]; a[index].type = e.target.value; setFormData({...formData, interviews: a}); }}
+                            className="w-full p-2 text-sm border rounded bg-white"
+                          >
+                            <option value="" disabled>{tMode('form.selectInterviewType')}</option>
+                            {INTERVIEW_TYPE_KEYS.map(key => <option key={key} value={key}>{tInterviewType(key)}</option>)}
+                            {interview.type && !INTERVIEW_TYPE_KEYS.includes(interview.type) && <option value={safeStr(interview.type)}>{safeStr(interview.type)}</option>}
+                          </select>
                           <input type="date" value={safeStr(interview.date)} onChange={e => { const a = [...formData.interviews]; a[index].date = e.target.value; setFormData({...formData, interviews: a}); }} className="w-full p-2 text-sm border rounded" />
                           <input type="text" placeholder={tMode('form.interviewerPlaceholder')} value={safeStr(interview.interviewer)} onChange={e => { const a = [...formData.interviews]; a[index].interviewer = e.target.value; setFormData({...formData, interviews: a}); }} className="w-full p-2 text-sm border rounded" />
                         </div>
@@ -1490,16 +1494,14 @@ Rules:
                         </div>
                         <div>
                           <label className="block text-sm font-bold text-gray-700 mb-1">{tMode('form.rejectionMethod', 'How Were You Notified')}</label>
-                          <Tooltip text={t('tooltips.rejectionMethod')} position="top">
-                            <select
-                              value={safeStr(formData.rejection?.method)}
-                              onChange={e => setFormData({...formData, rejection: {...(formData.rejection || {}), method: e.target.value}})}
-                              className="w-full p-2.5 border border-red-200 rounded-lg focus:ring-2 focus:ring-red-400 bg-white"
-                            >
-                              <option value="">{tMode('form.rejectionMethodSelect', 'Select...')}</option>
-                              {REJECTION_METHOD_KEYS.map(key => <option key={key} value={key}>{t(`rejectionMethod.${key}`, key)}</option>)}
-                            </select>
-                          </Tooltip>
+                          <select
+                            value={safeStr(formData.rejection?.method)}
+                            onChange={e => setFormData({...formData, rejection: {...(formData.rejection || {}), method: e.target.value}})}
+                            className="w-full p-2.5 border border-red-200 rounded-lg focus:ring-2 focus:ring-red-400 bg-white"
+                          >
+                            <option value="">{tMode('form.rejectionMethodSelect', 'Select...')}</option>
+                            {REJECTION_METHOD_KEYS.map(key => <option key={key} value={key}>{t(`rejectionMethod.${key}`, key)}</option>)}
+                          </select>
                         </div>
                       </div>
                       <div>

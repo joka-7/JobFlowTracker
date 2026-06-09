@@ -4,6 +4,7 @@
     "hr_call": "שיחת משאבי אנוש",
     "tech_interview": "ראיון טכני",
     "manager_interview": "ראיון מנהל",
+    "vp_ceo_interview": "ראיון סמנכ\"ל / מנכ\"ל",
     "home_assignment": "עבודת בית",
     "references": "בדיקת ממליצים",
     "offer": "הצעת שכר",
@@ -20,10 +21,12 @@
   },
   "interviewType": {
     "Intro Call / HR": "שיחת היכרות / HR",
+    "Initial Manager Interview": "ראיון מנהל ראשוני",
     "Technical Interview": "ראיון טכני",
     "Manager Interview": "ראיון מנהל",
     "Home Assignment / Task": "מבחן בית / מטלה",
     "VP / CEO Interview": "ראיון סמנכ\"ל / מנכ\"ל",
+    "HR Interview": "ראיון HR סופי",
     "References Check": "בדיקת ממליצים",
     "Salary Offer": "הצעת שכר",
     "Other": "אחר"
@@ -575,10 +578,12 @@
     },
     "interviewType": {
       "Intro Call / HR": "סינון ראשוני",
+      "Initial Manager Interview": "ראיון מנהל ראשוני",
       "Technical Interview": "ראיון טכני",
       "Manager Interview": "ראיון מנהל",
       "Home Assignment / Task": "מטלת בית",
       "VP / CEO Interview": "ראיון הנהלה",
+      "HR Interview": "ראיון HR סופי",
       "References Check": "בדיקת המלצות",
       "Salary Offer": "דיון על הצעה",
       "Other": "אחר"

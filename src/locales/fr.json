@@ -4,6 +4,7 @@
     "hr_call": "Appel RH",
     "tech_interview": "Entretien technique",
     "manager_interview": "Entretien manager",
+    "vp_ceo_interview": "Entretien VP / PDG",
     "home_assignment": "Exercice à domicile",
     "references": "Vérification références",
     "offer": "Offre reçue",
@@ -20,10 +21,12 @@
   },
   "interviewType": {
     "Intro Call / HR": "Appel intro / RH",
+    "Initial Manager Interview": "Premier entretien manager",
     "Technical Interview": "Entretien technique",
     "Manager Interview": "Entretien manager",
     "Home Assignment / Task": "Exercice à domicile",
     "VP / CEO Interview": "Entretien VP / PDG",
+    "HR Interview": "Entretien RH final",
     "References Check": "Vérification références",
     "Salary Offer": "Proposition salariale",
     "Other": "Autre"
@@ -575,10 +578,12 @@
     },
     "interviewType": {
       "Intro Call / HR": "Présélection",
+      "Initial Manager Interview": "Premier entretien manager",
       "Technical Interview": "Entretien technique",
       "Manager Interview": "Entretien manager",
       "Home Assignment / Task": "Exercice à domicile",
       "VP / CEO Interview": "Entretien direction",
+      "HR Interview": "Entretien RH final",
       "References Check": "Vérification des références",
       "Salary Offer": "Discussion offre",
       "Other": "Autre"
