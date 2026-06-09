@@ -126,14 +126,14 @@
     "rejectionNotesPlaceholder": "What was the feedback?"
   },
   "applicationSource": {
-    "me_linkedin": "Me – LinkedIn",
-    "me_job_search": "Me – Job Search",
-    "me_friend": "Me – Friend",
-    "me_article": "Me – Article",
-    "friend_suggest": "Friend Suggested",
-    "headhunter": "Head Hunter",
-    "recruiting_company": "Recruiting Company",
-    "company_itself": "The Company Itself"
+    "me_linkedin": "Me → LinkedIn",
+    "me_job_search": "Me → Job Board",
+    "me_friend": "Me → Friend Tip",
+    "me_article": "Me → Article",
+    "friend_suggest": "Friend Referred Me",
+    "headhunter": "Headhunter",
+    "recruiting_company": "Recruiting Agency",
+    "company_itself": "Company Reached Out"
   },
   "rejectionMethod": {
     "Automatic Email": "Automatic Email",
