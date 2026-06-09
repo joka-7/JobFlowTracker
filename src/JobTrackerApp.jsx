@@ -128,6 +128,7 @@ const makeInitialFormState = (isRecruiter) => ({
   name: '', role: '', location: '', status: 'applied', priority: 'medium',
   website: '', linkedinCompany: '', linkedinHR: '', description: '', products: '',
   linkedinCandidate: '', currentRole: '', expectedSalary: '', source: '',
+  companySize: '', companySector: '', applicationSource: '',
   interviews: [], homeworks: [], contacts: [], generalNotes: '',
   rejection: { date: '', method: '', notes: '' },
   ...(isRecruiter ? {} : {}),
@@ -687,6 +688,13 @@ Rules:
                     {company.location && (
                       <div className="text-xs text-gray-500 mt-2 flex items-center gap-1">
                         <MapPin size={12} /> {safeStr(company.location)}
+                      </div>
+                    )}
+                    {(company.companySector || company.companySize || company.applicationSource) && (
+                      <div className="mt-1.5 flex flex-wrap gap-1">
+                        {company.companySector && <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-500 font-medium">{safeStr(company.companySector)}</span>}
+                        {company.companySize && <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 font-medium">👥 {safeStr(company.companySize)}</span>}
+                        {company.applicationSource && <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-500 font-medium">{t(`applicationSource.${company.applicationSource}`, company.applicationSource.replace(/_/g, ' '))}</span>}
                       </div>
                     )}
                     {journeySteps.length > 0 && (
@@ -1280,10 +1288,19 @@ Rules:
                               {priorityInfo && <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${priorityInfo.color}`}></div>}
                             </div>
                             <p className="text-sm text-gray-600 truncate">{safeStr(company.role)}</p>
-                            <div className="mt-1.5">
+                            <div className="mt-1.5 flex flex-wrap gap-1">
                               <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium border ${statusInfo?.color || 'bg-gray-100 border-gray-200'}`}>
                                 {statusInfo ? tStatus(statusInfo.id) : tStatus('unknown')}
                               </span>
+                              {company.companySector && (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-blue-600 font-medium">{safeStr(company.companySector)}</span>
+                              )}
+                              {company.companySize && (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 border border-gray-200 text-gray-500 font-medium">👥 {safeStr(company.companySize)}</span>
+                              )}
+                              {company.applicationSource && (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-50 border border-purple-100 text-purple-600 font-medium">{t(`applicationSource.${company.applicationSource}`, company.applicationSource.replace(/_/g, ' '))}</span>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1379,6 +1396,43 @@ Rules:
                         <textarea placeholder={tMode('form.descriptionPlaceholder')} value={safeStr(formData.description)} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md h-20 resize-none"></textarea>
                       </>
                     )}
+                  </div>
+
+                  <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 mb-8">
+                    <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">🏢 {t('form.companyDetailsSection', 'Company Details')}</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">{t('form.companySize', 'Company Size')}</label>
+                        <select value={formData.companySize || ''} onChange={e => setFormData({...formData, companySize: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md bg-white">
+                          <option value="">—</option>
+                          <option value="1-10">1–10</option>
+                          <option value="11-50">11–50</option>
+                          <option value="51-200">51–200</option>
+                          <option value="201-500">201–500</option>
+                          <option value="501-1000">501–1,000</option>
+                          <option value="1001-5000">1,001–5,000</option>
+                          <option value="5001+">5,001+</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">{t('form.companySector', 'Sector')}</label>
+                        <input type="text" placeholder={t('form.companySectorPlaceholder', 'e.g. FinTech, HealthTech…')} value={safeStr(formData.companySector)} onChange={e => setFormData({...formData, companySector: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">{t('form.applicationSource', 'How did I start?')}</label>
+                        <select value={formData.applicationSource || ''} onChange={e => setFormData({...formData, applicationSource: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md bg-white">
+                          <option value="">—</option>
+                          <option value="me_linkedin">Me – LinkedIn</option>
+                          <option value="me_job_search">Me – Job Search</option>
+                          <option value="me_friend">Me – Friend</option>
+                          <option value="me_article">Me – Article</option>
+                          <option value="friend_suggest">Friend Suggested</option>
+                          <option value="headhunter">Head Hunter</option>
+                          <option value="recruiting_company">Recruiting Company</option>
+                          <option value="company_itself">The Company Itself</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="mb-8">
@@ -1499,6 +1553,21 @@ Rules:
                                 {company.location && (
                                   <span className="px-3 py-1 rounded-full text-sm bg-white border border-gray-200 text-gray-600 flex items-center gap-1">
                                     <MapPin size={14} /> {safeStr(company.location)}
+                                  </span>
+                                )}
+                                {company.companySize && (
+                                  <span className="px-3 py-1 rounded-full text-sm bg-white border border-gray-200 text-gray-600">
+                                    👥 {safeStr(company.companySize)}
+                                  </span>
+                                )}
+                                {company.companySector && (
+                                  <span className="px-3 py-1 rounded-full text-sm bg-white border border-gray-200 text-gray-600">
+                                    🏢 {safeStr(company.companySector)}
+                                  </span>
+                                )}
+                                {company.applicationSource && (
+                                  <span className="px-3 py-1 rounded-full text-sm bg-white border border-gray-200 text-gray-600">
+                                    {t(`applicationSource.${company.applicationSource}`, company.applicationSource.replace(/_/g, ' '))}
                                   </span>
                                 )}
                               </div>
