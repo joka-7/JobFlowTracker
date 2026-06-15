@@ -4,7 +4,7 @@ import {
   Search, Plus, MapPin, Globe, Calendar,
   User, CheckCircle, Clock, Trash2, Edit2,
   ArrowLeft, ArrowRight, Download, Upload, Layout, List, Activity, AlertTriangle,
-  Cloud, CloudOff, Languages, BarChart2, Settings, MoreVertical, Smartphone
+  Cloud, CloudOff, Languages, BarChart2, Settings, MoreVertical, Smartphone, RefreshCw
 } from 'lucide-react';
 import {
   signInWithGoogle, signOut, onAuthChange, loadAllItems, updateItem, deleteItem,
@@ -358,6 +358,16 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
   const handleSignOut = () => {
     signOut();
     showToast(tMode('toast.driveDisconnected'));
+  };
+
+  const handleSyncNow = async () => {
+    if (!user || syncing) return;
+    setSyncing(true);
+    try {
+      const data = await loadAllItems(user.uid, mode);
+      if (data && data.length > 0) setCompanies(filterItemsForMode(data, mode));
+    } catch (e) { console.error(e); }
+    setSyncing(false);
   };
 
   const filteredCompanies = useMemo(() => {
@@ -1079,6 +1089,15 @@ Rules:
               >
                 <Cloud size={16} className={syncing ? 'animate-pulse' : ''} />
                 <span className="hidden sm:inline shrink-0 max-w-[5rem] truncate sm:max-w-none">{syncing ? t('header.driveSyncing') : user.displayName?.split(' ')[0] || t('header.driveOn')}</span>
+              </button>
+              <button
+                onClick={handleSyncNow}
+                disabled={syncing}
+                title={t('header.syncNow')}
+                className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-blue-100 transition-colors min-h-[40px] disabled:opacity-50"
+              >
+                <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
+                <span className="hidden sm:inline shrink-0">{t('header.syncNow')}</span>
               </button>
             ) : (
               <button

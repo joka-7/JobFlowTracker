@@ -43,6 +43,7 @@
     "uploadTooltip": "Load existing backup file",
     "driveOn": "Drive On",
     "driveSyncing": "Syncing...",
+    "syncNow": "Sync Now",
     "connectDrive": "Connect Drive",
     "driveOnTooltip": "Drive syncing — click to disconnect",
     "connectDriveTooltip": "Connect Google Drive for cross-device sync",

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Plus, Search, Download, Upload, Layout, List, BarChart2, Activity,
   Trash2, Edit2, ArrowLeft, ArrowRight, CheckCircle2, CheckCircle, Circle,
-  Clock, AlertCircle, ChevronDown, Calendar, Cloud, CloudOff,
+  Clock, AlertCircle, ChevronDown, Calendar, Cloud, CloudOff, RefreshCw,
   ClipboardList, X, GripVertical, Languages, MoreVertical, Settings, Smartphone, Sparkles,
 } from 'lucide-react';
 import { initAI, getGoalsTasksSystemPrompt } from './services/aiAssistant';
@@ -222,6 +222,16 @@ export default function TasksApp({ onModeChange }) {
       try { await deleteItem(user.uid, MODE, id); } catch { /* ignore */ }
     }
   }, [user]);
+
+  const handleSyncNow = async () => {
+    if (!user || syncing) return;
+    setSyncing(true);
+    try {
+      const data = await loadAllItems(user.uid, MODE);
+      if (data && data.length > 0) setTasks(filterItemsForMode(data, MODE));
+    } catch (e) { console.error(e); }
+    setSyncing(false);
+  };
 
   const openNewForm = useCallback(() => {
     setFormData(makeInitialTask());
@@ -1208,6 +1218,15 @@ Rules:
               >
                 <Cloud size={16} className={syncing ? 'animate-pulse' : ''} />
                 <span className="hidden sm:inline shrink-0 max-w-[5rem] truncate sm:max-w-none">{syncing ? t('header.driveSyncing') : user.displayName?.split(' ')[0] || t('header.driveOn')}</span>
+              </button>
+              <button
+                onClick={handleSyncNow}
+                disabled={syncing}
+                title={t('header.syncNow')}
+                className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-blue-100 transition-colors min-h-[44px] touch-manipulation disabled:opacity-50"
+              >
+                <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
+                <span className="hidden sm:inline shrink-0">{t('header.syncNow')}</span>
               </button>
             ) : (
               <button
