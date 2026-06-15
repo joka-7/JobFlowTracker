@@ -43,6 +43,7 @@
     "uploadTooltip": "Charger un fichier de sauvegarde",
     "driveOn": "Drive actif",
     "driveSyncing": "Synchronisation...",
+    "syncNow": "Synchroniser",
     "connectDrive": "Connecter Drive",
     "driveOnTooltip": "Drive synchronisé — cliquer pour déconnecter",
     "connectDriveTooltip": "Connecter Google Drive pour synchroniser sur tous les appareils",

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Plus, Search, Download, Upload, Layout, List, BarChart2, Activity,
   Trash2, Edit2, ArrowLeft, ArrowRight, CheckCircle2, CheckCircle, Circle,
-  Clock, AlertCircle, ChevronDown, Calendar, Cloud, CloudOff,
+  Clock, AlertCircle, ChevronDown, Calendar, Cloud, CloudOff, RefreshCw,
   ClipboardList, X, GripVertical, Languages, MoreVertical, Settings, Smartphone, Sparkles,
 } from 'lucide-react';
 import { initAI, getGoalsTasksSystemPrompt } from './services/aiAssistant';
@@ -159,6 +159,9 @@ export default function TasksApp({ onModeChange }) {
     initAI(provider, apiKey, model, ollamaUrl);
   }, []);
 
+  const userRef = useRef(null);
+  useEffect(() => { userRef.current = user; }, [user]);
+
   useEffect(() => {
     const unsub = onAuthChange(async (firebaseUser) => {
       setUser(firebaseUser);
@@ -176,6 +179,22 @@ export default function TasksApp({ onModeChange }) {
       }
     });
     return unsub;
+  }, []);
+
+  useEffect(() => {
+    const handleVisibility = async () => {
+      const firebaseUser = userRef.current;
+      if (document.visibilityState === 'visible' && firebaseUser) {
+        setSyncing(true);
+        try {
+          const data = await loadAllItems(firebaseUser.uid, MODE);
+          if (data && data.length > 0) setTasks(filterItemsForMode(data, MODE));
+        } catch (e) { console.error(e); }
+        setSyncing(false);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, []);
 
   const saveTasks = useCallback(async (newTasks) => {
@@ -203,6 +222,16 @@ export default function TasksApp({ onModeChange }) {
       try { await deleteItem(user.uid, MODE, id); } catch { /* ignore */ }
     }
   }, [user]);
+
+  const handleSyncNow = async () => {
+    if (!user || syncing) return;
+    setSyncing(true);
+    try {
+      const data = await loadAllItems(user.uid, MODE);
+      if (data && data.length > 0) setTasks(filterItemsForMode(data, MODE));
+    } catch (e) { console.error(e); }
+    setSyncing(false);
+  };
 
   const openNewForm = useCallback(() => {
     setFormData(makeInitialTask());
@@ -1182,14 +1211,25 @@ Rules:
             </button>
 
             {user ? (
-              <button
-                onClick={() => signOut()}
-                title={user.email}
-                className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-bold transition-colors border min-h-[44px] touch-manipulation ${syncing ? 'bg-yellow-500/20 border-yellow-400/30 text-yellow-100' : 'bg-green-500/20 border-green-400/30 text-green-100 hover:bg-red-500/20 hover:border-red-400/30 hover:text-red-100'}`}
-              >
-                <Cloud size={16} className={syncing ? 'animate-pulse' : ''} />
-                <span className="hidden sm:inline shrink-0 max-w-[5rem] truncate sm:max-w-none">{syncing ? t('header.driveSyncing') : user.displayName?.split(' ')[0] || t('header.driveOn')}</span>
-              </button>
+              <>
+                <button
+                  onClick={() => signOut()}
+                  title={user.email}
+                  className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-bold transition-colors border min-h-[44px] touch-manipulation ${syncing ? 'bg-yellow-500/20 border-yellow-400/30 text-yellow-100' : 'bg-green-500/20 border-green-400/30 text-green-100 hover:bg-red-500/20 hover:border-red-400/30 hover:text-red-100'}`}
+                >
+                  <Cloud size={16} className={syncing ? 'animate-pulse' : ''} />
+                  <span className="hidden sm:inline shrink-0 max-w-[5rem] truncate sm:max-w-none">{syncing ? t('header.driveSyncing') : user.displayName?.split(' ')[0] || t('header.driveOn')}</span>
+                </button>
+                <button
+                  onClick={handleSyncNow}
+                  disabled={syncing}
+                  title={t('header.syncNow')}
+                  className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-blue-100 transition-colors min-h-[44px] touch-manipulation disabled:opacity-50"
+                >
+                  <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
+                  <span className="hidden sm:inline shrink-0">{t('header.syncNow')}</span>
+                </button>
+              </>
             ) : (
               <button
                 onClick={() => signInWithGoogle()
