@@ -1082,23 +1082,25 @@ Rules:
             </button>
 
             {user ? (
-              <button
-                onClick={handleSignOut}
-                title={t('header.driveOnTooltip')}
-                className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-bold transition-colors border min-h-[40px] ${syncing ? 'bg-yellow-500/20 border-yellow-400/30 text-yellow-100' : 'bg-green-500/20 border-green-400/30 text-green-100 hover:bg-red-500/20 hover:border-red-400/30 hover:text-red-100'}`}
-              >
-                <Cloud size={16} className={syncing ? 'animate-pulse' : ''} />
-                <span className="hidden sm:inline shrink-0 max-w-[5rem] truncate sm:max-w-none">{syncing ? t('header.driveSyncing') : user.displayName?.split(' ')[0] || t('header.driveOn')}</span>
-              </button>
-              <button
-                onClick={handleSyncNow}
-                disabled={syncing}
-                title={t('header.syncNow')}
-                className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-blue-100 transition-colors min-h-[40px] disabled:opacity-50"
-              >
-                <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
-                <span className="hidden sm:inline shrink-0">{t('header.syncNow')}</span>
-              </button>
+              <>
+                <button
+                  onClick={handleSignOut}
+                  title={t('header.driveOnTooltip')}
+                  className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-bold transition-colors border min-h-[40px] ${syncing ? 'bg-yellow-500/20 border-yellow-400/30 text-yellow-100' : 'bg-green-500/20 border-green-400/30 text-green-100 hover:bg-red-500/20 hover:border-red-400/30 hover:text-red-100'}`}
+                >
+                  <Cloud size={16} className={syncing ? 'animate-pulse' : ''} />
+                  <span className="hidden sm:inline shrink-0 max-w-[5rem] truncate sm:max-w-none">{syncing ? t('header.driveSyncing') : user.displayName?.split(' ')[0] || t('header.driveOn')}</span>
+                </button>
+                <button
+                  onClick={handleSyncNow}
+                  disabled={syncing}
+                  title={t('header.syncNow')}
+                  className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-blue-100 transition-colors min-h-[40px] disabled:opacity-50"
+                >
+                  <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
+                  <span className="hidden sm:inline shrink-0">{t('header.syncNow')}</span>
+                </button>
+              </>
             ) : (
               <button
                 onClick={handleSignIn}
