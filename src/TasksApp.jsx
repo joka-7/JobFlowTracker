@@ -1224,10 +1224,10 @@ Rules:
                   onClick={handleSyncNow}
                   disabled={syncing}
                   title={t('header.syncNow')}
-                  className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-blue-100 transition-colors min-h-[44px] touch-manipulation disabled:opacity-50"
+                  className="hidden md:flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-blue-100 transition-colors min-h-[44px] touch-manipulation disabled:opacity-50"
                 >
                   <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
-                  <span className="hidden sm:inline shrink-0">{t('header.syncNow')}</span>
+                  <span className="shrink-0">{t('header.syncNow')}</span>
                 </button>
               </>
             ) : (
@@ -1345,6 +1345,11 @@ Rules:
                         </select>
                       </div>
                     </div>
+                    {user && (
+                      <button onClick={() => { handleSyncNow(); setMobileMenuOpen(false); }} disabled={syncing} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50">
+                        <RefreshCw size={16} className={`text-blue-500 ${syncing ? 'animate-spin' : ''}`} /> {t('header.syncNow')}
+                      </button>
+                    )}
                     <button onClick={() => { handleExport(); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <Download size={16} className="text-green-600" /> {t('header.downloadTooltip')}
                     </button>
