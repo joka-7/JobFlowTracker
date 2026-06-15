@@ -250,6 +250,9 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
     } catch (e) { console.warn('LocalStorage error:', e); }
   }, [companies, mode]);
 
+  const userRef = useRef(null);
+  useEffect(() => { userRef.current = user; }, [user]);
+
   useEffect(() => {
     const unsub = onAuthChange(async (firebaseUser) => {
       setUser(firebaseUser);
@@ -269,6 +272,22 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
       }
     });
     return unsub;
+  }, [mode]);
+
+  useEffect(() => {
+    const handleVisibility = async () => {
+      const firebaseUser = userRef.current;
+      if (document.visibilityState === 'visible' && firebaseUser) {
+        setSyncing(true);
+        try {
+          const data = await loadAllItems(firebaseUser.uid, mode);
+          if (data && data.length > 0) setCompanies(filterItemsForMode(data, mode));
+        } catch (e) { console.error(e); }
+        setSyncing(false);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [mode]);
 
   const openNewForm = useCallback(() => {

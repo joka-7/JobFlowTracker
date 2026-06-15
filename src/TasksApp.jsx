@@ -159,6 +159,9 @@ export default function TasksApp({ onModeChange }) {
     initAI(provider, apiKey, model, ollamaUrl);
   }, []);
 
+  const userRef = useRef(null);
+  useEffect(() => { userRef.current = user; }, [user]);
+
   useEffect(() => {
     const unsub = onAuthChange(async (firebaseUser) => {
       setUser(firebaseUser);
@@ -176,6 +179,22 @@ export default function TasksApp({ onModeChange }) {
       }
     });
     return unsub;
+  }, []);
+
+  useEffect(() => {
+    const handleVisibility = async () => {
+      const firebaseUser = userRef.current;
+      if (document.visibilityState === 'visible' && firebaseUser) {
+        setSyncing(true);
+        try {
+          const data = await loadAllItems(firebaseUser.uid, MODE);
+          if (data && data.length > 0) setTasks(filterItemsForMode(data, MODE));
+        } catch (e) { console.error(e); }
+        setSyncing(false);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, []);
 
   const saveTasks = useCallback(async (newTasks) => {
