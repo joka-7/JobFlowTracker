@@ -74,6 +74,7 @@ const REJECTION_METHOD_KEYS = [
   'Automatic Email',
   'Personal Email',
   'Phone Call',
+  'Message',
   'No Response',
   'During Interview',
   'Other',
@@ -1504,7 +1505,7 @@ Rules:
                         >
                           <Trash2 size={16} />
                         </button>
-                        <div className={`grid grid-cols-1 md:grid-cols-3 gap-3 mb-3 ${isRTL ? 'pr-6' : 'pl-6'}`}>
+                        <div className={`grid grid-cols-1 md:grid-cols-3 gap-3 mb-3 ${isRTL ? 'pl-6' : 'pr-6'}`}>
                           <select
                             value={safeStr(interview.type)}
                             onChange={e => { const a = [...formData.interviews]; a[index].type = e.target.value; setFormData({...formData, interviews: a}); }}
@@ -1514,7 +1515,7 @@ Rules:
                             {INTERVIEW_TYPE_KEYS.map(key => <option key={key} value={key}>{tInterviewType(key)}</option>)}
                             {interview.type && !INTERVIEW_TYPE_KEYS.includes(interview.type) && <option value={safeStr(interview.type)}>{safeStr(interview.type)}</option>}
                           </select>
-                          <input type="date" value={safeStr(interview.date)} onChange={e => { const a = [...formData.interviews]; a[index].date = e.target.value; setFormData({...formData, interviews: a}); }} className="w-full p-2 text-sm border rounded" />
+                          <input type="date" dir="ltr" value={safeStr(interview.date)} onChange={e => { const a = [...formData.interviews]; a[index].date = e.target.value; setFormData({...formData, interviews: a}); }} className="w-full p-2 text-sm border rounded" />
                           <input type="text" placeholder={tMode('form.interviewerPlaceholder')} value={safeStr(interview.interviewer)} onChange={e => { const a = [...formData.interviews]; a[index].interviewer = e.target.value; setFormData({...formData, interviews: a}); }} className="w-full p-2 text-sm border rounded" />
                         </div>
                         <textarea placeholder={tMode('form.summaryPlaceholder')} value={safeStr(interview.summary)} onChange={e => { const a = [...formData.interviews]; a[index].summary = e.target.value; setFormData({...formData, interviews: a}); }} className="w-full p-2 text-sm border rounded h-16"></textarea>
@@ -1532,6 +1533,7 @@ Rules:
                           <label className="block text-sm font-bold text-gray-700 mb-1">{tMode('form.rejectionDate', 'Rejection Date')}</label>
                           <input
                             type="date"
+                            dir="ltr"
                             value={safeStr(formData.rejection?.date)}
                             onChange={e => setFormData({...formData, rejection: {...(formData.rejection || {}), date: e.target.value}})}
                             className="w-full p-2.5 border border-red-200 rounded-lg focus:ring-2 focus:ring-red-400 bg-white"
