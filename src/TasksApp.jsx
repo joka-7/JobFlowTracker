@@ -715,10 +715,10 @@ Rules:
           {editable && (
             <button
               onClick={() => handleDeleteStep(step.id)}
-              className="text-gray-300 hover:text-red-400 transition-colors"
+              className="text-gray-400 hover:text-red-500 transition-colors"
               title={tt('form.deleteStep', 'Delete step')}
             >
-              <X size={14} />
+              <Trash2 size={14} />
             </button>
           )}
         </div>
@@ -731,6 +731,7 @@ Rules:
       const steps = formData.steps || [];
       return (
         <div className="flex-1 overflow-y-auto p-3 sm:p-5 pb-20 custom-scrollbar">
+          <div className="max-w-3xl mx-auto">
           <div className="flex items-center justify-between mb-4 sm:mb-5">
             <h2 className="text-base sm:text-lg font-bold text-gray-800">
               {formData.id ? tt('form.editTitle', 'Edit Task') : tt('form.addTitle', 'Add New Task')}
@@ -870,6 +871,7 @@ Rules:
                 {tt('form.cancel', 'Cancel')}
               </button>
             </div>
+          </div>
           </div>
         </div>
       );
