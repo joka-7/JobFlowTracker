@@ -715,10 +715,10 @@ Rules:
           {editable && (
             <button
               onClick={() => handleDeleteStep(step.id)}
-              className="text-gray-300 hover:text-red-400 transition-colors"
+              className="text-gray-400 hover:text-red-500 transition-colors"
               title={tt('form.deleteStep', 'Delete step')}
             >
-              <X size={14} />
+              <Trash2 size={14} />
             </button>
           )}
         </div>
