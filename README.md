@@ -109,8 +109,13 @@ Supports Google Gemini, Groq (free tier), Ollama (free/local), Anthropic Claude,
 ### Data & Sync
 - **Google Sign-In** — private, isolated data per user; no accounts to create
 - **Firestore sync** — subcollection-based storage with granular writes
+- **Auto-refresh on tab focus** — returning to the tab/app re-fetches the latest data from Firestore so updates made on another device show up automatically
+- **Manual sync button** — re-fetch on demand from the header (desktop) or mobile menu
 - **Offline backup** — export and import your full dataset as JSON at any time
 - Each mode's data is stored independently: switching modes never loses data from other modes
+
+### Company / Candidate Details
+- **Company size, sector, and application source** — optional fields shown as chips on board cards, in the list sidebar, and in the detail view header when populated
 
 ### Interview Template Library
 80+ curated questions across 6 categories: HR, Technical, Behavioral, Manager, Culture, and Questions to Ask.
@@ -179,11 +184,11 @@ After saving, click any step's status icon in the detail panel to cycle it:
 
 ### 4. Switching Modes
 
-The **mode switcher** appears in every app header as three small icon buttons (Briefcase / Users / ClipboardList). Click any icon to switch instantly. Each mode's data is stored separately and is never affected by switching.
+The **mode switcher** appears in every app header as small icon buttons (Briefcase / Users / ClipboardList) on desktop, or a compact dropdown in the mobile menu. Click/tap any mode to switch instantly. Each mode's data is stored separately and is never affected by switching. You can hide modes you don't use from AI Settings (see below) — at least one must stay enabled.
 
 ### 5. Setting Up AI
 
-Click the **gear icon (⚙️)** in the header to open AI Settings. Choose a provider:
+Click the **gear icon (⚙️)** in the header to open AI Settings. This panel also has a **mode toggle** section to enable/disable Job Seeker, Recruiter, and Task Manager modes — disabled modes disappear from the mode switcher. Choose an AI provider:
 
 | Provider | Cost | Notes |
 |---|---|---|
@@ -199,13 +204,17 @@ Click the **gear icon (⚙️)** in the header to open AI Settings. Choose a pro
 
 Once a provider is configured, open any company and click the **AI Assistant** button. The panel includes: Interview Prep, Smart Schedule, Rejection Analysis, Interview Debrief, Pattern Analysis, Resume Tailoring, and AI Chat.
 
-### 7. Backup and Restore
+### 7. Syncing Across Devices
+
+When signed in, data automatically re-fetches from Firestore whenever you return to the tab/app. To pull updates immediately (e.g. right after editing on another device), click **Sync Now** next to the cloud indicator — shown in the header on desktop and in the mobile menu on phones.
+
+### 8. Backup and Restore
 
 **Export:** Click the download icon in the header. Your dataset downloads as `.json`.
 
 **Import:** Click the upload icon and select a previously exported file.
 
-### 8. Keyboard Shortcuts
+### 9. Keyboard Shortcuts
 
 | Shortcut | Action |
 |---|---|
@@ -240,7 +249,8 @@ src/
 ├── i18n.js                  # react-i18next setup
 ├── components/
 │   ├── ModeSelection.jsx    # First-launch 3-mode picker
-│   ├── ModeSwitcher.jsx     # Header mode switcher (3 icon buttons)
+│   ├── ModeSwitcher.jsx     # Header mode switcher (icon buttons, desktop)
+│   ├── ModeDropdown.jsx     # Compact mode switcher (dropdown, mobile menu)
 │   ├── AIAssistant.jsx      # Floating AI panel (job seeker only)
 │   ├── Onboarding.jsx       # First-visit wizard (job seeker only)
 │   ├── SearchFilter.jsx     # Search box + multi-status filter pills (list view)

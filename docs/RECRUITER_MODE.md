@@ -16,9 +16,13 @@ JobFlowTracker supports three modes that can be switched freely at any time usin
 2. Else if legacy `jobTrackerAppV2Data` exists → auto-set `jobseeker`.
 3. Else → show [`ModeSelection`](../src/components/ModeSelection.jsx) full-screen picker (3 options).
 
-**Switching at any time:** The `ModeSwitcher` component in every app header (3 icon buttons) updates `localStorage.appMode` and triggers an immediate re-render. The onboarding wizard is only shown on the very first visit ever, not when switching modes.
+**Switching at any time:** The `ModeSwitcher` component in every app header (icon buttons, desktop) or `ModeDropdown` (compact dropdown, mobile menu) updates `localStorage.appMode` and triggers an immediate re-render. The onboarding wizard is only shown on the very first visit ever, not when switching modes.
 
 On Google sign-in, `appMode` is written to `users/{uid}` and the matching subcollection is loaded.
+
+### Enabling / disabling modes
+
+Users can hide modes they don't use from the **⚙️ Settings** modal (`APIKeySettings.jsx`), which lists all 3 modes with toggle buttons. At least one mode must stay enabled. The selection is saved to `localStorage.enabledModes` (see `STORAGE_KEYS.enabledModes` / `getEnabledModes()` in [`src/storageKeys.js`](../src/storageKeys.js)) and read by both `ModeSwitcher` and `ModeDropdown` to filter which modes are shown. If the current mode is disabled, the app falls back to the first remaining enabled mode. When `enabledModes` is unset (default), all 3 modes are available.
 
 ---
 

@@ -75,7 +75,9 @@ JobFlowTracker is a single-page application (SPA) for tracking a job search, a r
 | `src/App.jsx` | Root | Mode gate: `ModeSelection`, `JobTrackerApp`, or `TasksApp`; tracks `autoOnboarding` flag |
 | `src/statuses.js` | Config | `STATUSES_JOBSEEKER`, `STATUSES_RECRUITER`, `STATUSES_TASKS`, `STEP_STATUSES`, storage keys, `getCollectionName`, `resolveInitialAppMode` |
 | `src/components/ModeSelection.jsx` | Full-screen | First-launch 3-mode picker (job seeker / recruiter / task manager) |
-| `src/components/ModeSwitcher.jsx` | Header widget | 3 icon buttons; updates `localStorage.appMode` and calls `onModeChange` |
+| `src/components/ModeSwitcher.jsx` | Header widget | Icon buttons for enabled modes (filtered via `getEnabledModes()`); updates `localStorage.appMode` and calls `onModeChange`; hidden if only 1 mode enabled |
+| `src/components/ModeDropdown.jsx` | Header widget | Compact dropdown variant of the mode switcher (mobile menu); same enabled-modes filtering |
+| `src/storageKeys.js` | Config | Canonical localStorage key names; `getEnabledModes()`, `APP_MODES`, e2e init constants |
 | `src/JobTrackerApp.jsx` | Main component | Mode-aware UI for job seeker and recruiter; all tabs, Firestore integration |
 | `src/TasksApp.jsx` | Main component | Task manager UI: board, list+step-detail, stats; step status cycling |
 | `src/firebase.js` | Module | Auth, mode-aware `loadAllItems(uid, mode)`, profile `appMode`, legacy migration |

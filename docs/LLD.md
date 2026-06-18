@@ -59,7 +59,7 @@ All fields are stored as-is in Firestore and in localStorage.
 | `name` | `string` | Yes | Company name. |
 | `role` | `string` | No | Job title / position applied for. |
 | `location` | `string` | No | Job location (city, remote, etc.). |
-| `status` | `string` | Yes | One of the 11 status IDs (see below). Default: `'applied'`. |
+| `status` | `string` | Yes | One of the 14 status IDs (see below). Default: `'applied'`. |
 | `priority` | `'high' \| 'medium' \| 'low'` | No | Default: `'medium'`. |
 | `website` | `string` | No | Company website URL. |
 | `linkedinCompany` | `string` | No | Company LinkedIn URL. |
@@ -70,6 +70,9 @@ All fields are stored as-is in Firestore and in localStorage.
 | `currentRole` | `string` | No | Recruiter: candidate's current job title. |
 | `expectedSalary` | `string` | No | Recruiter: salary expectations. |
 | `source` | `string` | No | Recruiter: where the candidate came from. |
+| `companySize` | `string` | No | Headcount bucket (e.g. `'11-50'`, `'5001+'`). Shown as a chip when populated. |
+| `companySector` | `string` | No | Free-text industry/sector (e.g. "FinTech"). Shown as a chip when populated. |
+| `applicationSource` | `string` | No | One of the application source keys (see below). Shown as a chip when populated. |
 | `interviews` | `Interview[]` | No | Array of interview records. Default: `[]`. |
 | `homeworks` | `Homework[]` | No | Array of home assignment records. Default: `[]`. |
 | `contacts` | `Contact[]` | No | Array of contact records. Default: `[]`. |
@@ -80,7 +83,7 @@ All fields are stored as-is in Firestore and in localStorage.
 
 | Field | Type | Description |
 |---|---|---|
-| `type` | `string` | One of the 8 interview type keys (see below). |
+| `type` | `string` | One of the 10 interview type keys (see below). |
 | `date` | `string` | ISO date string (`YYYY-MM-DD`). |
 | `interviewer` | `string` | Interviewer name (free text, never sent to AI). |
 | `summary` | `string` | User's notes from the interview. |
@@ -90,12 +93,12 @@ All fields are stored as-is in Firestore and in localStorage.
 | Field | Type | Description |
 |---|---|---|
 | `date` | `string` | ISO date string of the rejection. |
-| `method` | `string` | One of the 6 rejection method keys (see below). |
+| `method` | `string` | One of the 7 rejection method keys (see below). |
 | `notes` | `string` | Free-text notes or feedback received. |
 
 ### Status IDs — Job seeker
 
-See `STATUSES_JOBSEEKER` in `src/statuses.js` (11 statuses).
+See `STATUSES_JOBSEEKER` in `src/statuses.js` (14 statuses).
 
 ### Status IDs — Recruiter
 
@@ -107,8 +110,11 @@ See `STATUSES_RECRUITER` in `src/statuses.js` (9 statuses). Documented in [RECRU
 |---|---|---|
 | `applied` | Applied | `bg-blue-100 text-blue-800` |
 | `hr_call` | HR Call | `bg-purple-100 text-purple-800` |
+| `initial_manager_interview` | Initial Manager Interview | `bg-cyan-100 text-cyan-800` |
 | `tech_interview` | Technical Interview | `bg-yellow-100 text-yellow-800` |
 | `manager_interview` | Manager Interview | `bg-orange-100 text-orange-800` |
+| `vp_ceo_interview` | VP/CEO Interview | `bg-rose-100 text-rose-800` |
+| `hr_interview` | HR Interview | `bg-pink-100 text-pink-800` |
 | `home_assignment` | Home Assignment | `bg-indigo-100 text-indigo-800` |
 | `references` | References Check | `bg-teal-100 text-teal-800` |
 | `offer` | Offer | `bg-green-100 text-green-800` |
@@ -119,11 +125,15 @@ See `STATUSES_RECRUITER` in `src/statuses.js` (9 statuses). Documented in [RECRU
 
 ### Interview Type Keys
 
-`'Intro Call / HR'`, `'Technical Interview'`, `'Manager Interview'`, `'Home Assignment / Task'`, `'VP / CEO Interview'`, `'References Check'`, `'Salary Offer'`, `'Other'`
+`'Intro Call / HR'`, `'Initial Manager Interview'`, `'Technical Interview'`, `'Manager Interview'`, `'Home Assignment / Task'`, `'VP / CEO Interview'`, `'HR Interview'`, `'References Check'`, `'Salary Offer'`, `'Other'`
 
 ### Rejection Method Keys
 
-`'Automatic Email'`, `'Personal Email'`, `'Phone Call'`, `'No Response'`, `'During Interview'`, `'Other'`
+`'Automatic Email'`, `'Personal Email'`, `'Phone Call'`, `'Message'`, `'No Response'`, `'During Interview'`, `'Other'`
+
+### Application Source Keys
+
+`'me_linkedin'`, `'me_job_search'`, `'me_friend'`, `'me_article'`, `'friend_suggest'`, `'headhunter'`, `'recruiting_company'`, `'company_itself'` — recorded in `applicationSource` (see Company Object above).
 
 ### TasksApp.jsx
 
@@ -443,16 +453,17 @@ Language is persisted to `localStorage` as `appLanguage`. The app root sets `dir
 
 | Namespace key | Contents |
 |---|---|
-| `status.*` | 11 status display names (applied, hr_call, ..., withdrawn, unknown) |
+| `status.*` | 14 status display names (applied, hr_call, ..., withdrawn, unknown) |
 | `priority.*` | high, medium, low |
-| `interviewType.*` | 8 interview type display names |
+| `interviewType.*` | 10 interview type display names |
 | `header.*` | Title, subtitle, button labels, tooltip texts, save/sync indicators |
 | `tabs.*` | board, list, timeline, stats tab labels |
 | `board.*` | Empty state texts, CTA button labels, mode descriptions |
 | `timeline.*` | Timeline title, empty state, event type labels |
 | `list.*` | Search placeholder, filter label, no-results, Load More, remaining |
 | `form.*` | All form field labels, placeholders, save/cancel, rejection sub-fields |
-| `rejectionMethod.*` | 6 rejection method display names |
+| `rejectionMethod.*` | 7 rejection method display names |
+| `applicationSource.*` | 8 application source display names. EN only — `he.json`/`fr.json` lack this namespace, so non-English UIs fall back to the raw key with underscores replaced |
 | `detail.*` | Company detail panel labels (edit, delete, about, notes, etc.) |
 | `stats.*` | Statistics labels, funnel title/subtitle, avg days, no-data |
 | `toast.*` | All transient notification messages |
@@ -551,8 +562,8 @@ No environment variables are required at build time. The Firebase project config
 
 | Suite | Command | Count | Scope |
 |-------|---------|-------|-------|
-| Unit + integration | `npm test` | 155 | `src/__tests__/` — jsdom, mocked Firebase |
-| E2E | `npm run test:e2e` | 12 | `e2e/` — Playwright, real browser, port 5199 |
-| All | `npm run test:all` | 167 | Both |
+| Unit + integration | `npm test` | 279 | `src/__tests__/` — jsdom, mocked Firebase |
+| E2E | `npm run test:e2e` | 72 | `e2e/` — Playwright, real browser, port 5199 |
+| All | `npm run test:all` | 351 | Both |
 
 Vitest excludes `e2e/` via `vite.config.js`. E2E starts Vite with `--strictPort 5199` to avoid port conflicts.
