@@ -436,7 +436,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
     const byStatus = {};
     STATUSES.forEach(s => { byStatus[s.id] = companies.filter(c => c.status === s.id).length; });
     const active = companies.filter(c => !terminalStatuses.includes(c.status)).length;
-    const responded = companies.filter(c => c.status !== 'applied').length;
+    const responded = companies.filter(c => c.status !== 'applied' && c.status !== 'ghosted').length;
     const responseRate = total > 0 ? Math.round((responded / total) * 100) : 0;
     const interviewCount = companies.reduce((acc, c) => acc + (Array.isArray(c.interviews) ? c.interviews.length : 0), 0);
     return { total, byStatus, active, responseRate, interviewCount };
