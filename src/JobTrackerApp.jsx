@@ -103,20 +103,6 @@ const getJourneySteps = (company) => {
     .map(i => safeStr(i.type));
 };
 
-const STEP_SHORT = {
-  'Intro Call / HR': 'HR',
-  'Initial Manager Interview': 'iMgr',
-  'Technical Interview': 'Tech',
-  'Manager Interview': 'Mgr',
-  'Home Assignment / Task': 'Task',
-  'VP / CEO Interview': 'VP',
-  'HR Interview': 'HRf',
-  'References Check': 'Refs',
-  'Salary Offer': 'Offer',
-  'Other': 'Other',
-};
-const shortenStep = (s) => STEP_SHORT[s] || s.substring(0, 6);
-
 const getDaysUntil = (dateString) => {
   if (!dateString) return null;
   const date = new Date(dateString);
@@ -734,7 +720,7 @@ Rules:
                         {journeySteps.map((step, i) => (
                           <React.Fragment key={i}>
                             <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${isRejected ? 'bg-red-50 text-red-500' : 'bg-indigo-50 text-indigo-500'}`}>
-                              {shortenStep(step)}
+                              {tInterviewType(step)}
                             </span>
                             {i < journeySteps.length - 1 && <span className="text-gray-300 text-[10px]">›</span>}
                           </React.Fragment>
