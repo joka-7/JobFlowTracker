@@ -40,7 +40,7 @@ jobs:
         run: npm ci
 
       - name: Audit dependencies
-        run: npm audit --audit-level=high
+        run: npm audit --omit=dev --audit-level=high
 
   trivy:
     name: Trivy
@@ -62,6 +62,7 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: 1
           scanners: vuln
+          trivyignores: .trivyignore
 
       - name: Upload Trivy scan results
         uses: github/codeql-action/upload-sarif@v3

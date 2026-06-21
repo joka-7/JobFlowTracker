@@ -1,4 +1,4 @@
-import { STATUSES_TASKS } from './statuses';
+import { STATUSES_TASKS, normalizeInterviewType } from './statuses';
 
 /** Generate a cryptographically random ID (fallback to timestamp if crypto unavailable) */
 export function generateId() {
@@ -29,7 +29,7 @@ const STEP_STATUSES = new Set(['todo', 'in_progress', 'done', 'blocked']);
 function sanitizeInterviews(interviews) {
   if (!Array.isArray(interviews)) return [];
   return interviews.slice(0, 100).map(inv => ({
-    type: safeStr(inv.type || inv.round || ''),
+    type: normalizeInterviewType(safeStr(inv.type || inv.round || '')),
     date: safeStr(inv.date || ''),
     interviewer: safeStr(inv.interviewer || ''),
     summary: safeStr(inv.summary || ''),
@@ -47,6 +47,27 @@ function sanitizeRejection(rejection) {
   };
 }
 
+function sanitizeHomeworks(homeworks) {
+  if (!Array.isArray(homeworks)) return [];
+  return homeworks.slice(0, 100).map(hw => ({
+    title: safeStr(hw.title || ''),
+    deadline: safeStr(hw.deadline || ''),
+    notes: safeStr(hw.notes || ''),
+  }));
+}
+
+function sanitizeContacts(contacts) {
+  if (!Array.isArray(contacts)) return [];
+  return contacts.slice(0, 100).map(c => ({
+    name: safeStr(c.name || ''),
+    role: safeStr(c.role || ''),
+    email: safeStr(c.email || ''),
+    phone: safeStr(c.phone || ''),
+    linkedin: safeStr(c.linkedin || ''),
+    notes: safeStr(c.notes || ''),
+  }));
+}
+
 /** Whitelist fields for job seeker / recruiter tracker records (import + localStorage). */
 export function sanitizeTrackerRecords(importedArray, { unnamedLabel = 'Unnamed' } = {}) {
   if (!Array.isArray(importedArray)) return [];
@@ -59,14 +80,20 @@ export function sanitizeTrackerRecords(importedArray, { unnamedLabel = 'Unnamed'
     website: safeStr(c.website || ''),
     linkedinCompany: safeStr(c.linkedinCompany || ''),
     linkedinCandidate: safeStr(c.linkedinCandidate || ''),
+    linkedinHR: safeStr(c.linkedinHR || ''),
     description: safeStr(c.description || ''),
     products: safeStr(c.products || ''),
     currentRole: safeStr(c.currentRole || ''),
     expectedSalary: safeStr(c.expectedSalary || ''),
     source: safeStr(c.source || ''),
+    companySize: safeStr(c.companySize || ''),
+    companySector: safeStr(c.companySector || ''),
+    applicationSource: safeStr(c.applicationSource || ''),
     generalNotes: safeStr(c.generalNotes || ''),
     priority: safeStr(c.priority || 'medium'),
     interviews: sanitizeInterviews(c.interviews),
+    homeworks: sanitizeHomeworks(c.homeworks),
+    contacts: sanitizeContacts(c.contacts),
     rejection: sanitizeRejection(c.rejection),
   }));
 }

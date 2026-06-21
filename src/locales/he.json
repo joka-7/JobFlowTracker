@@ -21,6 +21,16 @@
     "medium": "בינונית",
     "low": "נמוכה"
   },
+  "applicationSource": {
+    "me_linkedin": "אני ← לינקדאין",
+    "me_job_search": "אני ← לוח דרושים",
+    "me_friend": "אני ← טיפ מחבר",
+    "me_article": "אני ← כתבה",
+    "friend_suggest": "חבר הפנה אותי",
+    "headhunter": "דורש כוח אדם",
+    "recruiting_company": "חברת השמה",
+    "company_itself": "החברה פנתה אליי"
+  },
   "interviewType": {
     "Intro Call / HR": "שיחת היכרות / HR",
     "Initial Manager Interview": "ראיון מנהל ראשוני",
