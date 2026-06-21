@@ -1,4 +1,4 @@
-import { STATUSES_TASKS } from './statuses';
+import { STATUSES_TASKS, normalizeInterviewType } from './statuses';
 
 /** Generate a cryptographically random ID (fallback to timestamp if crypto unavailable) */
 export function generateId() {
@@ -29,7 +29,7 @@ const STEP_STATUSES = new Set(['todo', 'in_progress', 'done', 'blocked']);
 function sanitizeInterviews(interviews) {
   if (!Array.isArray(interviews)) return [];
   return interviews.slice(0, 100).map(inv => ({
-    type: safeStr(inv.type || inv.round || ''),
+    type: normalizeInterviewType(safeStr(inv.type || inv.round || '')),
     date: safeStr(inv.date || ''),
     interviewer: safeStr(inv.interviewer || ''),
     summary: safeStr(inv.summary || ''),

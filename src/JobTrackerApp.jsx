@@ -249,7 +249,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
           await saveUserProfile(firebaseUser.uid, { appMode: mode });
           const data = await loadAllItems(firebaseUser.uid, mode);
           if (data && data.length > 0) {
-            setCompanies(filterItemsForMode(data, mode));
+            setCompanies(filterItemsForMode(sanitizeTrackerRecords(data), mode));
             showToast(tMode('toast.driveConnectedWithData'));
           } else {
             showToast(tMode('toast.driveConnectedEmpty'));
@@ -268,7 +268,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
         setSyncing(true);
         try {
           const data = await loadAllItems(firebaseUser.uid, mode);
-          if (data && data.length > 0) setCompanies(filterItemsForMode(data, mode));
+          if (data && data.length > 0) setCompanies(filterItemsForMode(sanitizeTrackerRecords(data), mode));
         } catch (e) { console.error(e); }
         setSyncing(false);
       }
@@ -352,7 +352,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
     setSyncing(true);
     try {
       const data = await loadAllItems(user.uid, mode);
-      if (data && data.length > 0) setCompanies(filterItemsForMode(data, mode));
+      if (data && data.length > 0) setCompanies(filterItemsForMode(sanitizeTrackerRecords(data), mode));
     } catch (e) { console.error(e); }
     setSyncing(false);
   };

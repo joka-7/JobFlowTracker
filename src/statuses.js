@@ -1,3 +1,7 @@
+import enLocale from './locales/en.json';
+import heLocale from './locales/he.json';
+import frLocale from './locales/fr.json';
+
 export const STATUSES_JOBSEEKER = [
   { id: 'applied', color: 'bg-blue-100 text-blue-800 border-blue-200' },
   { id: 'hr_call', color: 'bg-purple-100 text-purple-800 border-purple-200' },
@@ -51,6 +55,31 @@ export const INTERVIEW_TYPE_KEYS = [
   'Salary Offer',
   'Other',
 ];
+
+/**
+ * Map any previously-stored interview type — whether a canonical English key or
+ * a translated label saved in an earlier version (he/fr/recruiter wording) —
+ * back to the canonical English key so it can be translated and funnel-matched.
+ */
+const INTERVIEW_TYPE_ALIAS_TO_KEY = (() => {
+  const map = {};
+  const add = (value, key) => {
+    if (typeof value === 'string' && value.trim()) map[value.trim().toLowerCase()] = key;
+  };
+  for (const key of INTERVIEW_TYPE_KEYS) {
+    add(key, key); // canonical key maps to itself
+    for (const locale of [enLocale, heLocale, frLocale]) {
+      add(locale?.interviewType?.[key], key);
+      add(locale?.recruiter?.interviewType?.[key], key);
+    }
+  }
+  return map;
+})();
+
+export function normalizeInterviewType(type) {
+  if (typeof type !== 'string' || !type.trim()) return type || '';
+  return INTERVIEW_TYPE_ALIAS_TO_KEY[type.trim().toLowerCase()] || type;
+}
 
 export const RECRUITER_FUNNEL_ORDER = [
   'applied', 'screening', 'phone_screen', 'technical', 'offer_extended',
