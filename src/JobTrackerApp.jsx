@@ -865,6 +865,7 @@ Rules:
       'Intro Call / HR': 'screening',
       'Initial Manager Interview': 'screening',
       'Technical Interview': 'technical',
+      'Home Assignment / Task': 'technical',
       'Manager Interview': 'final_interview',
       'VP / CEO Interview': 'final_interview',
       'HR Interview': 'final_interview',
@@ -875,6 +876,7 @@ Rules:
       'Initial Manager Interview': 'initial_manager_interview',
       'Technical Interview': 'tech_interview',
       'Manager Interview': 'manager_interview',
+      'Home Assignment / Task': 'home_assignment',
       'VP / CEO Interview': 'vp_ceo_interview',
       'HR Interview': 'hr_interview',
       'Salary Offer': 'offer',
@@ -883,8 +885,12 @@ Rules:
     const funnelIdx = (id) => FUNNEL_ORDER.indexOf(id);
     const companiesReachedStage = (stageId) => {
       const idx = funnelIdx(stageId);
+      // Every tracked company has at least applied, regardless of its current status
+      // (e.g. rejected/ghosted/withdrawn/frozen aren't part of the linear funnel order).
+      if (idx === 0) return companies.length;
       return companies.filter(c => {
-        if (funnelIdx(c.status) >= idx && funnelIdx(c.status) !== -1) return true;
+        const statusIdx = funnelIdx(c.status);
+        if (statusIdx !== -1 && statusIdx >= idx) return true;
         if (Array.isArray(c.interviews)) {
           for (const iv of c.interviews) {
             const mapped = INTERVIEW_TYPE_TO_STAGE[iv.type];

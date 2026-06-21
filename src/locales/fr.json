@@ -21,6 +21,16 @@
     "medium": "Moyenne",
     "low": "Basse"
   },
+  "applicationSource": {
+    "me_linkedin": "Moi → LinkedIn",
+    "me_job_search": "Moi → Site d'emploi",
+    "me_friend": "Moi → Tuyau d'un ami",
+    "me_article": "Moi → Article",
+    "friend_suggest": "Recommandé par un ami",
+    "headhunter": "Chasseur de têtes",
+    "recruiting_company": "Agence de recrutement",
+    "company_itself": "L'entreprise m'a contacté"
+  },
   "interviewType": {
     "Intro Call / HR": "Appel intro / RH",
     "Initial Manager Interview": "Premier entretien manager",

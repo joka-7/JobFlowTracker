@@ -47,6 +47,27 @@ function sanitizeRejection(rejection) {
   };
 }
 
+function sanitizeHomeworks(homeworks) {
+  if (!Array.isArray(homeworks)) return [];
+  return homeworks.slice(0, 100).map(hw => ({
+    title: safeStr(hw.title || ''),
+    deadline: safeStr(hw.deadline || ''),
+    notes: safeStr(hw.notes || ''),
+  }));
+}
+
+function sanitizeContacts(contacts) {
+  if (!Array.isArray(contacts)) return [];
+  return contacts.slice(0, 100).map(c => ({
+    name: safeStr(c.name || ''),
+    role: safeStr(c.role || ''),
+    email: safeStr(c.email || ''),
+    phone: safeStr(c.phone || ''),
+    linkedin: safeStr(c.linkedin || ''),
+    notes: safeStr(c.notes || ''),
+  }));
+}
+
 /** Whitelist fields for job seeker / recruiter tracker records (import + localStorage). */
 export function sanitizeTrackerRecords(importedArray, { unnamedLabel = 'Unnamed' } = {}) {
   if (!Array.isArray(importedArray)) return [];
@@ -59,14 +80,20 @@ export function sanitizeTrackerRecords(importedArray, { unnamedLabel = 'Unnamed'
     website: safeStr(c.website || ''),
     linkedinCompany: safeStr(c.linkedinCompany || ''),
     linkedinCandidate: safeStr(c.linkedinCandidate || ''),
+    linkedinHR: safeStr(c.linkedinHR || ''),
     description: safeStr(c.description || ''),
     products: safeStr(c.products || ''),
     currentRole: safeStr(c.currentRole || ''),
     expectedSalary: safeStr(c.expectedSalary || ''),
     source: safeStr(c.source || ''),
+    companySize: safeStr(c.companySize || ''),
+    companySector: safeStr(c.companySector || ''),
+    applicationSource: safeStr(c.applicationSource || ''),
     generalNotes: safeStr(c.generalNotes || ''),
     priority: safeStr(c.priority || 'medium'),
     interviews: sanitizeInterviews(c.interviews),
+    homeworks: sanitizeHomeworks(c.homeworks),
+    contacts: sanitizeContacts(c.contacts),
     rejection: sanitizeRejection(c.rejection),
   }));
 }
