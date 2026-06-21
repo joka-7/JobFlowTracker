@@ -57,11 +57,29 @@ export const RECRUITER_FUNNEL_ORDER = [
 ];
 
 export const JOBSEEKER_FUNNEL_ORDER = [
-  'applied', 'hr_call', 'initial_manager_interview', 'tech_interview', 'manager_interview', 'vp_ceo_interview', 'hr_interview', 'home_assignment', 'references', 'offer',
+  'applied', 'hr_call', 'initial_manager_interview', 'tech_interview', 'manager_interview', 'home_assignment', 'vp_ceo_interview', 'hr_interview', 'references', 'offer',
 ];
 
 export const getFunnelOrder = (mode) =>
   mode === 'recruiter' ? RECRUITER_FUNNEL_ORDER : JOBSEEKER_FUNNEL_ORDER;
+
+/** Funnel stages that move/show together as one visual group (shared arrows in/out, each keeps its own count). */
+export const RECRUITER_FUNNEL_GROUPS = [
+  ['applied'], ['screening'], ['phone_screen'], ['technical'], ['offer_extended'],
+];
+
+export const JOBSEEKER_FUNNEL_GROUPS = [
+  ['applied'],
+  ['hr_call', 'initial_manager_interview'],
+  ['tech_interview', 'manager_interview', 'home_assignment'],
+  ['vp_ceo_interview'],
+  ['hr_interview'],
+  ['references'],
+  ['offer'],
+];
+
+export const getFunnelGroups = (mode) =>
+  mode === 'recruiter' ? RECRUITER_FUNNEL_GROUPS : JOBSEEKER_FUNNEL_GROUPS;
 
 export const STATUSES_TASKS = [
   { id: 'active', color: 'bg-blue-100 text-blue-800 border-blue-200' },

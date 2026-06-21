@@ -12,7 +12,7 @@ import {
 } from './firebase';
 import { initAI, getJobFinderSystemPrompt, getCandidateFinderSystemPrompt } from './services/aiAssistant';
 import {
-  getStatuses, getTerminalStatuses, getRejectedStatuses, getFunnelOrder,
+  getStatuses, getTerminalStatuses, getRejectedStatuses, getFunnelOrder, getFunnelGroups,
   getStorageKey, INTERVIEW_TYPE_KEYS, filterItemsForMode,
 } from './statuses';
 import Onboarding from './components/Onboarding';
@@ -404,7 +404,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
       if (Array.isArray(company.interviews)) {
         company.interviews.forEach(iv => {
           if (iv && iv.date)
-            evs.push({ date: iv.date, title: `${cName} – ${iv.type || ''}`, type: 'interview', parentId: company.id });
+            evs.push({ date: iv.date, title: `${cName} – ${iv.type ? tInterviewType(iv.type) : ''}`, type: 'interview', parentId: company.id });
         });
       }
       if (Array.isArray(company.homeworks)) {
@@ -415,7 +415,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
       }
     });
     return evs;
-  }, [companies]);
+  }, [companies, i18n.language]);
 
   const stats = useMemo(() => {
     const total = companies.length;
@@ -826,7 +826,7 @@ Rules:
                       {formatDate(event.date)}
                     </div>
                   </div>
-                  <h3 className="font-bold text-lg mb-1">{safeStr(event.type || event.task)}</h3>
+                  <h3 className="font-bold text-lg mb-1">{event.eventType === 'interview' ? (event.type ? tInterviewType(event.type) : '') : safeStr(event.task)}</h3>
                   <p className="text-gray-600 text-sm whitespace-pre-wrap">{safeStr(event.summary || event.notes)}</p>
                   {event.interviewer && (
                     <div className="mt-3 text-sm text-gray-500 flex items-center gap-1">
@@ -896,6 +896,12 @@ Rules:
     };
     const journeyCounts = JOURNEY_STAGES.map(s => ({ ...s, count: companiesReachedStage(s.id) }));
     const hasJourneyData = journeyCounts[0].count > 0;
+    const funnelGroupCounts = getFunnelGroups(mode).map(group =>
+      group.map(id => {
+        const stage = journeyCounts.find(s => s.id === id);
+        return stage || { id, label: tStatus(id), color: 'bg-gray-100 text-gray-800 border-gray-300', count: companiesReachedStage(id) };
+      })
+    );
 
     // Avg days: first to last interview date for companies with >=2 dated interviews
     const companiesWithDates = companies.filter(c =>
@@ -954,13 +960,14 @@ Rules:
             ) : (
               <div className="overflow-x-auto -mx-1 px-1">
               <div className="flex items-center gap-1 min-w-max">
-                {journeyCounts.map((stage, i) => {
-                  const prevCount = i > 0 ? journeyCounts[i - 1].count : null;
-                  const pct = prevCount && prevCount > 0
-                    ? Math.round((stage.count / prevCount) * 100)
+                {funnelGroupCounts.map((group, i) => {
+                  const prevEntryCount = i > 0 ? funnelGroupCounts[i - 1][0].count : null;
+                  const entryCount = group[0].count;
+                  const pct = prevEntryCount && prevEntryCount > 0
+                    ? Math.round((entryCount / prevEntryCount) * 100)
                     : null;
                   return (
-                    <React.Fragment key={stage.id}>
+                    <React.Fragment key={group.map(s => s.id).join('-')}>
                       {i > 0 && (
                         <div className="flex flex-col items-center mx-1">
                           <span className="text-gray-400 text-lg leading-none">›</span>
@@ -969,9 +976,13 @@ Rules:
                           )}
                         </div>
                       )}
-                      <div className={`flex flex-col items-center px-3 py-2 rounded-lg border font-medium text-sm ${stage.color}`}>
-                        <span className="font-bold">{stage.label}</span>
-                        <span className="text-lg font-black leading-tight">{stage.count}</span>
+                      <div className={`flex items-center gap-1 ${group.length > 1 ? 'p-1.5 rounded-xl border border-dashed border-gray-200 bg-gray-50/50' : ''}`}>
+                        {group.map(stage => (
+                          <div key={stage.id} className={`flex flex-col items-center px-3 py-2 rounded-lg border font-medium text-sm ${stage.color}`}>
+                            <span className="font-bold">{stage.label}</span>
+                            <span className="text-lg font-black leading-tight">{stage.count}</span>
+                          </div>
+                        ))}
                       </div>
                     </React.Fragment>
                   );
@@ -1015,7 +1026,7 @@ Rules:
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="font-bold text-gray-800 truncate">{safeStr(event.companyName)}</div>
-                        <div className="text-sm text-gray-600 truncate">{safeStr(event.type || event.task)}</div>
+                        <div className="text-sm text-gray-600 truncate">{event.eventType === 'interview' ? (event.type ? tInterviewType(event.type) : '') : safeStr(event.task)}</div>
                       </div>
                       <div className="text-sm text-gray-400 flex-shrink-0">{formatDate(event.date)}</div>
                     </div>
