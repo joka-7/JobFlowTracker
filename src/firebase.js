@@ -1,9 +1,3 @@
-import { initializeApp } from 'firebase/app';
-import {
-  getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
-  browserPopupRedirectResolver, signOut as firebaseSignOut, onAuthStateChanged,
-} from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
 import { getCollectionName } from './statuses';
 
 const firebaseConfig = {
@@ -15,10 +9,62 @@ const firebaseConfig = {
   appId: "1:163411158407:web:042975ed70499f35a7de22"
 };
 
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
+// localStorage flags let us avoid touching Firebase on load for fresh visitors.
+// SESSION_FLAG marks a previously signed-in session worth restoring; REDIRECT_FLAG
+// marks an in-flight redirect sign-in whose result we must collect on next load.
+const SESSION_FLAG = 'jft_auth_session';
+const REDIRECT_FLAG = 'jft_auth_redirect_pending';
+
+function readFlag(key) {
+  try { return window.localStorage.getItem(key) === '1'; } catch { return false; }
+}
+
+function writeFlag(key, on) {
+  try {
+    if (on) window.localStorage.setItem(key, '1');
+    else window.localStorage.removeItem(key);
+  } catch { /* ignore storage failures */ }
+}
+
+// Memoized, lazy Firebase initializer. The SDK is dynamically imported on first
+// use so it stays out of the entry bundle and never boots for visitors who don't
+// sign in.
+let initPromise;
+function ensureInit() {
+  if (!initPromise) {
+    initPromise = (async () => {
+      const { initializeApp } = await import('firebase/app');
+      const { getAuth } = await import('firebase/auth');
+      const { getFirestore } = await import('firebase/firestore');
+      const app = initializeApp(firebaseConfig);
+      return { auth: getAuth(app), db: getFirestore(app) };
+    })();
+  }
+  return initPromise;
+}
+
+// The auth watcher fans a single Firebase onAuthStateChanged listener out to all
+// registered callbacks. It is started lazily — only for returning signed-in users
+// or on an explicit sign-in / redirect completion — so it never boots the SDK for
+// fresh visitors.
+const authCallbacks = new Set();
+let authWatcherPromise;
+
+function startAuthWatcher() {
+  if (!authWatcherPromise) {
+    authWatcherPromise = (async () => {
+      const { auth } = await ensureInit();
+      const { onAuthStateChanged } = await import('firebase/auth');
+      onAuthStateChanged(auth, (user) => {
+        writeFlag(SESSION_FLAG, !!user);
+        authCallbacks.forEach((cb) => {
+          try { cb(user); } catch (e) { console.error(e); }
+        });
+      });
+    })();
+  }
+  return authWatcherPromise;
+}
 
 /** User-facing message for Firebase Google sign-in failures (header "Connect Drive"). */
 export function formatSignInError(err) {
@@ -43,9 +89,15 @@ export function formatSignInError(err) {
   return msg || 'Sign-in failed.';
 }
 
-/** Call once on app load after Google redirect sign-in. */
+/** Call once on app load after Google redirect sign-in. No-op (and no SDK load)
+ * unless a redirect sign-in is actually pending. */
 export async function completeRedirectSignIn() {
+  if (!readFlag(REDIRECT_FLAG)) return null;
+  writeFlag(REDIRECT_FLAG, false);
+  const { auth } = await ensureInit();
+  const { getRedirectResult } = await import('firebase/auth');
   const result = await getRedirectResult(auth);
+  startAuthWatcher().catch((e) => console.error('Auth watcher:', e));
   return result?.user ?? null;
 }
 
@@ -60,11 +112,19 @@ function shouldFallbackToRedirect(err) {
 }
 
 export async function signInWithGoogle() {
+  const { auth } = await ensureInit();
+  const {
+    GoogleAuthProvider, signInWithPopup, signInWithRedirect, browserPopupRedirectResolver,
+  } = await import('firebase/auth');
+  const provider = new GoogleAuthProvider();
+  // Start watching auth state so the popup-success path syncs registered consumers.
+  startAuthWatcher().catch((e) => console.error('Auth watcher:', e));
   try {
     const result = await signInWithPopup(auth, provider, browserPopupRedirectResolver);
     return result.user;
   } catch (err) {
     if (shouldFallbackToRedirect(err)) {
+      writeFlag(REDIRECT_FLAG, true);
       await signInWithRedirect(auth, provider);
       return null;
     }
@@ -73,28 +133,38 @@ export async function signInWithGoogle() {
 }
 
 export async function signOut() {
+  const { auth } = await ensureInit();
+  const { signOut: firebaseSignOut } = await import('firebase/auth');
   await firebaseSignOut(auth);
+  writeFlag(SESSION_FLAG, false);
 }
 
 export function onAuthChange(callback) {
-  return onAuthStateChanged(auth, callback);
+  authCallbacks.add(callback);
+  // Only boot Firebase eagerly to restore a previously signed-in session.
+  if (readFlag(SESSION_FLAG)) {
+    startAuthWatcher().catch((e) => console.error('Auth watcher:', e));
+  }
+  return () => { authCallbacks.delete(callback); };
 }
 
 export async function loadUserProfile(uid) {
+  const { db } = await ensureInit();
+  const { doc, getDoc } = await import('firebase/firestore');
   const snap = await getDoc(doc(db, 'users', uid));
   return snap.exists() ? snap.data() : {};
 }
 
 export async function saveUserProfile(uid, data) {
+  const { db } = await ensureInit();
+  const { doc, setDoc } = await import('firebase/firestore');
   await setDoc(doc(db, 'users', uid), data, { merge: true });
 }
 
-function collectionRef(uid, mode) {
-  return collection(db, 'users', uid, getCollectionName(mode));
-}
-
 export async function loadAllItems(uid, mode = 'jobseeker') {
-  const colRef = collectionRef(uid, mode);
+  const { db } = await ensureInit();
+  const { doc, getDoc, collection, getDocs } = await import('firebase/firestore');
+  const colRef = collection(db, 'users', uid, getCollectionName(mode));
   const snap = await getDocs(colRef);
 
   if (!snap.empty) {
@@ -116,17 +186,23 @@ export async function loadAllItems(uid, mode = 'jobseeker') {
 }
 
 export async function updateItem(uid, mode, item) {
+  const { db } = await ensureInit();
+  const { doc, setDoc } = await import('firebase/firestore');
   const ref = doc(db, 'users', uid, getCollectionName(mode), String(item.id));
   await setDoc(ref, item);
 }
 
 export async function deleteItem(uid, mode, id) {
+  const { db } = await ensureInit();
+  const { doc, deleteDoc } = await import('firebase/firestore');
   const ref = doc(db, 'users', uid, getCollectionName(mode), String(id));
   await deleteDoc(ref);
 }
 
 export async function batchSaveItems(uid, mode, items) {
   if (!items.length) return;
+  const { db } = await ensureInit();
+  const { doc, writeBatch } = await import('firebase/firestore');
   const CHUNK = 490;
   for (let i = 0; i < items.length; i += CHUNK) {
     const batch = writeBatch(db);
@@ -161,4 +237,3 @@ export async function loadUserData(uid) {
 export async function saveUserData(uid, companies) {
   return batchSaveCompanies(uid, companies);
 }
-
