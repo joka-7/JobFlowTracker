@@ -32,15 +32,24 @@ function writeFlag(key, on) {
 const FIREBASE_AUTH_DB = 'firebaseLocalStorageDb';
 const FIREBASE_AUTH_STORE = 'firebaseLocalStorage';
 
-function hasPersistedAuthUser() {
+// Opens the auth DB and resolves true iff it holds a persisted firebase:authUser
+// entry. If the DB didn't exist (oldVersion 0), opening creates an empty one —
+// we detect that and delete it so fresh visitors aren't left with a phantom DB.
+function probePersistedAuthUser() {
   return new Promise((resolve) => {
     let req;
     try { req = window.indexedDB.open(FIREBASE_AUTH_DB); }
     catch { return resolve(false); }
+    let created = false;
+    req.onupgradeneeded = (e) => { if (e.oldVersion === 0) created = true; };
     req.onerror = () => resolve(false);
     req.onsuccess = () => {
       const db = req.result;
-      if (!db.objectStoreNames.contains(FIREBASE_AUTH_STORE)) { db.close(); return resolve(false); }
+      if (created || !db.objectStoreNames.contains(FIREBASE_AUTH_STORE)) {
+        db.close();
+        if (created) { try { window.indexedDB.deleteDatabase(FIREBASE_AUTH_DB); } catch { /* ignore */ } }
+        return resolve(false);
+      }
       try {
         const keysReq = db.transaction(FIREBASE_AUTH_STORE, 'readonly')
           .objectStore(FIREBASE_AUTH_STORE).getAllKeys();
@@ -56,15 +65,19 @@ function hasPersistedAuthUser() {
 }
 
 // True when a previously signed-in session should be restored on load: our own
-// flag (set on every sign-in) or Firebase's persisted auth store. The IndexedDB
-// existence check via databases() avoids creating an empty DB for fresh visitors.
+// flag (set on every sign-in) or Firebase's persisted auth store. Where
+// indexedDB.databases() exists (Chromium/WebKit) we use it to skip the probe for
+// fresh visitors; where it doesn't (Firefox) we probe directly, which self-cleans
+// any empty DB it has to create. Either way the Firebase SDK is never loaded here.
 async function hasRestorableSession() {
   if (readFlag(SESSION_FLAG)) return true;
   try {
-    if (typeof window.indexedDB === 'undefined' || !window.indexedDB.databases) return false;
-    const dbs = await window.indexedDB.databases();
-    if (!dbs.some((d) => d.name === FIREBASE_AUTH_DB)) return false;
-    return await hasPersistedAuthUser();
+    if (typeof window.indexedDB === 'undefined') return false;
+    if (window.indexedDB.databases) {
+      const dbs = await window.indexedDB.databases();
+      if (!dbs.some((d) => d.name === FIREBASE_AUTH_DB)) return false;
+    }
+    return await probePersistedAuthUser();
   } catch { return false; }
 }
 
