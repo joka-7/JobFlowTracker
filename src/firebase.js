@@ -26,6 +26,48 @@ function writeFlag(key, on) {
   } catch { /* ignore storage failures */ }
 }
 
+// Firebase Auth persists the signed-in user in this IndexedDB store. Detecting it
+// (without loading the SDK) lets us restore sessions for users who were already
+// signed in before lazy-loading shipped — they predate our SESSION_FLAG.
+const FIREBASE_AUTH_DB = 'firebaseLocalStorageDb';
+const FIREBASE_AUTH_STORE = 'firebaseLocalStorage';
+
+function hasPersistedAuthUser() {
+  return new Promise((resolve) => {
+    let req;
+    try { req = window.indexedDB.open(FIREBASE_AUTH_DB); }
+    catch { return resolve(false); }
+    req.onerror = () => resolve(false);
+    req.onsuccess = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(FIREBASE_AUTH_STORE)) { db.close(); return resolve(false); }
+      try {
+        const keysReq = db.transaction(FIREBASE_AUTH_STORE, 'readonly')
+          .objectStore(FIREBASE_AUTH_STORE).getAllKeys();
+        keysReq.onsuccess = () => {
+          const has = (keysReq.result || []).some((k) => String(k).startsWith('firebase:authUser:'));
+          db.close();
+          resolve(has);
+        };
+        keysReq.onerror = () => { db.close(); resolve(false); };
+      } catch { db.close(); resolve(false); }
+    };
+  });
+}
+
+// True when a previously signed-in session should be restored on load: our own
+// flag (set on every sign-in) or Firebase's persisted auth store. The IndexedDB
+// existence check via databases() avoids creating an empty DB for fresh visitors.
+async function hasRestorableSession() {
+  if (readFlag(SESSION_FLAG)) return true;
+  try {
+    if (typeof window.indexedDB === 'undefined' || !window.indexedDB.databases) return false;
+    const dbs = await window.indexedDB.databases();
+    if (!dbs.some((d) => d.name === FIREBASE_AUTH_DB)) return false;
+    return await hasPersistedAuthUser();
+  } catch { return false; }
+}
+
 // Memoized, lazy Firebase initializer. The SDK is dynamically imported on first
 // use so it stays out of the entry bundle and never boots for visitors who don't
 // sign in.
@@ -141,10 +183,14 @@ export async function signOut() {
 
 export function onAuthChange(callback) {
   authCallbacks.add(callback);
-  // Only boot Firebase eagerly to restore a previously signed-in session.
-  if (readFlag(SESSION_FLAG)) {
-    startAuthWatcher().catch((e) => console.error('Auth watcher:', e));
-  }
+  // Boot Firebase only to restore a previously signed-in session — never for
+  // fresh, sync-free visitors. Covers both our own flag and (for users signed in
+  // before this change) Firebase's own persisted auth store.
+  hasRestorableSession().then((restore) => {
+    if (restore && authCallbacks.size > 0) {
+      startAuthWatcher().catch((e) => console.error('Auth watcher:', e));
+    }
+  });
   return () => { authCallbacks.delete(callback); };
 }
 
