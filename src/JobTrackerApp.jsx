@@ -34,6 +34,7 @@ import {
 } from './utils/templateQuestions';
 import { usePwaInstall } from './usePwaInstall';
 import { sanitizeTrackerRecords, parseTrackerImportPayload } from './sanitize';
+import { saveJsonFile } from './utils/saveFile';
 
 const Linkedin = ({ size = 16, ...p }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
@@ -508,16 +509,10 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
     showToast(tMode('toast.saved'));
   };
 
-  const handleBulkExport = () => {
+  const handleBulkExport = async () => {
     const selected = companies.filter(c => selectedItems.has(String(c.id)));
-    const dataStr = JSON.stringify(selected, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.download = `${isRecruiter ? 'recruiter-tracker' : 'job-tracker'}-selection-${new Date().toISOString().split('T')[0]}.json`;
-    link.href = url;
-    link.click();
-    showToast(tMode('toast.exported'));
+    const name = `${isRecruiter ? 'recruiter-tracker' : 'job-tracker'}-selection-${new Date().toISOString().split('T')[0]}.json`;
+    if (await saveJsonFile(name, selected)) showToast(tMode('toast.exported'));
   };
 
   const handleSaveToCompany = useCallback((companyId, text) => {
@@ -606,15 +601,9 @@ Rules:
     setShowTemplates(false);
   }, [isRecruiter, t]);
 
-  const handleExport = () => {
-    const dataStr = JSON.stringify(companies, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.download = `${isRecruiter ? 'recruiter-tracker' : 'job-tracker'}-backup-${new Date().toISOString().split('T')[0]}.json`;
-    link.href = url;
-    link.click();
-    showToast(tMode('toast.exported'));
+  const handleExport = async () => {
+    const name = `${isRecruiter ? 'recruiter-tracker' : 'job-tracker'}-backup-${new Date().toISOString().split('T')[0]}.json`;
+    if (await saveJsonFile(name, companies)) showToast(tMode('toast.exported'));
   };
 
   const handleImport = (e) => {

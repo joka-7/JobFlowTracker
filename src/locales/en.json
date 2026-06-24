@@ -202,6 +202,8 @@
     "welcomeTitle": "Welcome to JobFlowTracker!",
     "welcomeSubtitle": "Your personal job search command center",
     "welcomeDesc": "Track every company, interview, and rejection — all in one place. Your data stays private in your browser.",
+    "cloudTitle": "Cloud sync (optional)",
+    "cloudDesc": "Sign in with Google to back up your data and sync it across all your devices — or keep everything local and use JSON backups.",
     "featureBoard": "Kanban board with drag & drop",
     "featureList": "Detailed company profiles",
     "featureTimeline": "Interview timeline",

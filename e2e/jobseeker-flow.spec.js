@@ -46,6 +46,10 @@ test.describe('Job seeker mode flows', () => {
     await fillLabeledInput(page, /Company Name/i, 'Export Test Co');
     await saveForm(page);
 
+    // Force the classic-download fallback: the File System Access API ("Save As"
+    // with folder choice) opens a native dialog Playwright can't drive.
+    await page.evaluate(() => { delete window.showSaveFilePicker; });
+
     const downloadPromise = page.waitForEvent('download');
     await page.getByTitle(/Download backup/i).click();
     const download = await downloadPromise;
