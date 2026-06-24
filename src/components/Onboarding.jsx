@@ -1,7 +1,17 @@
 import React, { useState } from 'react';
-import { X, Layout, List, Activity, BarChart2, Lightbulb, ChevronRight, ChevronLeft, Upload, Plus, CheckCircle2, Clock, Calendar } from 'lucide-react';
+import { X, Layout, List, Activity, BarChart2, Lightbulb, ChevronRight, ChevronLeft, Upload, Plus, CheckCircle2, Clock, Calendar, Cloud } from 'lucide-react';
 import AppBrandMark from './AppBrandMark';
 import { STORAGE_KEYS } from '../storageKeys.js';
+
+const CloudSyncNote = (t) => (
+  <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100 mt-4 text-left">
+    <Cloud size={20} className="text-blue-500 shrink-0 mt-0.5" />
+    <div>
+      <p className="text-sm text-blue-800 font-medium">{t('onboarding.cloudTitle', 'Cloud sync (optional)')}</p>
+      <p className="text-xs text-blue-600">{t('onboarding.cloudDesc', 'Sign in with Google to back up your data and sync it across all your devices — or keep everything local and use JSON backups.')}</p>
+    </div>
+  </div>
+);
 
 const TASKS_STEPS = [
   {
@@ -50,6 +60,7 @@ const tasksStepContent = {
           </div>
         ))}
       </div>
+      {CloudSyncNote(t)}
     </div>
   ),
   tasksBoard: (t) => (
@@ -208,6 +219,7 @@ const stepContent = {
           </div>
         ))}
       </div>
+      {CloudSyncNote(t)}
     </div>
   ),
   board: (t) => (
