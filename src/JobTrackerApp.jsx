@@ -1315,7 +1315,8 @@ Rules:
                       <div
                         key={company.id}
                         onClick={() => selectCompany(company)}
-                        className={`p-3 sm:p-4 min-h-[56px] rounded-xl cursor-pointer transition-all ${isSelected ? 'bg-indigo-50 border-indigo-200 shadow-sm border ring-1 ring-indigo-500' : 'hover:bg-gray-50 active:bg-gray-100 border border-transparent'} ${isChecked ? 'ring-1 ring-purple-400' : ''}`}
+                        style={company.cardColor ? { backgroundColor: company.cardColor } : undefined}
+                        className={`p-3 sm:p-4 min-h-[56px] rounded-xl cursor-pointer transition-all ${company.cardColor ? 'border' : ''} ${isSelected ? 'border-indigo-200 shadow-sm border ring-1 ring-indigo-500' : company.cardColor ? 'border-black/5' : 'hover:bg-gray-50 active:bg-gray-100 border border-transparent'} ${isSelected && !company.cardColor ? 'bg-indigo-50' : ''} ${isChecked ? 'ring-1 ring-purple-400' : ''}`}
                       >
                         <div className="flex items-center gap-3">
                           <input

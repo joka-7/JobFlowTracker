@@ -1259,7 +1259,8 @@ Rules:
                     <button
                       key={task.id}
                       onClick={() => { setSelectedId(task.id); setIsEditing(false); }}
-                      className={`w-full text-left px-3 sm:px-4 py-3 min-h-[52px] border-b border-gray-50 hover:bg-emerald-50 active:bg-emerald-100 transition-colors ${isSelected ? 'bg-emerald-50 border-r-2 border-r-emerald-500' : ''}`}
+                      style={task.cardColor ? { backgroundColor: task.cardColor } : undefined}
+                      className={`w-full text-left px-3 sm:px-4 py-3 min-h-[52px] border-b border-gray-50 transition-colors ${task.cardColor ? '' : 'hover:bg-emerald-50 active:bg-emerald-100'} ${isSelected ? 'ring-2 ring-inset ring-emerald-500' : ''} ${isSelected && !task.cardColor ? 'bg-emerald-50' : ''}`}
                     >
                       <p className="font-semibold text-gray-800 text-xs sm:text-sm truncate">{safeStr(task.name)}</p>
                       <div className="flex items-center gap-2 mt-1">
