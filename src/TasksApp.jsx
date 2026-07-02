@@ -26,6 +26,7 @@ import AppBrandMark from './components/AppBrandMark';
 import Onboarding from './components/Onboarding';
 import { STORAGE_KEYS } from './storageKeys.js';
 import { sanitizeTaskRecords, parseTaskStoragePayload } from './sanitize';
+import { saveJsonFile } from './utils/saveFile';
 
 const MODE = 'tasks';
 
@@ -366,15 +367,9 @@ export default function TasksApp({ onModeChange }) {
     showToast(tt('toast.saved', 'Saved!'));
   };
 
-  const handleExport = () => {
-    const blob = new Blob([JSON.stringify(tasks, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `tasks-backup-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast(tt('toast.exported', 'Backup downloaded!'));
+  const handleExport = async () => {
+    const saved = await saveJsonFile(`tasks-backup-${Date.now()}.json`, tasks);
+    if (saved) showToast(tt('toast.exported', 'Backup downloaded!'));
   };
 
   const handleImport = (e) => {

@@ -195,6 +195,8 @@
     "welcomeTitle": "Bienvenue sur JobFlowTracker !",
     "welcomeSubtitle": "Votre centre de commande de recherche d'emploi",
     "welcomeDesc": "Suivez chaque entreprise, entretien et refus — tout en un seul endroit. Vos données restent privées dans votre navigateur.",
+    "cloudTitle": "Sync cloud (optionnel)",
+    "cloudDesc": "Connectez-vous avec Google pour sauvegarder et synchroniser vos données sur tous vos appareils — ou gardez tout en local avec des sauvegardes JSON.",
     "featureBoard": "Tableau kanban avec glisser-déposer",
     "featureList": "Profils d'entreprises détaillés",
     "featureTimeline": "Chronologie des entretiens",
