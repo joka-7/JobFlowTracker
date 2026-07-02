@@ -126,7 +126,9 @@
     "rejectionMethod": "How Were You Notified",
     "rejectionMethodSelect": "Select...",
     "rejectionNotes": "Notes / Feedback",
-    "rejectionNotesPlaceholder": "What was the feedback?"
+    "rejectionNotesPlaceholder": "What was the feedback?",
+    "cardColor": "Card Color",
+    "cardColorNone": "None"
   },
   "applicationSource": {
     "me_linkedin": "Me → LinkedIn",
@@ -288,7 +290,21 @@
     "titleTasks": "Task Coach",
     "coachingTitle": "AI Coaching",
     "coachingEmpty": "Starting your coaching session...",
-    "taskGeneral": "General coaching"
+    "taskGeneral": "General coaching",
+    "errorTitle": "Something went wrong",
+    "errorClose": "Close"
+  },
+  "bulkActions": {
+    "selected": "selected",
+    "changeStatus": "Change Status",
+    "export": "Export",
+    "delete": "Delete",
+    "clear": "Clear",
+    "deleteConfirmTitle": "Delete",
+    "items": "items?",
+    "deleteConfirmBody": "This action cannot be undone.",
+    "cancel": "Cancel",
+    "deleting": "Deleting..."
   },
   "settings": {
     "title": "Settings",
@@ -401,7 +417,8 @@
       "loadMore": "Load more",
       "remaining": "remaining",
       "selectTask": "Select a task from the list",
-      "noTasks": "No tasks yet."
+      "noTasks": "No tasks yet.",
+      "allLabels": "All Labels"
     },
     "form": {
       "editTitle": "Edit Task",
@@ -415,6 +432,14 @@
       "status": "Status",
       "priority": "Priority",
       "dueDate": "Due Date",
+      "duration": "Duration",
+      "durationValuePlaceholder": "Duration",
+      "labels": "Labels",
+      "noLabels": "No labels yet.",
+      "addLabelPlaceholder": "New label name...",
+      "manageLabels": "Manage",
+      "doneManaging": "Done",
+      "deleteLabel": "Delete label",
       "steps": "Steps",
       "addStep": "Add step",
       "addStepPlaceholder": "Describe the step...",
@@ -422,7 +447,16 @@
       "noSteps": "No steps added yet.",
       "notes": "Notes",
       "notesPlaceholder": "Any additional notes...",
-      "requiredName": "Task name is required"
+      "requiredName": "Task name is required",
+      "cardColor": "Card Color",
+      "cardColorNone": "None",
+      "changeLabelColor": "Change color"
+    },
+    "duration": {
+      "minute": "Minutes",
+      "hour": "Hours",
+      "day": "Days",
+      "month": "Months"
     },
     "detail": {
       "editDetails": "Edit Details",
@@ -440,7 +474,8 @@
       "completed": "Completed",
       "totalSteps": "Total Steps",
       "doneSteps": "Steps Done",
-      "byStatus": "By Status"
+      "byStatus": "By Status",
+      "byLabel": "By Label"
     },
     "toast": {
       "saved": "Task saved!",
@@ -537,7 +572,9 @@
       "rejectionMethod": "How Was Candidate Notified",
       "rejectionMethodSelect": "Select...",
       "rejectionNotes": "Notes / Feedback",
-      "rejectionNotesPlaceholder": "Reason for rejection or feedback given"
+      "rejectionNotesPlaceholder": "Reason for rejection or feedback given",
+      "cardColor": "Card Color",
+      "cardColorNone": "None"
     },
     "detail": {
       "editDetails": "Edit Details",

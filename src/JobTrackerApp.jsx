@@ -17,6 +17,7 @@ import {
 } from './statuses';
 import Onboarding from './components/Onboarding';
 import AppBrandMark from './components/AppBrandMark';
+import CardColorPicker from './components/CardColorPicker';
 import { STORAGE_KEYS } from './storageKeys.js';
 import AIAssistant from './components/AIAssistant';
 import APIKeySettings from './components/APIKeySettings';
@@ -121,6 +122,7 @@ const makeInitialFormState = (isRecruiter) => ({
   companySize: '', companySector: '', applicationSource: '',
   interviews: [], homeworks: [], contacts: [], generalNotes: '',
   rejection: { date: '', method: '', notes: '' },
+  cardColor: '',
   ...(isRecruiter ? {} : {}),
 });
 
@@ -688,7 +690,8 @@ Rules:
                     onDragStart={e => handleDragStart(e, company.id)}
                     onDragEnd={handleDragEnd}
                     onClick={() => { selectCompany(company); navigateTo('list', company.id); }}
-                    className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
+                    style={company.cardColor ? { backgroundColor: company.cardColor } : undefined}
+                    className={`${company.cardColor ? '' : 'bg-white'} p-4 rounded-lg shadow-sm border border-gray-200 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow`}
                   >
                     <div className="font-bold text-gray-800 mb-1">{safeStr(company.name)}</div>
                     <div className="text-sm text-gray-600">{safeStr(company.role)}</div>
@@ -1312,7 +1315,8 @@ Rules:
                       <div
                         key={company.id}
                         onClick={() => selectCompany(company)}
-                        className={`p-3 sm:p-4 min-h-[56px] rounded-xl cursor-pointer transition-all ${isSelected ? 'bg-indigo-50 border-indigo-200 shadow-sm border ring-1 ring-indigo-500' : 'hover:bg-gray-50 active:bg-gray-100 border border-transparent'} ${isChecked ? 'ring-1 ring-purple-400' : ''}`}
+                        style={company.cardColor ? { backgroundColor: company.cardColor } : undefined}
+                        className={`p-3 sm:p-4 min-h-[56px] rounded-xl cursor-pointer transition-all ${company.cardColor ? 'border' : ''} ${isSelected ? 'border-indigo-200 shadow-sm border ring-1 ring-indigo-500' : company.cardColor ? 'border-black/5' : 'hover:bg-gray-50 active:bg-gray-100 border border-transparent'} ${isSelected && !company.cardColor ? 'bg-indigo-50' : ''} ${isChecked ? 'ring-1 ring-purple-400' : ''}`}
                       >
                         <div className="flex items-center gap-3">
                           <input
@@ -1364,6 +1368,7 @@ Rules:
             </div>
 
             <BulkActionsBar
+              t={t}
               selectedCount={selectedItems.size}
               onBulkDelete={handleBulkDelete}
               onBulkStatusUpdate={handleBulkStatusUpdate}
@@ -1420,6 +1425,15 @@ Rules:
                     </div>
                   </div>
 
+                  <div className="mb-8">
+                    <label className="block text-sm font-bold text-gray-700 mb-2">{tMode('form.cardColor', 'Card Color')}</label>
+                    <CardColorPicker
+                      value={formData.cardColor || ''}
+                      onChange={(color) => setFormData({ ...formData, cardColor: color })}
+                      noneLabel={tMode('form.cardColorNone', 'None')}
+                    />
+                  </div>
+
                   <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 mb-8">
                     <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Globe size={18} /> {tMode('form.linksSection')}</h3>
                     {isRecruiter ? (
@@ -1466,14 +1480,14 @@ Rules:
                         <label className="block text-xs font-semibold text-gray-500 mb-1">{t('form.applicationSource', 'How did I start?')}</label>
                         <select value={formData.applicationSource || ''} onChange={e => setFormData({...formData, applicationSource: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md bg-white">
                           <option value="">—</option>
-                          <option value="me_linkedin">Me → LinkedIn</option>
-                          <option value="me_job_search">Me → Job Board</option>
-                          <option value="me_friend">Me → Friend Tip</option>
-                          <option value="me_article">Me → Article</option>
-                          <option value="friend_suggest">Friend Referred Me</option>
-                          <option value="headhunter">Headhunter</option>
-                          <option value="recruiting_company">Recruiting Agency</option>
-                          <option value="company_itself">Company Reached Out</option>
+                          <option value="me_linkedin">{t('applicationSource.me_linkedin', 'Me → LinkedIn')}</option>
+                          <option value="me_job_search">{t('applicationSource.me_job_search', 'Me → Job Board')}</option>
+                          <option value="me_friend">{t('applicationSource.me_friend', 'Me → Friend Tip')}</option>
+                          <option value="me_article">{t('applicationSource.me_article', 'Me → Article')}</option>
+                          <option value="friend_suggest">{t('applicationSource.friend_suggest', 'Friend Referred Me')}</option>
+                          <option value="headhunter">{t('applicationSource.headhunter', 'Headhunter')}</option>
+                          <option value="recruiting_company">{t('applicationSource.recruiting_company', 'Recruiting Agency')}</option>
+                          <option value="company_itself">{t('applicationSource.company_itself', 'Company Reached Out')}</option>
                         </select>
                       </div>
                     </div>
