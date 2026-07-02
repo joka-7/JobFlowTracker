@@ -1273,6 +1273,17 @@ Rules:
                           <span className="text-xs text-gray-400">{prog.done}/{prog.total}</span>
                         )}
                       </div>
+                      {(() => {
+                        const taskLabelIds = [...new Set([
+                          ...(task.labelIds || []),
+                          ...(task.steps || []).flatMap(s => s.labelIds || []),
+                        ])];
+                        return taskLabelIds.length > 0 ? (
+                          <div className="mt-1.5">
+                            <LabelChipsReadOnly labels={labels} labelIds={taskLabelIds} />
+                          </div>
+                        ) : null;
+                      })()}
                     </button>
                   );
                 })}
