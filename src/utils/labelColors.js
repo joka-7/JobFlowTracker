@@ -4,6 +4,15 @@ export const LABEL_COLOR_PALETTE = [
   '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#64748b',
 ];
 
+/**
+ * Soft background tints for board cards. The empty string means "none"
+ * (the default white card). All tints are light enough for dark text.
+ */
+export const CARD_COLOR_PALETTE = [
+  '', '#fee2e2', '#ffedd5', '#fef9c3', '#dcfce7', '#d1fae5',
+  '#cffafe', '#dbeafe', '#e0e7ff', '#ede9fe', '#fce7f3', '#f1f5f9',
+];
+
 export function readableTextColor(hex) {
   const c = String(hex || '').replace('#', '');
   if (c.length !== 6) return '#1f2937';

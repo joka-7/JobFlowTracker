@@ -32,7 +32,8 @@ import {
 } from './sanitize';
 import { saveJsonFile } from './utils/saveFile';
 import LabelPicker, { LabelChipsReadOnly } from './components/LabelPicker';
-import { LABEL_COLOR_PALETTE } from './utils/labelColors';
+import CardColorPicker from './components/CardColorPicker';
+import { LABEL_COLOR_PALETTE, readableTextColor } from './utils/labelColors';
 
 const TASKS_LABELS_KEY = 'tasksLabelsV1';
 const DURATION_UNITS = ['minute', 'hour', 'day', 'month'];
@@ -75,6 +76,7 @@ const makeInitialTask = () => ({
   dueDate: '',
   duration: makeInitialDuration(),
   labelIds: [],
+  cardColor: '',
   steps: [],
   notes: '',
 });
@@ -139,6 +141,7 @@ export default function TasksApp({ onModeChange }) {
   const [activeTab, setActiveTab] = useState('board');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [labelFilter, setLabelFilter] = useState('all');
   const [toastMessage, setToastMessage] = useState('');
   const [isSaved, setIsSaved] = useState(true);
   const [user, setUser] = useState(null);
@@ -514,6 +517,13 @@ Rules:
   const filteredTasks = useMemo(() => {
     let result = tasks;
     if (statusFilter !== 'all') result = result.filter(t => t.status === statusFilter);
+    if (labelFilter !== 'all') {
+      result = result.filter(t => {
+        const taskLabels = t.labelIds || [];
+        const stepLabels = (t.steps || []).flatMap(s => s.labelIds || []);
+        return taskLabels.includes(labelFilter) || stepLabels.includes(labelFilter);
+      });
+    }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(t =>
@@ -522,7 +532,7 @@ Rules:
       );
     }
     return result;
-  }, [tasks, statusFilter, searchQuery]);
+  }, [tasks, statusFilter, labelFilter, searchQuery]);
 
   const stats = useMemo(() => {
     const total = tasks.length;
@@ -533,8 +543,15 @@ Rules:
     const doneSteps = allSteps.filter(s => s.status === 'done').length;
     const byStatus = {};
     STATUSES_TASKS.forEach(s => { byStatus[s.id] = tasks.filter(t => t.status === s.id).length; });
-    return { total, active, completed, totalSteps, doneSteps, byStatus };
-  }, [tasks]);
+    const byLabel = {};
+    labels.forEach(l => {
+      byLabel[l.id] = tasks.filter(t => {
+        const ids = new Set([...(t.labelIds || []), ...(t.steps || []).flatMap(s => s.labelIds || [])]);
+        return ids.has(l.id);
+      }).length;
+    });
+    return { total, active, completed, totalSteps, doneSteps, byStatus, byLabel };
+  }, [tasks, labels]);
 
   const calendarEvents = useMemo(() => {
     const events = [];
@@ -681,7 +698,8 @@ Rules:
                         draggable
                         onDragStart={() => handleDragStart(task.id)}
                         onClick={() => navigateTo('list', task.id)}
-                        className="bg-white border border-gray-200 rounded-xl p-2.5 sm:p-3 cursor-pointer hover:shadow-md hover:border-emerald-300 active:bg-emerald-50/50 transition-all group"
+                        style={task.cardColor ? { backgroundColor: task.cardColor } : undefined}
+                        className={`${task.cardColor ? '' : 'bg-white'} border border-gray-200 rounded-xl p-2.5 sm:p-3 cursor-pointer hover:shadow-md hover:border-emerald-300 active:bg-emerald-50/50 transition-all group`}
                       >
                         <div className="flex items-start justify-between gap-2 mb-1">
                           <p className="font-semibold text-gray-800 text-xs sm:text-sm leading-snug flex-1">{safeStr(task.name)}</p>
@@ -1001,6 +1019,17 @@ Rules:
             </div>
 
             <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                {tt('form.cardColor', 'Card Color')}
+              </label>
+              <CardColorPicker
+                value={formData.cardColor || ''}
+                onChange={(color) => setFormData(prev => ({ ...prev, cardColor: color }))}
+                noneLabel={tt('form.cardColorNone', 'None')}
+              />
+            </div>
+
+            <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
                 {tt('form.description', 'Description')}
               </label>
@@ -1202,6 +1231,18 @@ Rules:
                 <option key={s.id} value={s.id}>{tt(`status.${s.id}`, s.id)}</option>
               ))}
             </select>
+            {labels.length > 0 && (
+              <select
+                value={labelFilter}
+                onChange={e => setLabelFilter(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              >
+                <option value="all">{tt('list.allLabels', 'All Labels')}</option>
+                {labels.map(l => (
+                  <option key={l.id} value={l.id}>{l.text}</option>
+                ))}
+              </select>
+            )}
           </div>
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             {visible.length === 0 ? (
@@ -1306,6 +1347,36 @@ Rules:
               );
             })}
           </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+          <h3 className="font-bold text-gray-800 mb-4">{tt('stats.byLabel', 'By Label')}</h3>
+          {labels.length === 0 ? (
+            <p className="text-sm text-gray-400 italic">{tt('form.noLabels', 'No labels yet.')}</p>
+          ) : (
+            <div className="space-y-3">
+              {labels.map(l => {
+                const count = stats.byLabel[l.id] || 0;
+                const pct = stats.total === 0 ? 0 : Math.round((count / stats.total) * 100);
+                return (
+                  <div key={l.id}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span
+                        className="px-2 py-0.5 rounded-full text-xs font-semibold"
+                        style={{ backgroundColor: l.color, color: readableTextColor(l.color) }}
+                      >
+                        {l.text}
+                      </span>
+                      <span className="text-gray-600 font-semibold">{count}</span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: l.color }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {stats.total > 0 && stats.totalSteps > 0 && (

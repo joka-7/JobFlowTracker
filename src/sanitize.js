@@ -40,6 +40,11 @@ function sanitizeLabelIds(labelIds) {
   return labelIds.slice(0, 50).map(id => String(id).slice(0, 64)).filter(Boolean);
 }
 
+/** Card background tint: a valid hex color, or '' for the default (white) card. */
+function sanitizeCardColor(color) {
+  return HEX_COLOR_RE.test(color) ? color : '';
+}
+
 /** Whitelist fields for the shared task/step label library (localStorage). */
 export function sanitizeTaskLabels(rows) {
   if (!Array.isArray(rows)) return [];
@@ -126,6 +131,7 @@ export function sanitizeTrackerRecords(importedArray, { unnamedLabel = 'Unnamed'
     applicationSource: safeStr(c.applicationSource || ''),
     generalNotes: safeStr(c.generalNotes || ''),
     priority: safeStr(c.priority || 'medium'),
+    cardColor: sanitizeCardColor(c.cardColor),
     interviews: sanitizeInterviews(c.interviews),
     homeworks: sanitizeHomeworks(c.homeworks),
     contacts: sanitizeContacts(c.contacts),
@@ -171,6 +177,7 @@ export function sanitizeTaskRecords(rows) {
     dueDate: safeStr(t.dueDate || ''),
     duration: sanitizeDuration(t.duration),
     labelIds: sanitizeLabelIds(t.labelIds),
+    cardColor: sanitizeCardColor(t.cardColor),
     steps: sanitizeTaskSteps(t.steps),
     notes: safeStr(t.notes || ''),
   }));

@@ -17,6 +17,7 @@ import {
 } from './statuses';
 import Onboarding from './components/Onboarding';
 import AppBrandMark from './components/AppBrandMark';
+import CardColorPicker from './components/CardColorPicker';
 import { STORAGE_KEYS } from './storageKeys.js';
 import AIAssistant from './components/AIAssistant';
 import APIKeySettings from './components/APIKeySettings';
@@ -121,6 +122,7 @@ const makeInitialFormState = (isRecruiter) => ({
   companySize: '', companySector: '', applicationSource: '',
   interviews: [], homeworks: [], contacts: [], generalNotes: '',
   rejection: { date: '', method: '', notes: '' },
+  cardColor: '',
   ...(isRecruiter ? {} : {}),
 });
 
@@ -688,7 +690,8 @@ Rules:
                     onDragStart={e => handleDragStart(e, company.id)}
                     onDragEnd={handleDragEnd}
                     onClick={() => { selectCompany(company); navigateTo('list', company.id); }}
-                    className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
+                    style={company.cardColor ? { backgroundColor: company.cardColor } : undefined}
+                    className={`${company.cardColor ? '' : 'bg-white'} p-4 rounded-lg shadow-sm border border-gray-200 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow`}
                   >
                     <div className="font-bold text-gray-800 mb-1">{safeStr(company.name)}</div>
                     <div className="text-sm text-gray-600">{safeStr(company.role)}</div>
@@ -1419,6 +1422,15 @@ Rules:
                         </select>
                       </Tooltip>
                     </div>
+                  </div>
+
+                  <div className="mb-8">
+                    <label className="block text-sm font-bold text-gray-700 mb-2">{tMode('form.cardColor', 'Card Color')}</label>
+                    <CardColorPicker
+                      value={formData.cardColor || ''}
+                      onChange={(color) => setFormData({ ...formData, cardColor: color })}
+                      noneLabel={tMode('form.cardColorNone', 'None')}
+                    />
                   </div>
 
                   <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 mb-8">

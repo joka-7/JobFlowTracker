@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Palette } from 'lucide-react';
 import { LABEL_COLOR_PALETTE, readableTextColor } from '../utils/labelColors';
 
 /** Read-only colored chips for board/list/detail views. */
@@ -22,7 +22,7 @@ export function LabelChipsReadOnly({ labels, labelIds, size = 'xs' }) {
   );
 }
 
-function LabelChip({ label, selected, onClick, onColorPick }) {
+function LabelChip({ label, selected, onClick, onColorPick, showColorButton, colorTitle }) {
   const [showPalette, setShowPalette] = useState(false);
   const bg = label.color;
   const fg = readableTextColor(bg);
@@ -34,13 +34,17 @@ function LabelChip({ label, selected, onClick, onColorPick }) {
         className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold border transition-all ${selected ? 'ring-2 ring-offset-1 ring-gray-400' : 'opacity-50 hover:opacity-90'}`}
         style={{ backgroundColor: bg, color: fg, borderColor: bg }}
       >
-        <span
-          role="button"
-          tabIndex={-1}
-          onClick={(e) => { e.stopPropagation(); setShowPalette(v => !v); }}
-          className="w-2.5 h-2.5 rounded-full border border-white/70 shrink-0"
-          style={{ backgroundColor: bg }}
-        />
+        {showColorButton && (
+          <span
+            role="button"
+            tabIndex={-1}
+            title={colorTitle}
+            onClick={(e) => { e.stopPropagation(); setShowPalette(v => !v); }}
+            className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-white/85 hover:bg-white shrink-0"
+          >
+            <Palette size={10} style={{ color: bg }} />
+          </span>
+        )}
         {label.text}
       </button>
       {showPalette && (
@@ -93,6 +97,8 @@ export default function LabelPicker({
               selected={selectedIds.includes(label.id)}
               onClick={() => onToggle(label.id)}
               onColorPick={(color) => onColorChange(label.id, color)}
+              showColorButton
+              colorTitle={t('form.changeLabelColor', 'Change color')}
             />
             {manageMode && (
               <button
