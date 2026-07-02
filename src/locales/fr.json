@@ -82,7 +82,7 @@
     }
   },
   "board": {
-    "emptyTitle": "Bienvenue dans Job Search Tracker",
+    "emptyTitle": "Bienvenue dans le Suivi de Recherche d'Emploi",
     "emptyDesc": "Suivez vos candidatures, entretiens et progression au même endroit.",
     "signInButton": "Se connecter avec Google — sync partout",
     "addFirstButton": "Ajouter votre première entreprise",
@@ -208,7 +208,7 @@
     "boardTip": "Conseil : Téléchargez une sauvegarde JSON chaque jour depuis la barre supérieure.",
     "listTitle": "Liste & Édition",
     "listSubtitle": "Gérez les entreprises et suivez les entretiens",
-    "listDesc": "L'onglet Liste est votre hub d'édition. Cliquez sur une entreprise pour voir les détails, ou ajoutez des entretiens et des notes de refus.",
+    "listDesc": "L'onglet Liste est votre centre d'édition. Cliquez sur une entreprise pour voir les détails, ou ajoutez des entretiens et des notes de refus.",
     "importTitle": "Importer des données existantes",
     "importDesc": "Charger une sauvegarde JSON enregistrée précédemment",
     "load": "Charger",
@@ -220,7 +220,7 @@
     "aiDesc": "L'Assistant IA lit vos données d'entreprise et vous donne des conseils de préparation personnalisés et une analyse des refus — basé sur Claude.",
     "aiFeature1": "Préparation entretien : 3 conseils ciblés avant chaque entretien",
     "aiFeature2": "Analyse des refus : apprenez quoi améliorer",
-    "aiFeature3": "Analyse de patterns : identifiez les tendances",
+    "aiFeature3": "Analyse des tendances : repérez les schémas de votre recherche",
     "aiKeyTitle": "Apportez votre propre clé API",
     "aiKeyDesc": "Vous avez besoin d'une clé API Anthropic gratuite. Cliquez sur l'icône ⚙️ dans l'en-tête pour l'ajouter.",
     "setKey": "Définir la clé",
@@ -230,7 +230,7 @@
     "shortcutN": "Ajouter une nouvelle entreprise",
     "shortcutEsc": "Fermer les détails / annuler l'édition",
     "shortcutSave": "Sauvegarde automatique dans le navigateur",
-    "finalTip": "Vous êtes prêt ! Ajoutez des notes de refus à chaque refus — l'IA peut identifier des patterns pour vous aider à vous améliorer.",
+    "finalTip": "Vous êtes prêt ! Ajoutez des notes de refus à chaque refus — l'IA peut repérer des tendances pour vous aider à vous améliorer.",
     "back": "Retour",
     "next": "Suivant",
     "skip": "Passer le tutoriel",
@@ -249,7 +249,7 @@
     "debriefPrivacy": "Évitez d'écrire des noms personnels — ce texte est envoyé à l'IA.",
     "debriefRun": "Analyser mes notes",
     "analyzing": "Analyse en cours...",
-    "patternsButton": "Analyser mes patterns de recherche",
+    "patternsButton": "Analyser les tendances de ma recherche",
     "chatButton": "Ouvrir le chat IA",
     "changeSettings": "Modifier les paramètres IA",
     "scheduleButton": "Planning de préparation entretien",
@@ -332,7 +332,7 @@
   },
   "tooltips": {
     "interviewType": "Sélectionnez le type d'entretien. RH = présélection, Technique = code/compétences, Manager = adéquation culturelle",
-    "rejectionMethod": "Comment vous avez été informé. Suivre ceci aide à identifier les patterns de ghosting.",
+    "rejectionMethod": "Comment vous avez été informé. Suivre ceci aide à identifier les schémas de non-réponse.",
     "responseRate": "Entreprises ayant répondu (toute étape) ÷ total des candidatures × 100",
     "priority": "Haute = processus actif ou entreprise de rêve. Utilisez pour filtrer et concentrer votre énergie."
   },
@@ -556,7 +556,7 @@
       "addInterview": "Ajouter un entretien",
       "selectInterviewType": "Sélectionner le type...",
       "interviewerPlaceholder": "Nom de l'interviewer",
-      "summaryPlaceholder": "Notes d'entretien, feedback, impressions...",
+      "summaryPlaceholder": "Notes d'entretien, retours, impressions...",
       "notes": "Notes de recrutement",
       "notesPlaceholder": "Notes internes sur ce candidat...",
       "requiredName": "Le nom du candidat est requis",
@@ -565,7 +565,7 @@
       "rejectionMethod": "Comment le candidat a été informé",
       "rejectionMethodSelect": "Sélectionner...",
       "rejectionNotes": "Notes / Retours",
-      "rejectionNotesPlaceholder": "Raison du refus ou feedback donné"
+      "rejectionNotesPlaceholder": "Raison du refus ou retours donnés"
     },
     "detail": {
       "editDetails": "Modifier",
