@@ -1364,6 +1364,7 @@ Rules:
             </div>
 
             <BulkActionsBar
+              t={t}
               selectedCount={selectedItems.size}
               onBulkDelete={handleBulkDelete}
               onBulkStatusUpdate={handleBulkStatusUpdate}
@@ -1466,14 +1467,14 @@ Rules:
                         <label className="block text-xs font-semibold text-gray-500 mb-1">{t('form.applicationSource', 'How did I start?')}</label>
                         <select value={formData.applicationSource || ''} onChange={e => setFormData({...formData, applicationSource: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md bg-white">
                           <option value="">—</option>
-                          <option value="me_linkedin">Me → LinkedIn</option>
-                          <option value="me_job_search">Me → Job Board</option>
-                          <option value="me_friend">Me → Friend Tip</option>
-                          <option value="me_article">Me → Article</option>
-                          <option value="friend_suggest">Friend Referred Me</option>
-                          <option value="headhunter">Headhunter</option>
-                          <option value="recruiting_company">Recruiting Agency</option>
-                          <option value="company_itself">Company Reached Out</option>
+                          <option value="me_linkedin">{t('applicationSource.me_linkedin', 'Me → LinkedIn')}</option>
+                          <option value="me_job_search">{t('applicationSource.me_job_search', 'Me → Job Board')}</option>
+                          <option value="me_friend">{t('applicationSource.me_friend', 'Me → Friend Tip')}</option>
+                          <option value="me_article">{t('applicationSource.me_article', 'Me → Article')}</option>
+                          <option value="friend_suggest">{t('applicationSource.friend_suggest', 'Friend Referred Me')}</option>
+                          <option value="headhunter">{t('applicationSource.headhunter', 'Headhunter')}</option>
+                          <option value="recruiting_company">{t('applicationSource.recruiting_company', 'Recruiting Agency')}</option>
+                          <option value="company_itself">{t('applicationSource.company_itself', 'Company Reached Out')}</option>
                         </select>
                       </div>
                     </div>

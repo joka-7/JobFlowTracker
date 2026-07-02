@@ -288,7 +288,21 @@
     "titleTasks": "מאמן משימות",
     "coachingTitle": "אימון AI",
     "coachingEmpty": "מתחיל את מפגש האימון...",
-    "taskGeneral": "אימון כללי"
+    "taskGeneral": "אימון כללי",
+    "errorTitle": "משהו השתבש",
+    "errorClose": "סגור"
+  },
+  "bulkActions": {
+    "selected": "נבחרו",
+    "changeStatus": "שנה סטטוס",
+    "export": "ייצוא",
+    "delete": "מחק",
+    "clear": "נקה",
+    "deleteConfirmTitle": "למחוק",
+    "items": "פריטים?",
+    "deleteConfirmBody": "לא ניתן לבטל פעולה זו.",
+    "cancel": "ביטול",
+    "deleting": "מוחק..."
   },
   "settings": {
     "title": "הגדרות",
@@ -388,7 +402,7 @@
     "board": {
       "emptyTitle": "ברוך הבא למנהל המשימות",
       "emptyDesc": "ארגן את המשימות שלך עם שלבים מרובים ועקוב אחרי ההתקדמות.",
-      "viewTutorial": "צפה בברכה",
+      "viewTutorial": "צפה בהדרכה",
       "addFirstButton": "הוסף את המשימה הראשונה שלך",
       "signInButton": "התחבר עם Google — סנכרון בכל מקום",
       "loadButton": "שחזר מגיבוי JSON"
@@ -415,6 +429,14 @@
       "status": "סטטוס",
       "priority": "עדיפות",
       "dueDate": "תאריך יעד",
+      "duration": "משך זמן",
+      "durationValuePlaceholder": "משך זמן",
+      "labels": "תוויות",
+      "noLabels": "אין תוויות עדיין.",
+      "addLabelPlaceholder": "שם תווית חדשה...",
+      "manageLabels": "נהל",
+      "doneManaging": "סיום",
+      "deleteLabel": "מחק תווית",
       "steps": "שלבים",
       "addStep": "הוסף שלב",
       "addStepPlaceholder": "תאר את השלב...",
@@ -423,6 +445,12 @@
       "notes": "הערות",
       "notesPlaceholder": "הערות נוספות...",
       "requiredName": "שם המשימה נדרש"
+    },
+    "duration": {
+      "minute": "דקות",
+      "hour": "שעות",
+      "day": "ימים",
+      "month": "חודשים"
     },
     "detail": {
       "editDetails": "ערוך פרטים",

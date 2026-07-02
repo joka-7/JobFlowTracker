@@ -13,6 +13,7 @@ export default function BulkActionsBar({
   onClearSelection,
   statusOptions = [],
   loading = false,
+  t = (key, fallback) => fallback,
 }) {
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
@@ -24,7 +25,7 @@ export default function BulkActionsBar({
       <div className="flex items-center justify-between gap-4 flex-wrap">
         {/* Selection count */}
         <div className="text-sm font-semibold text-gray-700">
-          {selectedCount} selected
+          {selectedCount} {t('bulkActions.selected', 'selected')}
         </div>
 
         {/* Bulk actions */}
@@ -37,7 +38,7 @@ export default function BulkActionsBar({
                 className="px-3 py-2 text-sm font-medium bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
                 disabled={loading}
               >
-                📊 Change Status
+                📊 {t('bulkActions.changeStatus', 'Change Status')}
               </button>
 
               {showStatusMenu && (
@@ -66,7 +67,7 @@ export default function BulkActionsBar({
             className="px-3 py-2 text-sm font-medium bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors flex items-center gap-1"
             disabled={loading}
           >
-            <Download size={16} /> Export
+            <Download size={16} /> {t('bulkActions.export', 'Export')}
           </button>
 
           {/* Delete */}
@@ -75,7 +76,7 @@ export default function BulkActionsBar({
             className="px-3 py-2 text-sm font-medium bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center gap-1"
             disabled={loading}
           >
-            <Trash2 size={16} /> Delete
+            <Trash2 size={16} /> {t('bulkActions.delete', 'Delete')}
           </button>
 
           {/* Clear selection */}
@@ -84,7 +85,7 @@ export default function BulkActionsBar({
             className="px-3 py-2 text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors flex items-center gap-1"
             disabled={loading}
           >
-            <X size={16} /> Clear
+            <X size={16} /> {t('bulkActions.clear', 'Clear')}
           </button>
         </div>
       </div>
@@ -93,8 +94,8 @@ export default function BulkActionsBar({
       {showConfirmDelete && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm">
-            <h3 className="font-bold text-lg text-red-600 mb-2">Delete {selectedCount} items?</h3>
-            <p className="text-gray-700 mb-4">This action cannot be undone.</p>
+            <h3 className="font-bold text-lg text-red-600 mb-2">{t('bulkActions.deleteConfirmTitle', 'Delete')} {selectedCount} {t('bulkActions.items', 'items?')}</h3>
+            <p className="text-gray-700 mb-4">{t('bulkActions.deleteConfirmBody', 'This action cannot be undone.')}</p>
 
             <div className="flex gap-3 justify-end">
               <button
@@ -102,7 +103,7 @@ export default function BulkActionsBar({
                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
                 disabled={loading}
               >
-                Cancel
+                {t('bulkActions.cancel', 'Cancel')}
               </button>
               <button
                 onClick={() => {
@@ -112,7 +113,7 @@ export default function BulkActionsBar({
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
                 disabled={loading}
               >
-                {loading ? 'Deleting...' : 'Delete'}
+                {loading ? t('bulkActions.deleting', 'Deleting...') : t('bulkActions.delete', 'Delete')}
               </button>
             </div>
           </div>

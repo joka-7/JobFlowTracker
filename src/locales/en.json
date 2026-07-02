@@ -288,7 +288,21 @@
     "titleTasks": "Task Coach",
     "coachingTitle": "AI Coaching",
     "coachingEmpty": "Starting your coaching session...",
-    "taskGeneral": "General coaching"
+    "taskGeneral": "General coaching",
+    "errorTitle": "Something went wrong",
+    "errorClose": "Close"
+  },
+  "bulkActions": {
+    "selected": "selected",
+    "changeStatus": "Change Status",
+    "export": "Export",
+    "delete": "Delete",
+    "clear": "Clear",
+    "deleteConfirmTitle": "Delete",
+    "items": "items?",
+    "deleteConfirmBody": "This action cannot be undone.",
+    "cancel": "Cancel",
+    "deleting": "Deleting..."
   },
   "settings": {
     "title": "Settings",
@@ -415,6 +429,14 @@
       "status": "Status",
       "priority": "Priority",
       "dueDate": "Due Date",
+      "duration": "Duration",
+      "durationValuePlaceholder": "Duration",
+      "labels": "Labels",
+      "noLabels": "No labels yet.",
+      "addLabelPlaceholder": "New label name...",
+      "manageLabels": "Manage",
+      "doneManaging": "Done",
+      "deleteLabel": "Delete label",
       "steps": "Steps",
       "addStep": "Add step",
       "addStepPlaceholder": "Describe the step...",
@@ -423,6 +445,12 @@
       "notes": "Notes",
       "notesPlaceholder": "Any additional notes...",
       "requiredName": "Task name is required"
+    },
+    "duration": {
+      "minute": "Minutes",
+      "hour": "Hours",
+      "day": "Days",
+      "month": "Months"
     },
     "detail": {
       "editDetails": "Edit Details",

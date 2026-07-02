@@ -281,7 +281,21 @@
     "titleTasks": "Coach tâches",
     "coachingTitle": "Coaching IA",
     "coachingEmpty": "Démarrage de la session de coaching...",
-    "taskGeneral": "Coaching général"
+    "taskGeneral": "Coaching général",
+    "errorTitle": "Une erreur est survenue",
+    "errorClose": "Fermer"
+  },
+  "bulkActions": {
+    "selected": "sélectionné(s)",
+    "changeStatus": "Changer le statut",
+    "export": "Exporter",
+    "delete": "Supprimer",
+    "clear": "Effacer",
+    "deleteConfirmTitle": "Supprimer",
+    "items": "éléments ?",
+    "deleteConfirmBody": "Cette action est irréversible.",
+    "cancel": "Annuler",
+    "deleting": "Suppression..."
   },
   "settings": {
     "title": "Paramètres",
@@ -415,6 +429,14 @@
       "status": "Statut",
       "priority": "Priorité",
       "dueDate": "Date d'échéance",
+      "duration": "Durée",
+      "durationValuePlaceholder": "Durée",
+      "labels": "Étiquettes",
+      "noLabels": "Aucune étiquette pour l'instant.",
+      "addLabelPlaceholder": "Nom de la nouvelle étiquette...",
+      "manageLabels": "Gérer",
+      "doneManaging": "Terminé",
+      "deleteLabel": "Supprimer l'étiquette",
       "steps": "Étapes",
       "addStep": "Ajouter une étape",
       "addStepPlaceholder": "Décrire l'étape...",
@@ -423,6 +445,12 @@
       "notes": "Notes",
       "notesPlaceholder": "Notes supplémentaires...",
       "requiredName": "Le nom de la tâche est obligatoire"
+    },
+    "duration": {
+      "minute": "Minutes",
+      "hour": "Heures",
+      "day": "Jours",
+      "month": "Mois"
     },
     "detail": {
       "editDetails": "Modifier les détails",
@@ -536,7 +564,7 @@
       "rejectionDate": "Date du refus",
       "rejectionMethod": "Comment le candidat a été informé",
       "rejectionMethodSelect": "Sélectionner...",
-      "rejectionNotes": "Notes / Feedback",
+      "rejectionNotes": "Notes / Retours",
       "rejectionNotesPlaceholder": "Raison du refus ou feedback donné"
     },
     "detail": {
