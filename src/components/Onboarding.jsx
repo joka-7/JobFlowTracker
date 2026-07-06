@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Layout, List, Activity, BarChart2, Lightbulb, ChevronRight, ChevronLeft, Upload, Plus, CheckCircle2, Clock, Calendar, Cloud } from 'lucide-react';
+import { X, Layout, List, Activity, BarChart2, Lightbulb, ChevronRight, ChevronLeft, Upload, Plus, CheckCircle2, Clock, Calendar, Cloud, Timer, Tag, Palette } from 'lucide-react';
 import AppBrandMark from './AppBrandMark';
 import { STORAGE_KEYS } from '../storageKeys.js';
 
@@ -53,6 +53,8 @@ const tasksStepContent = {
           { icon: <CheckCircle2 size={20} className="text-blue-500" />, text: t('onboarding.tasksFeatureSteps', 'Steps with status tracking') },
           { icon: <Calendar size={20} className="text-orange-500" />, text: t('onboarding.tasksFeatureTimeline', 'Timeline & due dates') },
           { icon: <BarChart2 size={20} className="text-purple-500" />, text: t('onboarding.tasksFeatureStats', 'Progress statistics') },
+          { icon: <Tag size={20} className="text-pink-500" />, text: t('onboarding.tasksFeatureLabels', 'Custom labels with your own colors') },
+          { icon: <Timer size={20} className="text-cyan-500" />, text: t('onboarding.tasksFeatureDuration', 'Track estimated duration') },
         ].map(({ icon, text }, i) => (
           <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
             {icon}
@@ -70,9 +72,9 @@ const tasksStepContent = {
       </p>
       <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 space-y-2">
         {[
-          { color: 'bg-blue-500', label: 'Active', title: t('onboarding.tasksBoardEx1', 'Design new homepage'), priority: '🔴' },
-          { color: 'bg-yellow-500', label: 'Paused', title: t('onboarding.tasksBoardEx2', 'Write tests'), priority: '🟡' },
-          { color: 'bg-green-500', label: 'Done', title: t('onboarding.tasksBoardEx3', 'Deploy to production'), priority: '🟢' },
+          { color: 'bg-blue-500', label: t('tasks.status.active', 'Active'), title: t('onboarding.tasksBoardEx1', 'Design new homepage'), priority: '🔴' },
+          { color: 'bg-yellow-500', label: t('tasks.status.on_hold', 'Paused'), title: t('onboarding.tasksBoardEx2', 'Write tests'), priority: '🟡' },
+          { color: 'bg-green-500', label: t('tasks.status.completed', 'Done'), title: t('onboarding.tasksBoardEx3', 'Deploy to production'), priority: '🟢' },
         ].map(({ color, label, title, priority }, i) => (
           <div key={i} className="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-100">
             <div className={`w-2 h-6 rounded-full ${color}`} />
@@ -85,6 +87,10 @@ const tasksStepContent = {
       <div className="flex items-start gap-2 p-3 bg-amber-50 rounded-lg border border-amber-100">
         <Lightbulb size={16} className="text-amber-500 shrink-0 mt-0.5" />
         <p className="text-sm text-amber-700">{t('onboarding.tasksBoardTip', 'Tip: Use the N key to quickly add a new task from anywhere.')}</p>
+      </div>
+      <div className="flex items-start gap-2 p-3 bg-pink-50 rounded-lg border border-pink-100">
+        <Palette size={16} className="text-pink-500 shrink-0 mt-0.5" />
+        <p className="text-sm text-pink-700">{t('onboarding.tasksBoardColorTip', 'Tip: Give a task its own card color from the edit form to make it stand out on the board.')}</p>
       </div>
     </div>
   ),
@@ -104,6 +110,16 @@ const tasksStepContent = {
             <span className="text-sm text-gray-700">{label}</span>
           </div>
         ))}
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="flex items-center gap-2 p-2.5 bg-cyan-50 rounded-lg border border-cyan-100">
+          <Timer size={16} className="text-cyan-500 shrink-0" />
+          <span className="text-xs text-gray-700">{t('onboarding.tasksStepsDuration', 'Estimate duration: minutes, hours, days or months')}</span>
+        </div>
+        <div className="flex items-center gap-2 p-2.5 bg-pink-50 rounded-lg border border-pink-100">
+          <Tag size={16} className="text-pink-500 shrink-0" />
+          <span className="text-xs text-gray-700">{t('onboarding.tasksStepsLabels', 'Add colored labels to tasks and steps')}</span>
+        </div>
       </div>
       <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg border border-blue-100">
         <Lightbulb size={16} className="text-blue-500 shrink-0 mt-0.5" />
@@ -245,6 +261,10 @@ const stepContent = {
       <div className="flex items-start gap-2 p-3 bg-amber-50 rounded-lg border border-amber-100">
         <Lightbulb size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
         <p className="text-sm text-amber-700">{t('onboarding.boardTip', 'Tip: Download a JSON backup daily from the top bar to never lose your data.')}</p>
+      </div>
+      <div className="flex items-start gap-2 p-3 bg-pink-50 rounded-lg border border-pink-100">
+        <Palette size={16} className="text-pink-500 flex-shrink-0 mt-0.5" />
+        <p className="text-sm text-pink-700">{t('onboarding.boardColorTip', 'Tip: Give a card its own background color from the edit form to spot priorities at a glance.')}</p>
       </div>
     </div>
   ),
