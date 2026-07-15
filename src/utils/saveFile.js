@@ -11,7 +11,9 @@
  * @returns {Promise<boolean>} true if saved, false if the user cancelled the picker
  */
 export async function saveJsonFile(suggestedName, data) {
-  const json = JSON.stringify(data, null, 2);
+  // Prefix a UTF-8 BOM so apps that don't sniff the encoding (Windows Notepad,
+  // Excel) render non-Latin text (Hebrew, etc.) correctly instead of as mojibake.
+  const json = '﻿' + JSON.stringify(data, null, 2);
 
   if (typeof window !== 'undefined' && typeof window.showSaveFilePicker === 'function') {
     try {
