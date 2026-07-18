@@ -63,6 +63,10 @@
     "androidInstallHint": "L'installation fonctionne dans Chrome sur le site en ligne (HTTPS). Menu ⋮ → « Installer l'application ».",
     "chromeInstallHint": "Dans Chrome : ⋮ (en haut à droite) → « Installer l'application » ou « Ajouter à l'écran d'accueil ». Utilisez le lien https:// publié (pas localhost). Sinon, actualisez la page."
   },
+  "update": {
+    "available": "Une nouvelle version est disponible",
+    "refresh": "Actualiser"
+  },
   "tabs": {
     "board": "Tableau",
     "list": "Liste & Édition",

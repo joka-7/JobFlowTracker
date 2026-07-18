@@ -16,6 +16,7 @@ import {
   getStorageKey, INTERVIEW_TYPE_KEYS, filterItemsForMode,
 } from './statuses';
 import Onboarding from './components/Onboarding';
+import UpdateBanner from './components/UpdateBanner';
 import AppBrandMark from './components/AppBrandMark';
 import CardColorPicker from './components/CardColorPicker';
 import { STORAGE_KEYS } from './storageKeys.js';
@@ -1040,6 +1041,7 @@ Rules:
 
   return (
     <div className="flex flex-col h-dvh bg-gray-50 font-sans" dir={isRTL ? 'rtl' : 'ltr'}>
+      <UpdateBanner />
       {toastMessage && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-green-600 text-white px-6 py-3 rounded-full shadow-lg font-bold">
           {toastMessage}

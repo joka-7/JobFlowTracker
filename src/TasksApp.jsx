@@ -25,6 +25,7 @@ import APIKeySettings from './components/APIKeySettings';
 import { usePwaInstall } from './usePwaInstall';
 import AppBrandMark from './components/AppBrandMark';
 import Onboarding from './components/Onboarding';
+import UpdateBanner from './components/UpdateBanner';
 import { STORAGE_KEYS } from './storageKeys.js';
 import {
   sanitizeTaskRecords, parseTaskStoragePayload, generateId,
@@ -1474,6 +1475,7 @@ Rules:
 
   return (
     <div className="flex flex-col h-dvh bg-white" dir={isRTL ? 'rtl' : 'ltr'}>
+      <UpdateBanner />
       {/* Header */}
       <header className={`bg-gradient-to-r ${isRTL ? 'from-emerald-700 to-green-600' : 'from-green-600 to-emerald-700'} text-white shadow-md flex-shrink-0`}>
         <div className="px-3 sm:px-6 py-3 sm:py-4 flex flex-col gap-3">
