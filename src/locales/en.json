@@ -53,6 +53,10 @@
     "androidInstallHint": "Install works in Chrome on the live site (HTTPS). Open the ⋮ menu → \"Install app\" or \"Add to Home screen\".",
     "chromeInstallHint": "In Chrome: tap ⋮ (top-right) → \"Install app\" or \"Add to Home screen\". Use the published https:// link (not localhost). If you don't see it, refresh once — the site must finish loading."
   },
+  "update": {
+    "available": "A new version is available",
+    "refresh": "Refresh"
+  },
   "tabs": {
     "board": "Status Board",
     "list": "List & Edit",
