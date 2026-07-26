@@ -274,12 +274,30 @@ export default function TasksApp({ onModeChange }) {
   useEffect(() => {
     const handler = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
+      if (e.key === 'Escape') {
+        // Close whichever modal is on top instead of reaching past it to
+        // clear the detail panel behind it.
+        if (showTasksWelcome) { setShowTasksWelcome(false); return; }
+        if (showAISettings) { setShowAISettings(false); return; }
+        if (showTemplates) { setShowTemplates(false); return; }
+        if (chatOpen) { setChatOpen(false); return; }
+        if (simulationData) { setSimulationData(null); return; }
+        if (showGoalsFinder) { setShowGoalsFinder(false); return; }
+        setSelectedId(null);
+        setIsEditing(false);
+        return;
+      }
+
+      const anyModalOpen = showTasksWelcome || showAISettings || showTemplates
+        || chatOpen || simulationData || showGoalsFinder;
+      if (anyModalOpen) return;
+
       if (e.key === 'n' || e.key === 'N') openNewForm();
-      if (e.key === 'Escape') { setSelectedId(null); setIsEditing(false); }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [openNewForm]);
+  }, [openNewForm, showTasksWelcome, showAISettings, showTemplates, chatOpen, simulationData, showGoalsFinder]);
 
   // Browser back/forward support
   const navigateTo = useCallback((tab, taskId = null) => {
@@ -1713,7 +1731,7 @@ Rules:
 
       {/* Toast */}
       {toastMessage && (
-        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-5 py-2.5 rounded-xl shadow-xl text-sm font-medium z-50 animate-fade-in">
+        <div role="status" aria-live="polite" className="fixed bottom-5 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-5 py-2.5 rounded-xl shadow-xl text-sm font-medium z-50 animate-fade-in">
           {toastMessage}
         </div>
       )}
@@ -1799,7 +1817,7 @@ Rules:
           type="button"
           onClick={() => setChatOpen(true)}
           title={t('chat.titleTasks', 'Task Coach')}
-          className={`fixed ${isEditing ? 'bottom-20 sm:bottom-24' : 'bottom-4 sm:bottom-6'} right-4 sm:right-6 z-40 w-11 h-11 sm:w-12 sm:h-12 rounded-full shadow-lg flex items-center justify-center bg-gradient-to-br from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white hover:scale-110 transition-all`}
+          className={`fixed ${isEditing ? 'bottom-20 sm:bottom-24' : 'bottom-4 sm:bottom-6'} end-4 sm:end-6 z-40 w-11 h-11 sm:w-12 sm:h-12 rounded-full shadow-lg flex items-center justify-center bg-gradient-to-br from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white hover:scale-110 transition-all`}
         >
           <Sparkles size={20} />
         </button>
