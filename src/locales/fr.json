@@ -221,6 +221,7 @@
     "boardDesc": "Chaque entreprise apparaît comme une carte dans sa colonne de statut. Faites glisser les cartes entre les colonnes pour mettre à jour le statut instantanément.",
     "dragHint": "↑ Les étiquettes de parcours montrent votre progression",
     "boardTip": "Conseil : Téléchargez une sauvegarde JSON chaque jour depuis la barre supérieure.",
+    "csvTip": "Conseil : Besoin d'un tableur ? Utilisez le téléchargement CSV à côté du bouton de sauvegarde JSON — le CSV est export uniquement, gardez les sauvegardes JSON pour la restauration.",
     "listTitle": "Liste & Édition",
     "listSubtitle": "Gérez les entreprises et suivez les entretiens",
     "listDesc": "L'onglet Liste est votre centre d'édition. Cliquez sur une entreprise pour voir les détails, ou ajoutez des entretiens et des notes de refus.",

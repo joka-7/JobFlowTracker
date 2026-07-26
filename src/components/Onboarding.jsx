@@ -262,6 +262,10 @@ const stepContent = {
         <Lightbulb size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
         <p className="text-sm text-amber-700">{t('onboarding.boardTip', 'Tip: Download a JSON backup daily from the top bar to never lose your data.')}</p>
       </div>
+      <div className="flex items-start gap-2 p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+        <Lightbulb size={16} className="text-emerald-500 flex-shrink-0 mt-0.5" />
+        <p className="text-sm text-emerald-700">{t('onboarding.csvTip', 'Tip: Need it in a spreadsheet? Use the CSV download next to the JSON backup button — CSV is export-only, so keep using JSON backups for restore.')}</p>
+      </div>
       <div className="flex items-start gap-2 p-3 bg-pink-50 rounded-lg border border-pink-100">
         <Palette size={16} className="text-pink-500 flex-shrink-0 mt-0.5" />
         <p className="text-sm text-pink-700">{t('onboarding.boardColorTip', 'Tip: Give a card its own background color from the edit form to spot priorities at a glance.')}</p>

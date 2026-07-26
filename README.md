@@ -110,6 +110,7 @@ Supports Google Gemini, Groq (free tier), Ollama (free/local), Anthropic Claude,
 - **Google Sign-In** — private, isolated data per user; no accounts to create
 - **Firestore sync** — subcollection-based storage with granular writes
 - **Offline backup** — export and import your full dataset as JSON at any time
+- **CSV export** — download your data as a spreadsheet-ready `.csv` alongside the JSON backup (export only — CSV isn't used for restore)
 - Each mode's data is stored independently: switching modes never loses data from other modes
 
 ### Interview Template Library
@@ -201,9 +202,11 @@ Once a provider is configured, open any company and click the **AI Assistant** b
 
 ### 7. Backup and Restore
 
-**Export:** Click the download icon in the header. Your dataset downloads as `.json`.
+**Export (JSON):** Click the download icon in the header. Your dataset downloads as `.json`. This is the format to use for backups — it's the only one you can re-import.
 
-**Import:** Click the upload icon and select a previously exported file.
+**Export (CSV):** Click the spreadsheet icon next to it (or **Download as CSV** in the mobile menu) to download a `.csv` for Excel/Google Sheets/Numbers. CSV is export-only — there's no CSV import.
+
+**Import:** Click the upload icon and select a previously exported `.json` file.
 
 ### 8. Keyboard Shortcuts
 

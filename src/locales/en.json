@@ -228,6 +228,7 @@
     "boardDesc": "Each company appears as a card in its status column. Drag cards between columns to update their status instantly.",
     "dragHint": "↑ Interview journey chips show your progress",
     "boardTip": "Tip: Download a JSON backup daily from the top bar to never lose your data.",
+    "csvTip": "Tip: Need it in a spreadsheet? Use the CSV download next to the JSON backup button — CSV is export-only, so keep using JSON backups for restore.",
     "listTitle": "List & Edit",
     "listSubtitle": "Manage companies and track interviews",
     "listDesc": "The List tab is your editing hub. Click any company to view details, or add interviews and rejection notes.",
