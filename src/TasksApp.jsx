@@ -29,9 +29,10 @@ import UpdateBanner from './components/UpdateBanner';
 import { STORAGE_KEYS } from './storageKeys.js';
 import {
   sanitizeTaskRecords, parseTaskStoragePayload, generateId,
-  parseTaskLabelsStoragePayload,
+  parseTaskLabelsStoragePayload, safeStr,
 } from './sanitize';
 import { saveJsonFile } from './utils/saveFile';
+import { formatDate } from './utils/date';
 import LabelPicker, { LabelChipsReadOnly } from './components/LabelPicker';
 import CardColorPicker from './components/CardColorPicker';
 import { LABEL_COLOR_PALETTE, readableTextColor } from './utils/labelColors';
@@ -40,12 +41,6 @@ const TASKS_LABELS_KEY = 'tasksLabelsV1';
 const DURATION_UNITS = ['minute', 'hour', 'day', 'month'];
 
 const MODE = 'tasks';
-
-const safeStr = (v) => {
-  if (v === null || v === undefined) return '';
-  if (typeof v === 'string') return v;
-  return String(v);
-};
 
 const PRIORITY_COLORS = {
   high: 'bg-red-100 text-red-700 border-red-200',
@@ -94,30 +89,11 @@ const getNextPendingStep = (task) => {
   return steps.find(s => s.status !== 'done' && s.status !== 'blocked') || null;
 };
 
-const formatDate = (dateStr, lang) => {
-  if (!dateStr) return '';
-  try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    return new Intl.DateTimeFormat(lang === 'he' ? 'he-IL' : lang === 'fr' ? 'fr-FR' : 'en-US', {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-    }).format(d);
-  } catch { return dateStr; }
-};
-
 const formatDuration = (duration, tt) => {
   const value = safeStr(duration?.value).trim();
   if (!value) return null;
   const unit = DURATION_UNITS.includes(duration?.unit) ? duration.unit : 'hour';
   return `${value} ${tt(`duration.${unit}`, unit)}`;
-};
-
-const getAvatarColor = (name) => {
-  const s = safeStr(name);
-  if (!s) return 'bg-gray-500';
-  const colors = ['bg-emerald-500', 'bg-teal-500', 'bg-cyan-500', 'bg-green-500', 'bg-lime-600', 'bg-indigo-500', 'bg-violet-500'];
-  const idx = s.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  return colors[idx % colors.length];
 };
 
 export default function TasksApp({ onModeChange }) {

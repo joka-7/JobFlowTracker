@@ -35,7 +35,9 @@ import {
   getLocalizedQuestions, getLocalizedCategoryLabel, formatQuestionList,
 } from './utils/templateQuestions';
 import { usePwaInstall } from './usePwaInstall';
-import { sanitizeTrackerRecords, parseTrackerImportPayload, generateId } from './sanitize';
+import { sanitizeTrackerRecords, parseTrackerImportPayload, generateId, safeStr } from './sanitize';
+import { pickAvatarColor, getInitials } from './utils/avatarColor';
+import { formatDate as formatDateShared } from './utils/date';
 import { saveJsonFile } from './utils/saveFile';
 
 const Linkedin = ({ size = 16, ...p }) => (
@@ -45,16 +47,6 @@ const Linkedin = ({ size = 16, ...p }) => (
     <circle cx="4" cy="4" r="2"/>
   </svg>
 );
-
-const safeStr = (val) => {
-  if (val === null || val === undefined) return '';
-  if (typeof val === 'string') return val;
-  if (typeof val === 'number' || typeof val === 'boolean') return String(val);
-  if (typeof val === 'object') {
-    try { return JSON.stringify(val); } catch { return ''; }
-  }
-  return String(val);
-};
 
 const safeUrl = (val) => {
   try {
@@ -83,19 +75,8 @@ const REJECTION_METHOD_KEYS = [
   'Other',
 ];
 
-const getAvatarColor = (name) => {
-  const strName = safeStr(name);
-  if (!strName) return 'bg-gray-500';
-  const colors = ['bg-pink-500', 'bg-purple-500', 'bg-indigo-500', 'bg-blue-500', 'bg-cyan-500', 'bg-teal-500', 'bg-emerald-500'];
-  const index = strName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return colors[index % colors.length];
-};
-
-const getInitials = (name) => {
-  const strName = safeStr(name);
-  if (!strName) return '?';
-  return strName.substring(0, 2).toUpperCase();
-};
+const AVATAR_COLORS = ['bg-pink-500', 'bg-purple-500', 'bg-indigo-500', 'bg-blue-500', 'bg-cyan-500', 'bg-teal-500', 'bg-emerald-500'];
+const getAvatarColor = (name) => pickAvatarColor(name, AVATAR_COLORS);
 
 const getJourneySteps = (company) => {
   const interviews = Array.isArray(company.interviews) ? company.interviews : [];
@@ -139,16 +120,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
   const tStatus = (id) => t(isRecruiter ? `recruiter.status.${id}` : `status.${id}`);
   const tInterviewType = (key) => t(isRecruiter ? `recruiter.interviewType.${key}` : `interviewType.${key}`, key);
 
-  const formatDate = (dateString) => {
-    const strDate = safeStr(dateString);
-    if (!strDate) return '';
-    try {
-      const date = new Date(strDate);
-      if (isNaN(date.getTime())) return strDate;
-      const locale = i18n.language === 'he' ? 'he-IL' : i18n.language === 'fr' ? 'fr-FR' : 'en-US';
-      return new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date);
-    } catch { return strDate; }
-  };
+  const formatDate = (dateString) => formatDateShared(dateString, i18n.language);
 
   const [isSaved, setIsSaved] = useState(true);
 
