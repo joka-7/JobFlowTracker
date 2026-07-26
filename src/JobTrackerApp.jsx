@@ -825,8 +825,11 @@ Rules:
               <div key={index} className="relative">
                 <div className={`absolute ${timelineDot} top-1 w-4 h-4 rounded-full bg-blue-500 border-4 border-white shadow-sm`}></div>
                 <div
+                  role="button"
+                  tabIndex={0}
                   onClick={() => { selectCompany({ id: event.parentId }); navigateTo('list', event.parentId); }}
-                  className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectCompany({ id: event.parentId }); navigateTo('list', event.parentId); } }}
+                  className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400"
                 >
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
@@ -1336,9 +1339,12 @@ Rules:
                     return (
                       <div
                         key={company.id}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => selectCompany(company)}
+                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectCompany(company); } }}
                         style={company.cardColor ? { backgroundColor: company.cardColor } : undefined}
-                        className={`p-3 sm:p-4 min-h-[56px] rounded-xl cursor-pointer transition-all ${company.cardColor ? 'border' : ''} ${isSelected ? 'border-indigo-200 shadow-sm border ring-1 ring-indigo-500' : company.cardColor ? 'border-black/5' : 'hover:bg-gray-50 active:bg-gray-100 border border-transparent'} ${isSelected && !company.cardColor ? 'bg-indigo-50' : ''} ${isChecked ? 'ring-1 ring-purple-400' : ''}`}
+                        className={`p-3 sm:p-4 min-h-[56px] rounded-xl cursor-pointer transition-all focus:outline-none focus:ring-2 focus:ring-indigo-400 ${company.cardColor ? 'border' : ''} ${isSelected ? 'border-indigo-200 shadow-sm border ring-1 ring-indigo-500' : company.cardColor ? 'border-black/5' : 'hover:bg-gray-50 active:bg-gray-100 border border-transparent'} ${isSelected && !company.cardColor ? 'bg-indigo-50' : ''} ${isChecked ? 'ring-1 ring-purple-400' : ''}`}
                       >
                         <div className="flex items-center gap-3">
                           <input
