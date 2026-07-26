@@ -121,7 +121,7 @@ function startAuthWatcher() {
   return authWatcherPromise;
 }
 
-/** User-facing message for Firebase Google sign-in failures (header "Connect Drive"). */
+/** User-facing message for Firebase Google sign-in failures (header "Sign In"). */
 export function formatSignInError(err) {
   const code = err?.code || '';
   const msg = err?.message || '';

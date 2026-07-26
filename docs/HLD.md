@@ -7,8 +7,8 @@ JobFlowTracker is a single-page application (SPA) for tracking a job search, a r
 **Key design principles:**
 
 - **No custom backend.** All business logic runs in the browser. Firebase provides auth and a database; Vercel provides static hosting.
-- **Three modes, freely switchable.** `App.jsx` gates on `localStorage.appMode`. `ModeSwitcher` in every header lets users move between modes at runtime. Each mode's data persists independently.
-- **Client-side AI (job seeker only).** AI requests run from the browser with the user's API key. Recruiter and task manager modes do not expose the AI Assistant.
+- **Three modes, freely switchable.** `App.jsx` gates on `localStorage.appMode`. `ModeDropdown` in every header lets users move between modes at runtime. Each mode's data persists independently.
+- **Client-side AI (all three modes, scope varies).** AI requests run from the browser with the user's API key. Every mode has a mode-specific AI action (Find Jobs / Find Candidates / Goals & Tasks, via `ChatModal`); the full floating AI Assistant panel — interview prep, rejection analysis, pattern analysis, debrief, smart scheduling, resume tailoring, multi-turn chat — is job seeker only (`AIAssistant.jsx`, hidden when `isRecruiter` and never rendered by `TasksApp.jsx`).
 - **User-isolated data.** Firestore rules allow each user read/write on `users/{userId}/**`.
 - **Offline-first local cache.** Data is written to mode-scoped localStorage keys on every mutation.
 - **Granular writes.** Each mutation calls `updateItem(uid, mode, item)` for the affected document only.
@@ -38,7 +38,7 @@ JobFlowTracker is a single-page application (SPA) for tracking a job search, a r
 │  │          ├── Calendar view (task due dates)         │     │
 │  │          └── Stats view                             │     │
 │  │                                                     │     │
-│  │  Shared: ModeSwitcher, AIAssistant, APIKeySettings, │     │
+│  │  Shared: ModeDropdown, AIAssistant, APIKeySettings, │     │
 │  │    ChatModal, ResumeReview, RejectionAnalysis,      │     │
 │  │    TemplateLibrary, Onboarding, Tooltip             │     │
 │  │                                                     │     │
@@ -75,13 +75,13 @@ JobFlowTracker is a single-page application (SPA) for tracking a job search, a r
 | `src/App.jsx` | Root | Mode gate: `ModeSelection`, `JobTrackerApp`, or `TasksApp`; tracks `autoOnboarding` flag |
 | `src/statuses.js` | Config | `STATUSES_JOBSEEKER`, `STATUSES_RECRUITER`, `STATUSES_TASKS`, `STEP_STATUSES`, storage keys, `getCollectionName`, `resolveInitialAppMode` |
 | `src/components/ModeSelection.jsx` | Full-screen | First-launch 3-mode picker (job seeker / recruiter / task manager) |
-| `src/components/ModeSwitcher.jsx` | Header widget | 3 icon buttons; updates `localStorage.appMode` and calls `onModeChange` |
+| `src/components/ModeDropdown.jsx` | Header widget | Dropdown button (icon buttons collapse to a single control when only one mode is enabled); updates `localStorage.appMode` and calls `onModeChange` |
 | `src/JobTrackerApp.jsx` | Main component | Mode-aware UI for job seeker and recruiter; all tabs, Firestore integration |
 | `src/TasksApp.jsx` | Main component | Task manager UI: board, list+step-detail, stats; step status cycling |
 | `src/firebase.js` | Module | Auth, mode-aware `loadAllItems(uid, mode)`, profile `appMode`, legacy migration |
 | `src/components/Onboarding.jsx` | Modal | 5-step wizard (job seeker only, skipped when switching from another mode) |
 | `src/services/aiAssistant.js` | Module | Provider configuration, `initAI`, `isAIReady`, all streaming functions |
-| `src/components/AIAssistant.jsx` | Floating panel | Sparkles button, menu screen, debrief; launches ChatModal and ResumeReview |
+| `src/components/AIAssistant.jsx` | Floating panel (job seeker only) | Sparkles button, menu screen, debrief; launches ChatModal and ResumeReview |
 | `src/components/APIKeySettings.jsx` | Modal | Provider selector, API key / Ollama URL input, saves to localStorage |
 | `src/components/ChatModal.jsx` | Modal | Multi-turn AI chat with streaming, company context, save-to-notes |
 | `src/components/RejectionAnalysis.jsx` | Modal | Rejection AI analysis for a specific company, streaming result |
@@ -105,7 +105,7 @@ JobFlowTracker is a single-page application (SPA) for tracking a job search, a r
 ### 4.1 Sign-In Flow
 
 ```
-User clicks "Connect Drive" / Cloud icon
+User clicks "Sign In" / Cloud icon
   → signInWithGoogle()
   → onAuthStateChanged fires
   → loadUserProfile(uid) → confirm or update appMode
@@ -127,7 +127,7 @@ First visit (no appMode in localStorage)
   → jobseeker + autoOnboarding=true: may show Onboarding wizard
   → recruiter / tasks: skip onboarding
 
-Switching via ModeSwitcher (any time)
+Switching via ModeDropdown (any time)
   → localStorage.appMode = newMode
   → App.setMode(newMode) → re-renders appropriate component
   → autoOnboarding=false → onboarding never shown when switching
