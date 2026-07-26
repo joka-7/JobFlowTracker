@@ -240,7 +240,7 @@ src/
 ├── i18n.js                  # react-i18next setup
 ├── components/
 │   ├── ModeSelection.jsx    # First-launch 3-mode picker
-│   ├── ModeSwitcher.jsx     # Header mode switcher (3 icon buttons)
+│   ├── ModeDropdown.jsx     # Header mode switcher
 │   ├── AIAssistant.jsx      # Floating AI panel (job seeker only)
 │   ├── Onboarding.jsx       # First-visit wizard (job seeker only)
 │   ├── SearchFilter.jsx     # Search box + multi-status filter pills (list view)
