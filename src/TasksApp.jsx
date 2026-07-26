@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Plus, Search, Download, Upload, Layout, List, BarChart2, Activity,
+  Plus, Search, Download, Upload, Layout, List, BarChart2, Activity, FileSpreadsheet,
   Trash2, Edit2, ArrowLeft, ArrowRight, CheckCircle2, CheckCircle, Circle,
   Clock, AlertCircle, Calendar, Cloud, CloudOff, RefreshCw,
   ClipboardList, X, GripVertical, Languages, MoreVertical, Settings, Smartphone, Sparkles,
@@ -31,7 +31,9 @@ import {
   sanitizeTaskRecords, parseTaskStoragePayload, generateId,
   parseTaskLabelsStoragePayload, safeStr,
 } from './sanitize';
-import { saveJsonFile } from './utils/saveFile';
+import { saveJsonFile, saveCsvFile } from './utils/saveFile';
+import { toCSV } from './utils/csv';
+import { useBackGestureGuard } from './hooks/useBackGestureGuard';
 import { formatDate } from './utils/date';
 import { appendNote } from './utils/notes';
 import { useCloudSync } from './hooks/useCloudSync';
@@ -255,17 +257,12 @@ export default function TasksApp({ onModeChange }) {
     window.history.pushState({ tab, selectedId: taskId }, '');
   }, []);
 
-  useEffect(() => {
-    const onPop = (e) => {
-      const s = e.state;
-      if (!s) return;
-      setActiveTab(s.tab || 'board');
-      setSelectedId(s.selectedId || null);
-      setIsEditing(false);
-    };
-    window.addEventListener('popstate', onPop);
-    return () => window.removeEventListener('popstate', onPop);
-  }, []);
+  useBackGestureGuard({
+    activeTab,
+    selectedId,
+    onNavigate: (tab, itemId) => { setActiveTab(tab); setSelectedId(itemId); setIsEditing(false); },
+    onExit: () => { setActiveTab('board'); setSelectedId(null); setIsEditing(false); },
+  });
 
   const isSavingRef = useRef(false);
   const handleSave = async () => {
@@ -409,6 +406,19 @@ export default function TasksApp({ onModeChange }) {
   const handleExport = async () => {
     const saved = await saveJsonFile(`tasks-backup-${Date.now()}.json`, tasks);
     if (saved) showToast(tt('toast.exported', 'Backup downloaded!'));
+  };
+
+  const handleExportCsv = async () => {
+    const columns = [
+      { key: 'name', label: tt('form.taskName', 'Task Name') },
+      { key: 'status', label: tt('form.status', 'Status'), get: task => tt(`status.${task.status}`, task.status) },
+      { key: 'priority', label: tt('form.priority', 'Priority') },
+      { key: 'dueDate', label: tt('form.dueDate', 'Due Date') },
+      { key: 'duration', label: tt('form.duration', 'Duration'), get: task => formatDuration(task.duration, tt) || '' },
+      { key: 'notes', label: tt('form.notes', 'Notes') },
+    ];
+    const saved = await saveCsvFile(`tasks-export-${Date.now()}.csv`, toCSV(tasks, columns));
+    if (saved) showToast(tt('toast.exportedCsv', 'CSV file downloaded!'));
   };
 
   const handleImport = (e) => {
@@ -1527,6 +1537,9 @@ Rules:
               <button onClick={handleExport} title={t('header.downloadTooltip')} className="p-2 bg-green-500/20 hover:bg-green-500/40 rounded text-white transition-colors border border-green-400/30">
                 <Download size={18} />
               </button>
+              <button onClick={handleExportCsv} title={t('header.downloadCsvTooltip', 'Download as CSV (for spreadsheets)')} className="p-2 hover:bg-white/20 rounded text-white transition-colors">
+                <FileSpreadsheet size={18} />
+              </button>
               <label className="p-2 hover:bg-white/20 rounded text-white transition-colors cursor-pointer" title={t('header.uploadTooltip')}>
                 <Upload size={18} />
                 <input ref={fileInputRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
@@ -1598,6 +1611,9 @@ Rules:
                     )}
                     <button onClick={() => { handleExport(); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <Download size={16} className="text-green-600" /> {t('header.downloadTooltip')}
+                    </button>
+                    <button onClick={() => { handleExportCsv(); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                      <FileSpreadsheet size={16} className="text-emerald-600" /> {t('header.downloadCsvTooltip', 'Download as CSV (for spreadsheets)')}
                     </button>
                     <label className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100 cursor-pointer">
                       <Upload size={16} className="text-blue-600" /> {t('header.uploadTooltip')}

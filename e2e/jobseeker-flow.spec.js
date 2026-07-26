@@ -56,6 +56,27 @@ test.describe('Job seeker mode flows', () => {
     expect(download.suggestedFilename()).toMatch(/job-tracker-backup.*\.json/);
   });
 
+  test('export downloads CSV spreadsheet', async ({ page }) => {
+    await page.getByRole('button', { name: /Add Company/i }).click();
+    await fillLabeledInput(page, /Company Name/i, 'CSV Export Co');
+    await fillLabeledInput(page, /^Role$/i, 'Backend Developer');
+    await saveForm(page);
+
+    await page.evaluate(() => { delete window.showSaveFilePicker; });
+
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByTitle(/Download as CSV/i).click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toMatch(/job-tracker-export.*\.csv/);
+
+    const stream = await download.createReadStream();
+    const chunks = [];
+    for await (const chunk of stream) chunks.push(chunk);
+    const csvText = Buffer.concat(chunks).toString('utf-8').replace(/^\uFEFF/, '');
+    expect(csvText).toContain('CSV Export Co');
+    expect(csvText).toContain('Backend Developer');
+  });
+
   test('import JSON backup loads companies', async ({ page }) => {
     const filePath = join(tmpdir(), `jobflow-import-${Date.now()}.json`);
     await writeFile(filePath, JSON.stringify([
