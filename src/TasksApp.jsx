@@ -1051,7 +1051,7 @@ Rules:
             <div className={`flex gap-3 pt-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <button
                 onClick={handleSave}
-                className="flex-1 bg-emerald-600 text-white py-2.5 rounded-xl font-semibold hover:bg-emerald-700 transition-colors text-sm"
+                className="flex-1 bg-emerald-700 text-white py-2.5 rounded-xl font-semibold hover:bg-emerald-800 transition-colors text-sm"
               >
                 {tt('form.save', 'Save Changes')}
               </button>

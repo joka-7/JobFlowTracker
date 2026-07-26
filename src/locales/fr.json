@@ -45,6 +45,7 @@
   },
   "header": {
     "title": "Suivi de Recherche d'Emploi",
+    "language": "Langue",
     "savedInBrowser": "Enregistré",
     "saving": "Enregistrement...",
     "subtitle": "Connectez-vous pour synchroniser · JSON pour sauvegarde hors ligne",
