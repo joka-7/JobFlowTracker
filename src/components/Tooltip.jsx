@@ -3,10 +3,14 @@
 // Uses Tailwind group/group-hover pattern with absolute positioning
 
 const positionClasses = {
+  // top/bottom center via left-1/2 + -translate-x-1/2 — a symmetric
+  // centering trick, not a left/right RTL concern (the transform itself
+  // isn't direction-aware, so pairing it with a logical `start-1/2` would
+  // actually break centering in RTL).
   top: 'bottom-full left-1/2 -translate-x-1/2 mb-2',
   bottom: 'top-full left-1/2 -translate-x-1/2 mt-2',
-  left: 'right-full top-1/2 -translate-y-1/2 mr-2',
-  right: 'left-full top-1/2 -translate-y-1/2 ml-2',
+  left: 'end-full top-1/2 -translate-y-1/2 me-2',
+  right: 'start-full top-1/2 -translate-y-1/2 ms-2',
 };
 
 export default function Tooltip({ children, text, position = 'top' }) {

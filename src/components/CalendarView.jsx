@@ -172,8 +172,11 @@ export default function CalendarView({ events = [], onEventClick, isRTL = false,
             return (
               <div
                 key={key}
+                role="button"
+                tabIndex={0}
                 onClick={() => setSelectedDay(isSelected ? null : key)}
-                className={`bg-white min-h-[72px] p-1 cursor-pointer transition-colors
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedDay(isSelected ? null : key); } }}
+                className={`bg-white min-h-[72px] p-1 cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-400
                   ${isSelected ? 'ring-2 ring-inset ring-blue-500' : 'hover:bg-blue-50'}
                 `}
               >
@@ -188,8 +191,11 @@ export default function CalendarView({ events = [], onEventClick, isRTL = false,
                     return (
                       <div
                         key={i}
+                        role="button"
+                        tabIndex={0}
                         onClick={(e) => { e.stopPropagation(); onEventClick && onEventClick(ev); }}
-                        className={`text-xs px-1 rounded truncate cursor-pointer hover:opacity-75 ${style.light}`}
+                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); onEventClick && onEventClick(ev); } }}
+                        className={`text-xs px-1 rounded truncate cursor-pointer hover:opacity-75 focus:outline-none focus:ring-1 focus:ring-blue-500 ${style.light}`}
                         title={ev.title}
                       >
                         {ev.title}
@@ -245,8 +251,11 @@ export default function CalendarView({ events = [], onEventClick, isRTL = false,
                     return (
                       <div
                         key={i}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => onEventClick && onEventClick(ev)}
-                        className={`flex items-start gap-2 p-2 rounded-lg border cursor-pointer hover:shadow-sm transition-shadow ${style.light} ${style.border}`}
+                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEventClick && onEventClick(ev); } }}
+                        className={`flex items-start gap-2 p-2 rounded-lg border cursor-pointer hover:shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-blue-400 ${style.light} ${style.border}`}
                       >
                         <Icon className="w-4 h-4 mt-0.5 shrink-0" />
                         <div className="min-w-0">

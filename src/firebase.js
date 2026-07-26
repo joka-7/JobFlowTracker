@@ -90,9 +90,17 @@ function ensureInit() {
     initPromise = (async () => {
       const { initializeApp } = await import('firebase/app');
       const { getAuth } = await import('firebase/auth');
-      const { getFirestore } = await import('firebase/firestore');
+      const {
+        initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+      } = await import('firebase/firestore');
       const app = initializeApp(firebaseConfig);
-      return { auth: getAuth(app), db: getFirestore(app) };
+      // Without this, writes made while offline live only in memory and are
+      // lost on reload — this doesn't add conflict resolution or multi-device
+      // merge (see #76), it just stops offline edits from silently vanishing.
+      const db = initializeFirestore(app, {
+        localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+      });
+      return { auth: getAuth(app), db };
     })();
   }
   return initPromise;

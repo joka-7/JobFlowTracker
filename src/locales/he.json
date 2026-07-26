@@ -108,6 +108,7 @@
   },
   "list": {
     "searchPlaceholder": "חיפוש חברה...",
+    "selectItem": "בחר פריט",
     "allStatuses": "כל הסטטוסים",
     "noResults": "לא נמצאו תוצאות.",
     "backToList": "חזור לרשימה",
@@ -128,6 +129,11 @@
     "linkedinPlaceholder": "לינקדין החברה",
     "locationPlaceholder": "מיקום המשרה",
     "descriptionPlaceholder": "תיאור החברה ומה היא עושה...",
+    "companyDetailsSection": "פרטי החברה",
+    "companySize": "גודל החברה",
+    "companySector": "תחום",
+    "companySectorPlaceholder": "לדוגמה: פינטק, הלת’טק…",
+    "applicationSource": "איך התחלתי?",
     "interviews": "ראיונות",
     "addInterview": "הוסף ראיון",
     "selectInterviewType": "בחר סוג ראיון...",
@@ -186,6 +192,7 @@
     "journey": "משפך הגיוס",
     "journeySubtitle": "כמה מועמדויות הגיעו לכל שלב — מראה היכן רוב ה\"נפילות\"",
     "avgDays": "ממוצע ימים ראיון ראשון ← אחרון",
+    "avgDaysShort": "ממוצע",
     "noData": "הוסף עוד חברות כדי לראות דפוסים"
   },
   "toast": {
@@ -423,7 +430,9 @@
       "desc": "נהל משימות עם שלבים מרובים ועקוב אחרי ההתקדמות"
     },
     "timeline": {
-      "dueDate": "תאריך יעד"
+      "step": "שלב",
+      "dueDate": "תאריך יעד",
+      "stepOverdue": "תאריך השלב מאוחר מתאריך היעד של המשימה!"
     },
     "header": {
       "title": "מנהל משימות",
@@ -492,7 +501,9 @@
       "steps": "שלבים",
       "addStep": "הוסף שלב",
       "addStepPlaceholder": "תאר את השלב...",
+      "deleteStep": "מחק שלב",
       "stepNotesPlaceholder": "הערות לשלב...",
+      "stepDateAfterTask": "התאריך מאוחר מתאריך היעד של המשימה",
       "noSteps": "אין שלבים עדיין.",
       "notes": "הערות",
       "notesPlaceholder": "הערות נוספות...",
@@ -585,6 +596,7 @@
     },
     "list": {
       "searchPlaceholder": "חיפוש מועמד...",
+      "selectItem": "בחר פריט",
       "allStatuses": "כל הסטטוסים",
       "noResults": "לא נמצאו תוצאות.",
       "backToList": "חזרה לרשימה",
@@ -660,6 +672,7 @@
       "journey": "משפך גיוס",
       "journeySubtitle": "כמה מועמדים הגיעו לכל שלב — מראה היכן נופלים הכי הרבה",
       "avgDays": "ממוצע ימים מראיון ראשון לאחרון",
+      "avgDaysShort": "ממוצע",
       "noData": "הוסף עוד מועמדים כדי לראות דפוסים"
     },
     "toast": {

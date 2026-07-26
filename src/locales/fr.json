@@ -108,6 +108,7 @@
   },
   "list": {
     "searchPlaceholder": "Rechercher une entreprise...",
+    "selectItem": "Sélectionner l'élément",
     "allStatuses": "Tous les statuts",
     "noResults": "Aucun résultat trouvé.",
     "backToList": "Retour à la liste",
@@ -128,6 +129,11 @@
     "linkedinPlaceholder": "LinkedIn de l'entreprise",
     "locationPlaceholder": "Lieu du poste",
     "descriptionPlaceholder": "Description de l'entreprise et leur activité...",
+    "companyDetailsSection": "Détails de l'entreprise",
+    "companySize": "Taille de l'entreprise",
+    "companySector": "Secteur",
+    "companySectorPlaceholder": "ex. FinTech, HealthTech…",
+    "applicationSource": "Comment ai-je commencé ?",
     "interviews": "Entretiens",
     "addInterview": "Ajouter un entretien",
     "selectInterviewType": "Sélectionner le type d'entretien...",
@@ -186,6 +192,7 @@
     "journey": "Entonnoir de recrutement",
     "journeySubtitle": "Combien de candidatures ont atteint chaque étape — montre où la plupart abandonnent",
     "avgDays": "Jours moy. premier → dernier entretien",
+    "avgDaysShort": "Moy.",
     "noData": "Ajoutez plus d'entreprises pour voir les tendances"
   },
   "toast": {
@@ -423,7 +430,9 @@
       "desc": "Gérez vos tâches avec plusieurs étapes et suivez la progression"
     },
     "timeline": {
-      "dueDate": "Échéance"
+      "step": "Étape",
+      "dueDate": "Échéance",
+      "stepOverdue": "La date de l'étape est postérieure à l'échéance de la tâche !"
     },
     "header": {
       "title": "Gestionnaire de tâches",
@@ -492,7 +501,9 @@
       "steps": "Étapes",
       "addStep": "Ajouter une étape",
       "addStepPlaceholder": "Décrire l'étape...",
+      "deleteStep": "Supprimer l'étape",
       "stepNotesPlaceholder": "Notes ou détails de l'étape...",
+      "stepDateAfterTask": "La date est postérieure à l'échéance de la tâche",
       "noSteps": "Aucune étape ajoutée.",
       "notes": "Notes",
       "notesPlaceholder": "Notes supplémentaires...",
@@ -585,6 +596,7 @@
     },
     "list": {
       "searchPlaceholder": "Rechercher un candidat...",
+      "selectItem": "Sélectionner l'élément",
       "allStatuses": "Tous les statuts",
       "noResults": "Aucun résultat trouvé.",
       "backToList": "Retour à la liste",
@@ -660,6 +672,7 @@
       "journey": "Entonnoir de recrutement",
       "journeySubtitle": "Combien de candidats ont atteint chaque étape",
       "avgDays": "Moy. jours du 1er au dernier entretien",
+      "avgDaysShort": "Moy.",
       "noData": "Ajoutez plus de candidats pour voir les tendances"
     },
     "toast": {

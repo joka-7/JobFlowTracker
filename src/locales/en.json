@@ -98,6 +98,7 @@
   },
   "list": {
     "searchPlaceholder": "Search company...",
+    "selectItem": "Select item",
     "allStatuses": "All Statuses",
     "noResults": "No results found.",
     "backToList": "Back to List",
@@ -118,6 +119,11 @@
     "linkedinPlaceholder": "Company LinkedIn",
     "locationPlaceholder": "Job Location",
     "descriptionPlaceholder": "Company description and what they do...",
+    "companyDetailsSection": "Company Details",
+    "companySize": "Company Size",
+    "companySector": "Sector",
+    "companySectorPlaceholder": "e.g. FinTech, HealthTech…",
+    "applicationSource": "How did I start?",
     "interviews": "Interviews",
     "addInterview": "Add Interview",
     "selectInterviewType": "Select interview type...",
@@ -186,6 +192,7 @@
     "journey": "Hiring Funnel",
     "journeySubtitle": "How many applications reached each stage — shows where most drop off",
     "avgDays": "Avg. days first → last interview",
+    "avgDaysShort": "Avg",
     "noData": "Add more companies to see patterns"
   },
   "toast": {
@@ -423,7 +430,9 @@
       "desc": "Manage tasks with multiple steps and track progress"
     },
     "timeline": {
-      "dueDate": "Due date"
+      "step": "Step",
+      "dueDate": "Due date",
+      "stepOverdue": "Step date is after task due date!"
     },
     "header": {
       "title": "Task Manager",
@@ -492,7 +501,9 @@
       "steps": "Steps",
       "addStep": "Add step",
       "addStepPlaceholder": "Describe the step...",
+      "deleteStep": "Delete step",
       "stepNotesPlaceholder": "Step notes or details...",
+      "stepDateAfterTask": "Date is after the task due date",
       "noSteps": "No steps added yet.",
       "notes": "Notes",
       "notesPlaceholder": "Any additional notes...",
@@ -585,6 +596,7 @@
     },
     "list": {
       "searchPlaceholder": "Search candidate...",
+      "selectItem": "Select item",
       "allStatuses": "All Statuses",
       "noResults": "No results found.",
       "backToList": "Back to List",
@@ -660,6 +672,7 @@
       "journey": "Hiring Funnel",
       "journeySubtitle": "How many candidates reached each stage — shows where most drop off",
       "avgDays": "Avg. days first → last interview",
+      "avgDaysShort": "Avg",
       "noData": "Add more candidates to see patterns"
     },
     "toast": {
