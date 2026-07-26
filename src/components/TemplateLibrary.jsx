@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Search, Copy, Check } from 'lucide-react';
 import { TEMPLATES } from '../data/interviewTemplates';
@@ -41,7 +41,7 @@ function CopyButton({ text, label, copiedLabel }) {
 }
 
 export default function TemplateLibrary({ t: tProp, onClose, onStartSimulation, isRecruiter, libraryMode }) {
-  const { t: tI18n, i18n } = useTranslation();
+  const { t: tI18n } = useTranslation();
   const t = tProp || tI18n;
   const isTasks = libraryMode === 'tasks';
   const templates = isTasks ? TASK_TEMPLATES : TEMPLATES;
@@ -60,7 +60,7 @@ export default function TemplateLibrary({ t: tProp, onClose, onStartSimulation, 
       };
     });
     return out;
-  }, [t, i18n.language, isTasks, templates, categoryKeys]);
+  }, [t, isTasks, templates, categoryKeys]);
 
   const isSearching = searchQuery.trim().length > 0;
 
@@ -181,7 +181,7 @@ export default function TemplateLibrary({ t: tProp, onClose, onStartSimulation, 
                   {t('templates.noSearchResults', 'No questions match your search.')}
                 </div>
               ) : (
-                searchResults.map(({ question, categoryKey, categoryLabel, categoryIcon, color }, i) => {
+                searchResults.map(({ question, categoryLabel, categoryIcon, color }, i) => {
                   const colors = COLOR_MAP[color] || COLOR_MAP.indigo;
                   return (
                     <div

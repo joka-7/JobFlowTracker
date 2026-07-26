@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { X, Layout, List, Activity, BarChart2, Lightbulb, ChevronRight, ChevronLeft, Upload, Plus, CheckCircle2, Clock, Calendar, Cloud, Timer, Tag, Palette } from 'lucide-react';
 import AppBrandMark from './AppBrandMark';
 import { STORAGE_KEYS } from '../storageKeys.js';

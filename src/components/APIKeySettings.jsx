@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Key, Eye, EyeOff, ExternalLink, CheckCircle, Trash2, Settings, Briefcase, Users, ClipboardList } from 'lucide-react';
+import { useState } from 'react';
+import { X, Eye, EyeOff, ExternalLink, CheckCircle, Trash2, Settings, Briefcase, Users, ClipboardList } from 'lucide-react';
 import { loadAIConfigFromStorage, isAIReady, PROVIDERS } from '../services/aiAssistant';
 import { STORAGE_KEYS, APP_MODES, getEnabledModes } from '../storageKeys';
 
