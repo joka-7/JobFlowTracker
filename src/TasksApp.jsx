@@ -282,12 +282,30 @@ export default function TasksApp({ onModeChange }) {
   useEffect(() => {
     const handler = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
+      if (e.key === 'Escape') {
+        // Close whichever modal is on top instead of reaching past it to
+        // clear the detail panel behind it.
+        if (showTasksWelcome) { setShowTasksWelcome(false); return; }
+        if (showAISettings) { setShowAISettings(false); return; }
+        if (showTemplates) { setShowTemplates(false); return; }
+        if (chatOpen) { setChatOpen(false); return; }
+        if (simulationData) { setSimulationData(null); return; }
+        if (showGoalsFinder) { setShowGoalsFinder(false); return; }
+        setSelectedId(null);
+        setIsEditing(false);
+        return;
+      }
+
+      const anyModalOpen = showTasksWelcome || showAISettings || showTemplates
+        || chatOpen || simulationData || showGoalsFinder;
+      if (anyModalOpen) return;
+
       if (e.key === 'n' || e.key === 'N') openNewForm();
-      if (e.key === 'Escape') { setSelectedId(null); setIsEditing(false); }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [openNewForm]);
+  }, [openNewForm, showTasksWelcome, showAISettings, showTemplates, chatOpen, simulationData, showGoalsFinder]);
 
   // Browser back/forward support
   const navigateTo = useCallback((tab, taskId = null) => {

@@ -292,12 +292,31 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
   useEffect(() => {
     const handler = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
+      if (e.key === 'Escape') {
+        // Close whichever modal is on top instead of reaching past it to
+        // clear the detail panel behind it — previously Escape with any
+        // modal open silently closed the open record/form underneath.
+        if (showOnboarding) { setShowOnboarding(false); return; }
+        if (showAISettings) { setShowAISettings(false); return; }
+        if (showTemplates) { setShowTemplates(false); return; }
+        if (rejectionCompany) { setRejectionCompany(null); return; }
+        if (simulationData) { setSimulationData(null); return; }
+        if (showAIFinder) { setShowAIFinder(false); return; }
+        setSelectedId(null);
+        setIsEditing(false);
+        return;
+      }
+
+      const anyModalOpen = showOnboarding || showAISettings || showTemplates
+        || rejectionCompany || simulationData || showAIFinder;
+      if (anyModalOpen) return;
+
       if (e.key === 'n' || e.key === 'N') openNewForm();
-      if (e.key === 'Escape') { setSelectedId(null); setIsEditing(false); }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [openNewForm]);
+  }, [openNewForm, showOnboarding, showAISettings, showTemplates, rejectionCompany, simulationData, showAIFinder]);
 
   // Browser back/forward support
   const navigateTo = useCallback((tab, companyId = null) => {
