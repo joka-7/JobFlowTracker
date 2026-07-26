@@ -8,7 +8,7 @@ import { initJobSeekerApp } from './helpers.js';
 
 test.describe('Accessibility (WCAG AA)', () => {
   test('mode selection page has proper heading structure', async ({ page }) => {
-    await page.goto('http://localhost:5199');
+    await page.goto('/');
 
     // Page should have at least one h1
     const h1Count = await page.locator('h1').count();
@@ -21,7 +21,7 @@ test.describe('Accessibility (WCAG AA)', () => {
 
   test('app is keyboard navigable', async ({ page }) => {
     await initJobSeekerApp(page);
-    await page.goto('http://localhost:5199');
+    await page.goto('/');
     await page.getByRole('heading', { name: 'Job Search Tracker', exact: true }).waitFor();
 
     // Navigate using Tab key
@@ -39,7 +39,7 @@ test.describe('Accessibility (WCAG AA)', () => {
 
   test('add company button is functional', async ({ page }) => {
     await initJobSeekerApp(page);
-    await page.goto('http://localhost:5199');
+    await page.goto('/');
     await page.getByRole('heading', { name: 'Job Search Tracker', exact: true }).waitFor();
 
     // Add company button should be clickable
@@ -50,7 +50,7 @@ test.describe('Accessibility (WCAG AA)', () => {
 
   test('form inputs exist and are usable', async ({ page }) => {
     await initJobSeekerApp(page);
-    await page.goto('http://localhost:5199');
+    await page.goto('/');
     await page.getByRole('heading', { name: 'Job Search Tracker', exact: true }).waitFor();
 
     // Open add company form by clicking the button
@@ -75,7 +75,7 @@ test.describe('Accessibility (WCAG AA)', () => {
   });
 
   test('buttons have accessible labels', async ({ page }) => {
-    await page.goto('http://localhost:5199');
+    await page.goto('/');
 
     // Check main action buttons exist and have text
     const buttons = page.locator('button');
@@ -93,7 +93,7 @@ test.describe('Accessibility (WCAG AA)', () => {
   });
 
   test('page has reasonable color contrast', async ({ page }) => {
-    await page.goto('http://localhost:5199');
+    await page.goto('/');
 
     // Check some key text elements exist and are visible
     const headings = page.locator('h1, h2, h3');
@@ -110,7 +110,7 @@ test.describe('Accessibility (WCAG AA)', () => {
 
   test('app responds to keyboard navigation', async ({ page }) => {
     await initJobSeekerApp(page);
-    await page.goto('http://localhost:5199');
+    await page.goto('/');
     await page.getByRole('heading', { name: 'Job Search Tracker', exact: true }).waitFor();
 
     // Should be able to open form with keyboard

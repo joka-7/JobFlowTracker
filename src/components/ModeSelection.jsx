@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Briefcase, Users, ClipboardList, Languages, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { APP_MODES, STORAGE_KEYS } from '../storageKeys';
@@ -108,7 +108,7 @@ export default function ModeSelection({ onSelect }) {
                 }`}
               >
                 {isActive && (
-                  <div className="absolute top-3 right-3 bg-indigo-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow">
+                  <div className="absolute top-3 end-3 bg-indigo-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow">
                     <Check size={14} />
                   </div>
                 )}

@@ -28,25 +28,24 @@ function LabelChip({ label, selected, onClick, onColorPick, showColorButton, col
   const fg = readableTextColor(bg);
   return (
     <span className="relative inline-flex items-center">
-      <button
-        type="button"
-        onClick={onClick}
+      <span
         className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold border transition-all ${selected ? 'ring-2 ring-offset-1 ring-gray-400' : 'opacity-50 hover:opacity-90'}`}
         style={{ backgroundColor: bg, color: fg, borderColor: bg }}
       >
         {showColorButton && (
-          <span
-            role="button"
-            tabIndex={-1}
+          <button
+            type="button"
             title={colorTitle}
             onClick={(e) => { e.stopPropagation(); setShowPalette(v => !v); }}
             className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-white/85 hover:bg-white shrink-0"
           >
             <Palette size={10} style={{ color: bg }} />
-          </span>
+          </button>
         )}
-        {label.text}
-      </button>
+        <button type="button" onClick={onClick} className="bg-transparent">
+          {label.text}
+        </button>
+      </span>
       {showPalette && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setShowPalette(false)} />

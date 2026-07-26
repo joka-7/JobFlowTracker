@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Search, Copy, Check } from 'lucide-react';
 import { TEMPLATES } from '../data/interviewTemplates';
@@ -41,7 +41,7 @@ function CopyButton({ text, label, copiedLabel }) {
 }
 
 export default function TemplateLibrary({ t: tProp, onClose, onStartSimulation, isRecruiter, libraryMode }) {
-  const { t: tI18n, i18n } = useTranslation();
+  const { t: tI18n } = useTranslation();
   const t = tProp || tI18n;
   const isTasks = libraryMode === 'tasks';
   const templates = isTasks ? TASK_TEMPLATES : TEMPLATES;
@@ -60,7 +60,7 @@ export default function TemplateLibrary({ t: tProp, onClose, onStartSimulation, 
       };
     });
     return out;
-  }, [t, i18n.language, isTasks, templates, categoryKeys]);
+  }, [t, isTasks, templates, categoryKeys]);
 
   const isSearching = searchQuery.trim().length > 0;
 
@@ -117,13 +117,13 @@ export default function TemplateLibrary({ t: tProp, onClose, onStartSimulation, 
         {/* Search */}
         <div className="px-6 pt-4 pb-3 border-b border-gray-100 flex-shrink-0">
           <div className="relative">
-            <Search size={16} className="absolute left-3 top-2.5 text-gray-400" />
+            <Search size={16} className="absolute start-3 top-2.5 text-gray-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('templates.search', 'Search questions...')}
-              className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50"
+              className="w-full ps-9 pe-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50"
             />
           </div>
         </div>
@@ -131,7 +131,7 @@ export default function TemplateLibrary({ t: tProp, onClose, onStartSimulation, 
         <div className="flex flex-1 overflow-hidden">
           {/* Left sidebar — category pills */}
           {!isSearching && (
-            <aside className="w-44 flex-shrink-0 border-r border-gray-100 py-4 px-3 overflow-y-auto bg-gray-50 space-y-1">
+            <aside className="w-44 flex-shrink-0 border-e border-gray-100 py-4 px-3 overflow-y-auto bg-gray-50 space-y-1">
               {categoryKeys.map((key) => {
                 const cat = localizedTemplates[key];
                 const colors = COLOR_MAP[cat.color] || COLOR_MAP.indigo;
@@ -181,7 +181,7 @@ export default function TemplateLibrary({ t: tProp, onClose, onStartSimulation, 
                   {t('templates.noSearchResults', 'No questions match your search.')}
                 </div>
               ) : (
-                searchResults.map(({ question, categoryKey, categoryLabel, categoryIcon, color }, i) => {
+                searchResults.map(({ question, categoryLabel, categoryIcon, color }, i) => {
                   const colors = COLOR_MAP[color] || COLOR_MAP.indigo;
                   return (
                     <div

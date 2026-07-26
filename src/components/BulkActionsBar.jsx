@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Trash2, Download, X } from 'lucide-react';
 
 /**
@@ -42,7 +42,7 @@ export default function BulkActionsBar({
               </button>
 
               {showStatusMenu && (
-                <div className="absolute bottom-full mb-2 left-0 bg-white border border-gray-300 rounded-lg shadow-lg p-2 min-w-[150px] z-50">
+                <div className="absolute bottom-full mb-2 start-0 bg-white border border-gray-300 rounded-lg shadow-lg p-2 min-w-[150px] z-50">
                   {statusOptions.map(status => (
                     <button
                       key={status.id}

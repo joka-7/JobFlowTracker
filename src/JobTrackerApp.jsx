@@ -1,14 +1,14 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Search, Plus, MapPin, Globe, Calendar,
+  Plus, MapPin, Globe, Calendar,
   User, CheckCircle, Clock, Trash2, Edit2,
   ArrowLeft, ArrowRight, Download, Upload, Layout, List, Activity, AlertTriangle,
   Cloud, CloudOff, Languages, BarChart2, Settings, MoreVertical, Smartphone, RefreshCw
 } from 'lucide-react';
 import {
   signInWithGoogle, signOut, onAuthChange, loadAllItems, updateItem, deleteItem,
-  batchSaveItems, loadUserProfile, saveUserProfile, formatSignInError,
+  batchSaveItems, saveUserProfile, formatSignInError,
 } from './firebase';
 import { initAI, getJobFinderSystemPrompt, getCandidateFinderSystemPrompt } from './services/aiAssistant';
 import {
@@ -35,7 +35,7 @@ import {
   getLocalizedQuestions, getLocalizedCategoryLabel, formatQuestionList,
 } from './utils/templateQuestions';
 import { usePwaInstall } from './usePwaInstall';
-import { sanitizeTrackerRecords, parseTrackerImportPayload, generateId } from './sanitize';
+import { sanitizeTrackerRecords, parseTrackerImportPayload, generateId, safeUrl } from './sanitize';
 import { saveJsonFile } from './utils/saveFile';
 
 const Linkedin = ({ size = 16, ...p }) => (
@@ -54,17 +54,6 @@ const safeStr = (val) => {
     try { return JSON.stringify(val); } catch { return ''; }
   }
   return String(val);
-};
-
-const safeUrl = (val) => {
-  try {
-    const str = safeStr(val).trim();
-    if (!str) return null;
-    const withScheme = /^https?:\/\//i.test(str) ? str : `https://${str}`;
-    const parsed = new URL(withScheme);
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
-    return parsed.href;
-  } catch { return null; }
 };
 
 const PRIORITIES = [
@@ -127,7 +116,7 @@ const makeInitialFormState = (isRecruiter) => ({
   ...(isRecruiter ? {} : {}),
 });
 
-export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOnboarding = true }) {
+export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'he';
   const isRecruiter = mode === 'recruiter';
@@ -292,12 +281,31 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
   useEffect(() => {
     const handler = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
+      if (e.key === 'Escape') {
+        // Close whichever modal is on top instead of reaching past it to
+        // clear the detail panel behind it — previously Escape with any
+        // modal open silently closed the open record/form underneath.
+        if (showOnboarding) { setShowOnboarding(false); return; }
+        if (showAISettings) { setShowAISettings(false); return; }
+        if (showTemplates) { setShowTemplates(false); return; }
+        if (rejectionCompany) { setRejectionCompany(null); return; }
+        if (simulationData) { setSimulationData(null); return; }
+        if (showAIFinder) { setShowAIFinder(false); return; }
+        setSelectedId(null);
+        setIsEditing(false);
+        return;
+      }
+
+      const anyModalOpen = showOnboarding || showAISettings || showTemplates
+        || rejectionCompany || simulationData || showAIFinder;
+      if (anyModalOpen) return;
+
       if (e.key === 'n' || e.key === 'N') openNewForm();
-      if (e.key === 'Escape') { setSelectedId(null); setIsEditing(false); }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [openNewForm]);
+  }, [openNewForm, showOnboarding, showAISettings, showTemplates, rejectionCompany, simulationData, showAIFinder]);
 
   // Browser back/forward support
   const navigateTo = useCallback((tab, companyId = null) => {
@@ -385,7 +393,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
 
   const timelineEvents = useMemo(() => {
     let events = [];
-    companies.forEach(company => {
+    filteredCompanies.forEach(company => {
       if (Array.isArray(company.interviews)) {
         company.interviews.forEach(interview => {
           if (interview && interview.date)
@@ -400,7 +408,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
       }
     });
     return events.sort((a, b) => new Date(safeStr(b.date)) - new Date(safeStr(a.date)));
-  }, [companies, i18n.language]);
+  }, [filteredCompanies, i18n.language]);
 
   const calendarEvents = useMemo(() => {
     const evs = [];
@@ -669,7 +677,7 @@ Rules:
   const renderBoard = () => (
     <div className="flex-1 overflow-x-auto p-3 sm:p-6 bg-slate-50 min-h-0 flex flex-col sm:flex-row gap-4 sm:gap-6">
       {STATUSES.map(statusObj => {
-        const statusCompanies = companies.filter(c => c.status === statusObj.id);
+        const statusCompanies = filteredCompanies.filter(c => c.status === statusObj.id);
         if (statusCompanies.length === 0) return null;
         return (
           <div
@@ -806,8 +814,11 @@ Rules:
               <div key={index} className="relative">
                 <div className={`absolute ${timelineDot} top-1 w-4 h-4 rounded-full bg-blue-500 border-4 border-white shadow-sm`}></div>
                 <div
+                  role="button"
+                  tabIndex={0}
                   onClick={() => { selectCompany({ id: event.parentId }); navigateTo('list', event.parentId); }}
-                  className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectCompany({ id: event.parentId }); navigateTo('list', event.parentId); } }}
+                  className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400"
                 >
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
@@ -1017,7 +1028,7 @@ Rules:
                 {tMode('stats.upcoming', 'Upcoming — Next 14 Days')}
               </h3>
               <div className="space-y-3">
-                {upcomingEvents.map((event, i) => {
+                {upcomingEvents.map((event) => {
                   const days = getDaysUntil(event.date);
                   return (
                     <div key={`${event.companyName}-${event.date}`} className="flex items-center gap-4 p-3 bg-orange-50 rounded-lg border border-orange-100">
@@ -1044,7 +1055,7 @@ Rules:
     <div className="flex flex-col h-dvh bg-gray-50 font-sans" dir={isRTL ? 'rtl' : 'ltr'}>
       <UpdateBanner />
       {toastMessage && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-green-600 text-white px-6 py-3 rounded-full shadow-lg font-bold">
+        <div role="status" aria-live="polite" className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-green-600 text-white px-6 py-3 rounded-full shadow-lg font-bold">
           {toastMessage}
         </div>
       )}
@@ -1317,9 +1328,12 @@ Rules:
                     return (
                       <div
                         key={company.id}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => selectCompany(company)}
+                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectCompany(company); } }}
                         style={company.cardColor ? { backgroundColor: company.cardColor } : undefined}
-                        className={`p-3 sm:p-4 min-h-[56px] rounded-xl cursor-pointer transition-all ${company.cardColor ? 'border' : ''} ${isSelected ? 'border-indigo-200 shadow-sm border ring-1 ring-indigo-500' : company.cardColor ? 'border-black/5' : 'hover:bg-gray-50 active:bg-gray-100 border border-transparent'} ${isSelected && !company.cardColor ? 'bg-indigo-50' : ''} ${isChecked ? 'ring-1 ring-purple-400' : ''}`}
+                        className={`p-3 sm:p-4 min-h-[56px] rounded-xl cursor-pointer transition-all focus:outline-none focus:ring-2 focus:ring-indigo-400 ${company.cardColor ? 'border' : ''} ${isSelected ? 'border-indigo-200 shadow-sm border ring-1 ring-indigo-500' : company.cardColor ? 'border-black/5' : 'hover:bg-gray-50 active:bg-gray-100 border border-transparent'} ${isSelected && !company.cardColor ? 'bg-indigo-50' : ''} ${isChecked ? 'ring-1 ring-purple-400' : ''}`}
                       >
                         <div className="flex items-center gap-3">
                           <input
