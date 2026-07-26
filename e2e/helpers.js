@@ -111,6 +111,21 @@ export async function mockGeminiChatStream(page, replyText = 'Mock AI reply for 
   });
 }
 
+/** Mock Groq streaming API (OpenAI-compatible SSE) — avoids real network and API keys in e2e. */
+export async function mockGroqChatStream(page, replyText = 'Mock AI reply for e2e.') {
+  const chunk = JSON.stringify({
+    choices: [{ delta: { content: replyText } }],
+  });
+  const sseBody = `data: ${chunk}\n\ndata: [DONE]\n\n`;
+  await page.route('**/api.groq.com/**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      headers: { 'Content-Type': 'text/event-stream' },
+      body: sseBody,
+    });
+  });
+}
+
 /** Pre-set tasks mode and skip Task Manager welcome modal. */
 export async function initTasksApp(page) {
   await page.addInitScript(() => {
