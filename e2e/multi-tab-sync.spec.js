@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 
 /**
  * Multi-Tab Sync Tests
@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test';
  */
 
 test.describe('Multi-Tab Synchronization', () => {
-  test.skip('syncs company update across tabs via BroadcastChannel', async ({ context }) => {
+  test.skip('syncs company update across tabs via BroadcastChannel', async ({ context: _context }) => {
     // This test requires multiple page contexts and BroadcastChannel support
     // Currently skipped - requires environment setup
 
@@ -20,7 +20,7 @@ test.describe('Multi-Tab Synchronization', () => {
     test.skip();
   });
 
-  test.skip('handles concurrent edits across tabs', async ({ context }) => {
+  test.skip('handles concurrent edits across tabs', async ({ context: _context }) => {
     // 1. Tab A and Tab B open same company
     // 2. Tab A updates to "rejected"
     // 3. Tab B updates to "offer"
@@ -30,7 +30,7 @@ test.describe('Multi-Tab Synchronization', () => {
     test.skip();
   });
 
-  test.skip('prevents stale data when switching tabs', async ({ context }) => {
+  test.skip('prevents stale data when switching tabs', async ({ context: _context }) => {
     // 1. Tab A: Add company
     // 2. Switch to Tab B: Should see new company
     // 3. Switch back to Tab A: Data consistent
@@ -38,7 +38,7 @@ test.describe('Multi-Tab Synchronization', () => {
     test.skip();
   });
 
-  test.skip('clear cache on one tab affects other tabs', async ({ context }) => {
+  test.skip('clear cache on one tab affects other tabs', async ({ context: _context }) => {
     // 1. Tab A and B both have cached companies
     // 2. User clears cache in Tab A
     // 3. Tab B should detect cache clear

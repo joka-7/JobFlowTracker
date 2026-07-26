@@ -22,6 +22,18 @@ export function safeStr(val) {
   return String(val);
 }
 
+/** Normalizes user-supplied URLs and rejects anything but http(s) (blocks javascript:, data:, etc). */
+export function safeUrl(val) {
+  try {
+    const str = safeStr(val).trim();
+    if (!str) return null;
+    const withScheme = /^https?:\/\//i.test(str) ? str : `https://${str}`;
+    const parsed = new URL(withScheme);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    return parsed.href;
+  } catch { return null; }
+}
+
 const TASK_STATUS_IDS = new Set(STATUSES_TASKS.map(s => s.id));
 const TASK_PRIORITIES = new Set(['high', 'medium', 'low']);
 const STEP_STATUSES = new Set(['todo', 'in_progress', 'done', 'blocked']);

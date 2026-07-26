@@ -20,7 +20,6 @@ function AppLoadingFallback() {
 }
 
 export default function App() {
-  const [autoOnboarding] = useState(() => !resolveInitialAppMode());
   const [mode, setMode] = useState(() => resolveInitialAppMode());
 
   useEffect(() => {
@@ -40,7 +39,7 @@ export default function App() {
     <Suspense fallback={<AppLoadingFallback />}>
       {mode === 'tasks'
         ? <TasksApp key="tasks" onModeChange={setMode} />
-        : <JobTrackerApp mode={mode} onModeChange={setMode} autoOnboarding={autoOnboarding} />}
+        : <JobTrackerApp mode={mode} onModeChange={setMode} />}
     </Suspense>
   );
 }

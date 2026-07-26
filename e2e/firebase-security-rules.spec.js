@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 
 /**
  * Firebase Security Rules E2E Tests
@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test';
  */
 
 test.describe('Firebase Security Rules', () => {
-  test.skip('prevents user A from reading user B data', async ({ page }) => {
+  test.skip('prevents user A from reading user B data', async ({ page: _page }) => {
     // This test would require Firebase test emulator and multiple auth contexts
     // Currently skipped as it needs Firebase emulator setup
 
@@ -18,7 +18,7 @@ test.describe('Firebase Security Rules', () => {
     test.skip();
   });
 
-  test.skip('allows user to read own data only', async ({ page }) => {
+  test.skip('allows user to read own data only', async ({ page: _page }) => {
     // 1. Login as User A
     // 2. Try to read own /users/{uid-a}/companies - ALLOW
     // 3. Try to read other /users/{uid-b}/companies - DENY
@@ -26,7 +26,7 @@ test.describe('Firebase Security Rules', () => {
     test.skip();
   });
 
-  test.skip('allows user to write own data only', async ({ page }) => {
+  test.skip('allows user to write own data only', async ({ page: _page }) => {
     // 1. Login as User A
     // 2. Create company in own data - ALLOW
     // 3. Try to create in other user's data - DENY
@@ -34,7 +34,7 @@ test.describe('Firebase Security Rules', () => {
     test.skip();
   });
 
-  test.skip('enforces authentication on all operations', async ({ page }) => {
+  test.skip('enforces authentication on all operations', async ({ page: _page }) => {
     // 1. Sign out
     // 2. Try to read /companies - DENY
     // 3. Try to write /companies - DENY
@@ -44,7 +44,7 @@ test.describe('Firebase Security Rules', () => {
     test.skip();
   });
 
-  test.skip('prevents subcollection bypass', async ({ page }) => {
+  test.skip('prevents subcollection bypass', async ({ page: _page }) => {
     // 1. Try to access /companies/123/interviews without reading parent
     // 2. Expect DENY (rules use recursive match)
 

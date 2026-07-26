@@ -1,17 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { safeStr, sanitizeTrackerRecords } from '../sanitize';
-
-// --- safeUrl (mirrors JobTrackerApp.jsx) ---
-const safeUrl = (val) => {
-  try {
-    const str = safeStr(val).trim();
-    if (!str) return null;
-    const withScheme = /^https?:\/\//i.test(str) ? str : `https://${str}`;
-    const parsed = new URL(withScheme);
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
-    return parsed.href;
-  } catch { return null; }
-};
+import { safeUrl, sanitizeTrackerRecords } from '../sanitize';
 
 const sanitizeImport = sanitizeTrackerRecords;
 

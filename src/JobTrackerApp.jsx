@@ -1,14 +1,14 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Search, Plus, MapPin, Globe, Calendar,
+  Plus, MapPin, Globe, Calendar,
   User, CheckCircle, Clock, Trash2, Edit2,
   ArrowLeft, ArrowRight, Download, Upload, Layout, List, Activity, AlertTriangle,
   Cloud, CloudOff, Languages, BarChart2, Settings, MoreVertical, Smartphone, RefreshCw
 } from 'lucide-react';
 import {
   signInWithGoogle, signOut, onAuthChange, loadAllItems, updateItem, deleteItem,
-  batchSaveItems, loadUserProfile, saveUserProfile, formatSignInError,
+  batchSaveItems, saveUserProfile, formatSignInError,
 } from './firebase';
 import { initAI, getJobFinderSystemPrompt, getCandidateFinderSystemPrompt } from './services/aiAssistant';
 import {
@@ -35,7 +35,7 @@ import {
   getLocalizedQuestions, getLocalizedCategoryLabel, formatQuestionList,
 } from './utils/templateQuestions';
 import { usePwaInstall } from './usePwaInstall';
-import { sanitizeTrackerRecords, parseTrackerImportPayload, generateId } from './sanitize';
+import { sanitizeTrackerRecords, parseTrackerImportPayload, generateId, safeUrl } from './sanitize';
 import { saveJsonFile } from './utils/saveFile';
 
 const Linkedin = ({ size = 16, ...p }) => (
@@ -54,17 +54,6 @@ const safeStr = (val) => {
     try { return JSON.stringify(val); } catch { return ''; }
   }
   return String(val);
-};
-
-const safeUrl = (val) => {
-  try {
-    const str = safeStr(val).trim();
-    if (!str) return null;
-    const withScheme = /^https?:\/\//i.test(str) ? str : `https://${str}`;
-    const parsed = new URL(withScheme);
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
-    return parsed.href;
-  } catch { return null; }
 };
 
 const PRIORITIES = [
@@ -127,7 +116,7 @@ const makeInitialFormState = (isRecruiter) => ({
   ...(isRecruiter ? {} : {}),
 });
 
-export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOnboarding = true }) {
+export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'he';
   const isRecruiter = mode === 'recruiter';
@@ -1020,7 +1009,7 @@ Rules:
                 {tMode('stats.upcoming', 'Upcoming — Next 14 Days')}
               </h3>
               <div className="space-y-3">
-                {upcomingEvents.map((event, i) => {
+                {upcomingEvents.map((event) => {
                   const days = getDaysUntil(event.date);
                   return (
                     <div key={`${event.companyName}-${event.date}`} className="flex items-center gap-4 p-3 bg-orange-50 rounded-lg border border-orange-100">

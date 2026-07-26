@@ -1,48 +1,103 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
+  initAI,
+  getInterviewPrep,
+  analyzeRejection,
   _resetRateLimitForTests,
   _setRateLimitingEnabled,
 } from '../services/aiAssistant.js';
 
-describe('AI Assistant - Rate Limiting Setup', () => {
+const RATE_LIMIT_MS = 3000;
+
+/** Build a ReadableStream that yields one Gemini SSE chunk. */
+function makeGeminiStream(content = 'hi') {
+  const line = `data: ${JSON.stringify({ candidates: [{ content: { parts: [{ text: content }] } }] })}\n\n`;
+  const bytes = new TextEncoder().encode(line);
+  return new ReadableStream({
+    start(controller) {
+      controller.enqueue(bytes);
+      controller.close();
+    },
+  });
+}
+
+function makeOkResponse(stream) {
+  return { ok: true, body: stream, json: async () => ({}) };
+}
+
+function stubFetch() {
+  // A fresh stream per call — a ReadableStream can only be read once.
+  const mockFetch = vi.fn().mockImplementation(() => Promise.resolve(makeOkResponse(makeGeminiStream('hi'))));
+  vi.stubGlobal('fetch', mockFetch);
+  return mockFetch;
+}
+
+const company = { name: 'Acme Corp', role: 'Engineer', interviews: [] };
+
+describe('AI Assistant rate limiting', () => {
   beforeEach(() => {
     _resetRateLimitForTests();
+    initAI('gemini', 'AIza-test', 'gemini-2.0-flash', '');
+    vi.useFakeTimers();
   });
 
-  it('exports rate limiting test utilities', () => {
-    // Verify the utility functions exist
-    expect(typeof _resetRateLimitForTests).toBe('function');
-    expect(typeof _setRateLimitingEnabled).toBe('function');
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
-  it('resets rate limit state between tests', () => {
+  it('throttles a second call to the same action within the rate-limit window', async () => {
+    _setRateLimitingEnabled(true);
+    const mockFetch = stubFetch();
+
+    await getInterviewPrep(company, 'technical', 'en', () => {});
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+
+    await expect(getInterviewPrep(company, 'technical', 'en', () => {}))
+      .rejects.toThrow(/Rate limited/);
+    // The throttled call must reject before ever reaching the network.
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('includes a wait time in the rate-limit error message', async () => {
+    _setRateLimitingEnabled(true);
+    stubFetch();
+
+    await getInterviewPrep(company, 'technical', 'en', () => {});
+    await expect(getInterviewPrep(company, 'technical', 'en', () => {}))
+      .rejects.toThrow(/wait \d+s/);
+  });
+
+  it('allows the call again once the rate-limit window has elapsed', async () => {
+    _setRateLimitingEnabled(true);
+    const mockFetch = stubFetch();
+
+    await getInterviewPrep(company, 'technical', 'en', () => {});
+    vi.advanceTimersByTime(RATE_LIMIT_MS + 1);
+    await getInterviewPrep(company, 'technical', 'en', () => {});
+
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('throttles independently per action key', async () => {
+    _setRateLimitingEnabled(true);
+    const mockFetch = stubFetch();
+
+    await getInterviewPrep(company, 'technical', 'en', () => {});
+    // A different action key is unaffected by interview-prep's throttle.
+    await analyzeRejection(company, 'en', () => {});
+
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not throttle when rate limiting is disabled', async () => {
     _setRateLimitingEnabled(false);
-    _resetRateLimitForTests();
+    const mockFetch = stubFetch();
 
-    // Should be able to call again without issues
-    _setRateLimitingEnabled(false);
-    _resetRateLimitForTests();
+    await getInterviewPrep(company, 'technical', 'en', () => {});
+    await getInterviewPrep(company, 'technical', 'en', () => {});
 
-    expect(true).toBe(true); // Dummy assertion - just verify no errors
-  });
-
-  it('disables rate limiting for test environment', () => {
-    _setRateLimitingEnabled(false);
-
-    // This should be safe to call multiple times
-    for (let i = 0; i < 3; i++) {
-      _resetRateLimitForTests();
-    }
-
-    expect(true).toBe(true);
-  });
-});
-
-describe('AI Assistant - Rate Limiting Error Messages', () => {
-  it('provides helpful rate limit error message', () => {
-    // When rate limiting is enabled, error should guide user
-    const error = new Error('Rate limited. Please wait 3s before next request.');
-    expect(error.message).toContain('wait');
-    expect(error.message).toContain('3s');
+    expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 });
