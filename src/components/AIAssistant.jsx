@@ -3,21 +3,7 @@ import { Sparkles, X, Loader2, AlertTriangle, ArrowLeft, FileText, MessageSquare
 import { getInterviewPrep, analyzePatterns, debriefInterview, getSchedulingAdvice, isAIReady } from '../services/aiAssistant';
 import ChatModal from './ChatModal';
 import ResumeReview from './ResumeReview';
-
-function MarkdownText({ text }) {
-  const safe = String(text ?? '');
-  if (!safe) return null;
-  const parts = safe.split(/(\*\*[^*]+\*\*)/g);
-  return (
-    <span>
-      {parts.map((part, i) =>
-        part.startsWith('**') && part.endsWith('**')
-          ? <strong key={i}>{part.slice(2, -2)}</strong>
-          : <span key={i}>{part}</span>
-      )}
-    </span>
-  );
-}
+import MarkdownText from './MarkdownText';
 
 function StreamingText({ text, loading }) {
   const safe = String(text ?? '');
