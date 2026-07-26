@@ -1722,7 +1722,7 @@ Rules:
 
       {/* Toast */}
       {toastMessage && (
-        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-5 py-2.5 rounded-xl shadow-xl text-sm font-medium z-50 animate-fade-in">
+        <div role="status" aria-live="polite" className="fixed bottom-5 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-5 py-2.5 rounded-xl shadow-xl text-sm font-medium z-50 animate-fade-in">
           {toastMessage}
         </div>
       )}

@@ -385,7 +385,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
 
   const timelineEvents = useMemo(() => {
     let events = [];
-    companies.forEach(company => {
+    filteredCompanies.forEach(company => {
       if (Array.isArray(company.interviews)) {
         company.interviews.forEach(interview => {
           if (interview && interview.date)
@@ -400,7 +400,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
       }
     });
     return events.sort((a, b) => new Date(safeStr(b.date)) - new Date(safeStr(a.date)));
-  }, [companies, i18n.language]);
+  }, [filteredCompanies, i18n.language]);
 
   const calendarEvents = useMemo(() => {
     const evs = [];
@@ -669,7 +669,7 @@ Rules:
   const renderBoard = () => (
     <div className="flex-1 overflow-x-auto p-3 sm:p-6 bg-slate-50 min-h-0 flex flex-col sm:flex-row gap-4 sm:gap-6">
       {STATUSES.map(statusObj => {
-        const statusCompanies = companies.filter(c => c.status === statusObj.id);
+        const statusCompanies = filteredCompanies.filter(c => c.status === statusObj.id);
         if (statusCompanies.length === 0) return null;
         return (
           <div
@@ -1044,7 +1044,7 @@ Rules:
     <div className="flex flex-col h-dvh bg-gray-50 font-sans" dir={isRTL ? 'rtl' : 'ltr'}>
       <UpdateBanner />
       {toastMessage && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-green-600 text-white px-6 py-3 rounded-full shadow-lg font-bold">
+        <div role="status" aria-live="polite" className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-green-600 text-white px-6 py-3 rounded-full shadow-lg font-bold">
           {toastMessage}
         </div>
       )}
