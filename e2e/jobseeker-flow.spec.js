@@ -72,7 +72,7 @@ test.describe('Job seeker mode flows', () => {
     const stream = await download.createReadStream();
     const chunks = [];
     for await (const chunk of stream) chunks.push(chunk);
-    const csvText = Buffer.concat(chunks).toString('utf-8').replace(/^﻿/, '');
+    const csvText = Buffer.concat(chunks).toString('utf-8').replace(/^\uFEFF/, '');
     expect(csvText).toContain('CSV Export Co');
     expect(csvText).toContain('Backend Developer');
   });
