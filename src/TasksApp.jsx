@@ -1808,7 +1808,7 @@ Rules:
           type="button"
           onClick={() => setChatOpen(true)}
           title={t('chat.titleTasks', 'Task Coach')}
-          className={`fixed ${isEditing ? 'bottom-20 sm:bottom-24' : 'bottom-4 sm:bottom-6'} right-4 sm:right-6 z-40 w-11 h-11 sm:w-12 sm:h-12 rounded-full shadow-lg flex items-center justify-center bg-gradient-to-br from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white hover:scale-110 transition-all`}
+          className={`fixed ${isEditing ? 'bottom-20 sm:bottom-24' : 'bottom-4 sm:bottom-6'} end-4 sm:end-6 z-40 w-11 h-11 sm:w-12 sm:h-12 rounded-full shadow-lg flex items-center justify-center bg-gradient-to-br from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white hover:scale-110 transition-all`}
         >
           <Sparkles size={20} />
         </button>
