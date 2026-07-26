@@ -13,6 +13,12 @@
   padding: 0;
 }
 
+/* The app has no dark theme yet — force light native controls (select, date
+   inputs) so they don't render dark-on-white when the OS is in dark mode. */
+:root {
+  color-scheme: light;
+}
+
 body {
   font-family: system-ui, -apple-system, sans-serif;
 }
