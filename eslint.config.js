@@ -17,5 +17,26 @@ export default defineConfig([
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
+    rules: {
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    },
+  },
+  {
+    // Config/build/test-runner files run under Node, not the browser.
+    files: [
+      '*.config.js',
+      'e2e/**/*.js',
+    ],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
+  {
+    // Vitest injects describe/it/expect/vi globally (see vite.config.js
+    // `test.globals: true`) instead of requiring per-file imports.
+    files: ['src/__tests__/**/*.{js,jsx}'],
+    languageOptions: {
+      globals: { ...globals.browser, ...globals.vitest },
+    },
   },
 ])

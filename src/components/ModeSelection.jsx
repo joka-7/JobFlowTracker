@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Briefcase, Users, ClipboardList, Languages, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { APP_MODES, STORAGE_KEYS } from '../storageKeys';
