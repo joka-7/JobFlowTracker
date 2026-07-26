@@ -5,26 +5,13 @@ import {
   PROVIDERS, AI_CONFIG_UPDATED,
 } from '../services/aiAssistant';
 import { delimUserField } from '../utils/promptSafety';
+import MarkdownText from './MarkdownText';
 
 const SIM_TRIGGER = '__sim_start__';
 
 function safeTranslate(t, key, fallback) {
   if (typeof t === 'function') return t(key, fallback);
   return fallback ?? key;
-}
-
-function MarkdownText({ text }) {
-  const safe = String(text ?? '');
-  if (!safe) return null;
-  return (
-    <span>
-      {safe.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
-        part.startsWith('**') && part.endsWith('**')
-          ? <strong key={i}>{part.slice(2, -2)}</strong>
-          : <span key={i}>{part}</span>
-      )}
-    </span>
-  );
 }
 
 function Message({ msg, onSave, t }) {

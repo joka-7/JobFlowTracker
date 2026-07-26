@@ -7,8 +7,8 @@ import {
   Cloud, CloudOff, Languages, BarChart2, Settings, MoreVertical, Smartphone, RefreshCw, FileSpreadsheet
 } from 'lucide-react';
 import {
-  signInWithGoogle, signOut, onAuthChange, loadAllItems, updateItem, deleteItem,
-  batchSaveItems, saveUserProfile, formatSignInError,
+  signInWithGoogle, signOut, updateItem, deleteItem,
+  batchSaveItems, formatSignInError,
 } from './firebase';
 import { initAI, getJobFinderSystemPrompt, getCandidateFinderSystemPrompt } from './services/aiAssistant';
 import {
@@ -35,7 +35,11 @@ import {
   getLocalizedQuestions, getLocalizedCategoryLabel, formatQuestionList,
 } from './utils/templateQuestions';
 import { usePwaInstall } from './usePwaInstall';
-import { sanitizeTrackerRecords, parseTrackerImportPayload, generateId, safeUrl } from './sanitize';
+import { sanitizeTrackerRecords, parseTrackerImportPayload, generateId, safeStr, safeUrl } from './sanitize';
+import { pickAvatarColor, getInitials } from './utils/avatarColor';
+import { formatDate as formatDateShared } from './utils/date';
+import { appendNote } from './utils/notes';
+import { useCloudSync } from './hooks/useCloudSync';
 import { saveJsonFile, saveCsvFile } from './utils/saveFile';
 import { toCSV } from './utils/csv';
 import { useBackGestureGuard } from './hooks/useBackGestureGuard';
@@ -47,16 +51,6 @@ const Linkedin = ({ size = 16, ...p }) => (
     <circle cx="4" cy="4" r="2"/>
   </svg>
 );
-
-const safeStr = (val) => {
-  if (val === null || val === undefined) return '';
-  if (typeof val === 'string') return val;
-  if (typeof val === 'number' || typeof val === 'boolean') return String(val);
-  if (typeof val === 'object') {
-    try { return JSON.stringify(val); } catch { return ''; }
-  }
-  return String(val);
-};
 
 const PRIORITIES = [
   { id: 'high', color: 'bg-red-500' },
@@ -74,19 +68,8 @@ const REJECTION_METHOD_KEYS = [
   'Other',
 ];
 
-const getAvatarColor = (name) => {
-  const strName = safeStr(name);
-  if (!strName) return 'bg-gray-500';
-  const colors = ['bg-pink-500', 'bg-purple-500', 'bg-indigo-500', 'bg-blue-500', 'bg-cyan-500', 'bg-teal-500', 'bg-emerald-500'];
-  const index = strName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return colors[index % colors.length];
-};
-
-const getInitials = (name) => {
-  const strName = safeStr(name);
-  if (!strName) return '?';
-  return strName.substring(0, 2).toUpperCase();
-};
+const AVATAR_COLORS = ['bg-pink-500', 'bg-purple-500', 'bg-indigo-500', 'bg-blue-500', 'bg-cyan-500', 'bg-teal-500', 'bg-emerald-500'];
+const getAvatarColor = (name) => pickAvatarColor(name, AVATAR_COLORS);
 
 const getJourneySteps = (company) => {
   const interviews = Array.isArray(company.interviews) ? company.interviews : [];
@@ -126,20 +109,14 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
   const rejectedStatuses = getRejectedStatuses(mode);
   const terminalStatuses = getTerminalStatuses(mode);
 
-  const tMode = (key, fallback) => t(isRecruiter ? `recruiter.${key}` : key, fallback);
+  const tMode = useCallback(
+    (key, fallback) => t(isRecruiter ? `recruiter.${key}` : key, fallback),
+    [t, isRecruiter]
+  );
   const tStatus = (id) => t(isRecruiter ? `recruiter.status.${id}` : `status.${id}`);
   const tInterviewType = (key) => t(isRecruiter ? `recruiter.interviewType.${key}` : `interviewType.${key}`, key);
 
-  const formatDate = (dateString) => {
-    const strDate = safeStr(dateString);
-    if (!strDate) return '';
-    try {
-      const date = new Date(strDate);
-      if (isNaN(date.getTime())) return strDate;
-      const locale = i18n.language === 'he' ? 'he-IL' : i18n.language === 'fr' ? 'fr-FR' : 'en-US';
-      return new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date);
-    } catch { return strDate; }
-  };
+  const formatDate = (dateString) => formatDateShared(dateString, i18n.language);
 
   const [isSaved, setIsSaved] = useState(true);
 
@@ -163,8 +140,6 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
   const [activeTab, setActiveTab] = useState('board');
   const [toastMessage, setToastMessage] = useState('');
 
-  const [user, setUser] = useState(null);
-  const [syncing, setSyncing] = useState(false);
   const dragCompanyId = useRef(null);
 
   const [showOnboarding, setShowOnboarding] = useState(() => {
@@ -220,7 +195,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
   }, [mode]);
 
   const initialFormState = makeInitialFormState(isRecruiter);
-  const [formData, setFormData] = useState(initialFormState);
+  const [formData, setFormData] = useState(() => makeInitialFormState(isRecruiter));
 
   useEffect(() => {
     try {
@@ -233,45 +208,12 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
     } catch (e) { console.warn('LocalStorage error:', e); }
   }, [companies, mode]);
 
-  const userRef = useRef(null);
-  useEffect(() => { userRef.current = user; }, [user]);
-
-  useEffect(() => {
-    const unsub = onAuthChange(async (firebaseUser) => {
-      setUser(firebaseUser);
-      if (firebaseUser) {
-        setSyncing(true);
-        try {
-          await saveUserProfile(firebaseUser.uid, { appMode: mode });
-          const data = await loadAllItems(firebaseUser.uid, mode);
-          if (data && data.length > 0) {
-            setCompanies(filterItemsForMode(sanitizeTrackerRecords(data), mode));
-            showToast(tMode('toast.driveConnectedWithData'));
-          } else {
-            showToast(tMode('toast.driveConnectedEmpty'));
-          }
-        } catch (e) { console.error(e); }
-        setSyncing(false);
-      }
-    });
-    return unsub;
-  }, [mode]);
-
-  useEffect(() => {
-    const handleVisibility = async () => {
-      const firebaseUser = userRef.current;
-      if (document.visibilityState === 'visible' && firebaseUser) {
-        setSyncing(true);
-        try {
-          const data = await loadAllItems(firebaseUser.uid, mode);
-          if (data && data.length > 0) setCompanies(filterItemsForMode(sanitizeTrackerRecords(data), mode));
-        } catch (e) { console.error(e); }
-        setSyncing(false);
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => document.removeEventListener('visibilitychange', handleVisibility);
-  }, [mode]);
+  const { user, syncing, syncNow } = useCloudSync({
+    mode,
+    sanitizeAndFilter: (data, m) => filterItemsForMode(sanitizeTrackerRecords(data), m),
+    onData: setCompanies,
+    onSignedIn: (hasData) => showToast(hasData ? tMode('toast.driveConnectedWithData') : tMode('toast.driveConnectedEmpty')),
+  });
 
   const openNewForm = useCallback(() => {
     setFormData(makeInitialFormState(isRecruiter));
@@ -340,16 +282,6 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
   const handleSignOut = () => {
     signOut();
     showToast(tMode('toast.driveDisconnected'));
-  };
-
-  const handleSyncNow = async () => {
-    if (!user || syncing) return;
-    setSyncing(true);
-    try {
-      const data = await loadAllItems(user.uid, mode);
-      if (data && data.length > 0) setCompanies(filterItemsForMode(sanitizeTrackerRecords(data), mode));
-    } catch (e) { console.error(e); }
-    setSyncing(false);
   };
 
   const filteredCompanies = useMemo(() => {
@@ -429,10 +361,10 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
       .sort((a, b) => new Date(safeStr(a.date)) - new Date(safeStr(b.date)));
   }, [timelineEvents]);
 
-  const showToast = (msg) => {
+  const showToast = useCallback((msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(''), 3000);
-  };
+  }, []);
 
   const handleSave = () => {
     if (!formData.name) { alert(tMode('form.requiredName')); return; }
@@ -514,7 +446,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
     if (!target) return;
     const updated = {
       ...target,
-      generalNotes: target.generalNotes ? `${target.generalNotes}\n\n---\n${text}` : text,
+      generalNotes: appendNote(target.generalNotes, text),
     };
     setCompanies(prev => prev.map(c => String(c.id) === String(companyId) ? updated : c));
     if (user) updateItem(user.uid, mode, updated).catch(console.error);
@@ -536,7 +468,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
     if (!target) return;
     const updated = {
       ...target,
-      generalNotes: target.generalNotes ? `${target.generalNotes}\n\n---\n${text}` : text,
+      generalNotes: appendNote(target.generalNotes, text),
     };
     setCompanies(prev => prev.map(c => c.id === rejectionCompany.id ? updated : c));
     if (user) updateItem(user.uid, mode, updated).catch(console.error);
@@ -1106,7 +1038,7 @@ Rules:
                   <span className="hidden sm:inline shrink-0 max-w-[5rem] truncate sm:max-w-none">{syncing ? t('header.driveSyncing') : user.displayName?.split(' ')[0] || t('header.driveOn')}</span>
                 </button>
                 <button
-                  onClick={handleSyncNow}
+                  onClick={syncNow}
                   disabled={syncing}
                   title={t('header.syncNow')}
                   className="hidden md:flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-blue-100 transition-colors min-h-[40px] disabled:opacity-50"
@@ -1228,7 +1160,7 @@ Rules:
                       </div>
                     </div>
                     {user && (
-                      <button onClick={() => { handleSyncNow(); setMobileMenuOpen(false); }} disabled={syncing} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50">
+                      <button onClick={() => { syncNow(); setMobileMenuOpen(false); }} disabled={syncing} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50">
                         <RefreshCw size={16} className={`text-blue-500 ${syncing ? 'animate-spin' : ''}`} /> {t('header.syncNow')}
                       </button>
                     )}

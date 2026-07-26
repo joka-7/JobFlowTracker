@@ -1,4 +1,3 @@
-import Anthropic from '@anthropic-ai/sdk';
 import { delimUserField } from '../utils/promptSafety';
 
 export const PROVIDERS = {
@@ -238,6 +237,7 @@ async function streamOllama(baseUrl, model, prompt, onChunk) {
 
 // Anthropic SDK stream
 async function streamAnthropic(apiKey, model, prompt, onChunk) {
+  const { default: Anthropic } = await import('@anthropic-ai/sdk');
   const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
   const stream = await client.messages.stream({
     model,
@@ -341,6 +341,7 @@ export async function streamChat(messages, systemPrompt, onChunk) {
   }
 
   if (provider === 'anthropic') {
+    const { default: Anthropic } = await import('@anthropic-ai/sdk');
     const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
     const stream = await client.messages.stream({
       model, max_tokens: 1024,

@@ -14,8 +14,8 @@ import {
 } from './utils/templateQuestions';
 import ChatModal from './components/ChatModal';
 import {
-  signInWithGoogle, signOut, onAuthChange, loadAllItems, formatSignInError,
-  updateItem, deleteItem, batchSaveItems, saveUserProfile,
+  signInWithGoogle, signOut, formatSignInError,
+  updateItem, deleteItem, batchSaveItems,
 } from './firebase';
 import { getStorageKey, STATUSES_TASKS, filterItemsForMode } from './statuses';
 import ModeDropdown from './components/ModeDropdown';
@@ -29,11 +29,14 @@ import UpdateBanner from './components/UpdateBanner';
 import { STORAGE_KEYS } from './storageKeys.js';
 import {
   sanitizeTaskRecords, parseTaskStoragePayload, generateId,
-  parseTaskLabelsStoragePayload,
+  parseTaskLabelsStoragePayload, safeStr,
 } from './sanitize';
 import { saveJsonFile, saveCsvFile } from './utils/saveFile';
 import { toCSV } from './utils/csv';
 import { useBackGestureGuard } from './hooks/useBackGestureGuard';
+import { formatDate } from './utils/date';
+import { appendNote } from './utils/notes';
+import { useCloudSync } from './hooks/useCloudSync';
 import LabelPicker, { LabelChipsReadOnly } from './components/LabelPicker';
 import CardColorPicker from './components/CardColorPicker';
 import { LABEL_COLOR_PALETTE, readableTextColor } from './utils/labelColors';
@@ -42,12 +45,6 @@ const TASKS_LABELS_KEY = 'tasksLabelsV1';
 const DURATION_UNITS = ['minute', 'hour', 'day', 'month'];
 
 const MODE = 'tasks';
-
-const safeStr = (v) => {
-  if (v === null || v === undefined) return '';
-  if (typeof v === 'string') return v;
-  return String(v);
-};
 
 const PRIORITY_COLORS = {
   high: 'bg-red-100 text-red-700 border-red-200',
@@ -96,17 +93,6 @@ const getNextPendingStep = (task) => {
   return steps.find(s => s.status !== 'done' && s.status !== 'blocked') || null;
 };
 
-const formatDate = (dateStr, lang) => {
-  if (!dateStr) return '';
-  try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    return new Intl.DateTimeFormat(lang === 'he' ? 'he-IL' : lang === 'fr' ? 'fr-FR' : 'en-US', {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-    }).format(d);
-  } catch { return dateStr; }
-};
-
 const formatDuration = (duration, tt) => {
   const value = safeStr(duration?.value).trim();
   if (!value) return null;
@@ -139,8 +125,6 @@ export default function TasksApp({ onModeChange }) {
   const [labelFilter, setLabelFilter] = useState('all');
   const [toastMessage, setToastMessage] = useState('');
   const [isSaved, setIsSaved] = useState(true);
-  const [user, setUser] = useState(null);
-  const [syncing, setSyncing] = useState(false);
   const [newStepTitle, setNewStepTitle] = useState('');
   const [visibleCount, setVisibleCount] = useState(25);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -185,43 +169,12 @@ export default function TasksApp({ onModeChange }) {
     initAI(provider, apiKey, model, ollamaUrl);
   }, []);
 
-  const userRef = useRef(null);
-  useEffect(() => { userRef.current = user; }, [user]);
-
-  useEffect(() => {
-    const unsub = onAuthChange(async (firebaseUser) => {
-      setUser(firebaseUser);
-      if (firebaseUser) {
-        setSyncing(true);
-        try {
-          await saveUserProfile(firebaseUser.uid, { appMode: MODE });
-          const data = await loadAllItems(firebaseUser.uid, MODE);
-          if (data && data.length > 0) {
-            setTasks(filterItemsForMode(sanitizeTaskRecords(data), MODE));
-            showToast(tt('toast.imported', 'Data loaded from cloud!'));
-          }
-        } catch (e) { console.error(e); }
-        setSyncing(false);
-      }
-    });
-    return unsub;
-  }, []);
-
-  useEffect(() => {
-    const handleVisibility = async () => {
-      const firebaseUser = userRef.current;
-      if (document.visibilityState === 'visible' && firebaseUser) {
-        setSyncing(true);
-        try {
-          const data = await loadAllItems(firebaseUser.uid, MODE);
-          if (data && data.length > 0) setTasks(filterItemsForMode(sanitizeTaskRecords(data), MODE));
-        } catch (e) { console.error(e); }
-        setSyncing(false);
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => document.removeEventListener('visibilitychange', handleVisibility);
-  }, []);
+  const { user, syncing, syncNow } = useCloudSync({
+    mode: MODE,
+    sanitizeAndFilter: (data, m) => filterItemsForMode(sanitizeTaskRecords(data), m),
+    onData: setTasks,
+    onSignedIn: (hasData) => { if (hasData) showToast(tt('toast.imported', 'Data loaded from cloud!')); },
+  });
 
   const saveTasks = useCallback(async (newTasks) => {
     setTasks(newTasks);
@@ -248,16 +201,6 @@ export default function TasksApp({ onModeChange }) {
       try { await deleteItem(user.uid, MODE, id); } catch { /* ignore */ }
     }
   }, [user]);
-
-  const handleSyncNow = async () => {
-    if (!user || syncing) return;
-    setSyncing(true);
-    try {
-      const data = await loadAllItems(user.uid, MODE);
-      if (data && data.length > 0) setTasks(filterItemsForMode(sanitizeTaskRecords(data), MODE));
-    } catch (e) { console.error(e); }
-    setSyncing(false);
-  };
 
   const openNewForm = useCallback(() => {
     setFormData(makeInitialTask());
@@ -503,7 +446,7 @@ export default function TasksApp({ onModeChange }) {
   const handleSaveToTask = useCallback((taskId, text) => {
     setTasks(prev => prev.map(t => {
       if (t.id !== taskId) return t;
-      const merged = { ...t, notes: t.notes ? `${t.notes}\n\n---\n${text}` : text };
+      const merged = { ...t, notes: appendNote(t.notes, text) };
       if (user) updateItem(user.uid, MODE, merged).catch(() => {});
       return merged;
     }));
@@ -1534,7 +1477,7 @@ Rules:
                   <span className="hidden sm:inline shrink-0 max-w-[5rem] truncate sm:max-w-none">{syncing ? t('header.driveSyncing') : user.displayName?.split(' ')[0] || t('header.driveOn')}</span>
                 </button>
                 <button
-                  onClick={handleSyncNow}
+                  onClick={syncNow}
                   disabled={syncing}
                   title={t('header.syncNow')}
                   className="hidden md:flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-blue-100 transition-colors min-h-[44px] touch-manipulation disabled:opacity-50"
@@ -1662,7 +1605,7 @@ Rules:
                       </div>
                     </div>
                     {user && (
-                      <button onClick={() => { handleSyncNow(); setMobileMenuOpen(false); }} disabled={syncing} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50">
+                      <button onClick={() => { syncNow(); setMobileMenuOpen(false); }} disabled={syncing} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50">
                         <RefreshCw size={16} className={`text-blue-500 ${syncing ? 'animate-spin' : ''}`} /> {t('header.syncNow')}
                       </button>
                     )}
