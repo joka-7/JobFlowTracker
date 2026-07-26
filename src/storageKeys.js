@@ -20,7 +20,7 @@ export function getEnabledModes() {
   try {
     const arr = JSON.parse(raw);
     if (Array.isArray(arr) && arr.length > 0) return arr;
-  } catch {}
+  } catch { /* malformed JSON — fall through to null */ }
   return null;
 }
 

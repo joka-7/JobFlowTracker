@@ -4,7 +4,7 @@ import { initGroqConfig } from './helpers.js';
 test.describe('AI Rate Limiting', () => {
   test.beforeEach(async ({ page }) => {
     // Setup: Initialize with test Groq API key
-    await page.goto('http://localhost:5199');
+    await page.goto('/');
     await initGroqConfig(page);
   });
 

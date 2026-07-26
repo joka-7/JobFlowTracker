@@ -1,9 +1,9 @@
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Plus, Search, Download, Upload, Layout, List, BarChart2, Activity,
   Trash2, Edit2, ArrowLeft, ArrowRight, CheckCircle2, CheckCircle, Circle,
-  Clock, AlertCircle, ChevronDown, Calendar, Cloud, CloudOff, RefreshCw,
+  Clock, AlertCircle, Calendar, Cloud, CloudOff, RefreshCw,
   ClipboardList, X, GripVertical, Languages, MoreVertical, Settings, Smartphone, Sparkles,
   Timer,
 } from 'lucide-react';
@@ -15,7 +15,7 @@ import {
 import ChatModal from './components/ChatModal';
 import {
   signInWithGoogle, signOut, formatSignInError,
-  updateItem, deleteItem, batchSaveItems, loadUserProfile,
+  updateItem, deleteItem, batchSaveItems,
 } from './firebase';
 import { getStorageKey, STATUSES_TASKS, filterItemsForMode } from './statuses';
 import ModeDropdown from './components/ModeDropdown';
@@ -626,7 +626,6 @@ Rules:
                 </div>
                 <div className="p-2 sm:p-3 space-y-2 sm:space-y-3 sm:flex-1 sm:overflow-y-auto sm:custom-scrollbar">
                   {columnTasks.map(task => {
-                    const prog = getProgress(task);
                     const next = getNextPendingStep(task);
                     return (
                       <div

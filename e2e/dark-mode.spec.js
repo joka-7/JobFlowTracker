@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 
 /**
  * Dark Mode Tests
@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test';
  */
 
 test.describe('Dark Mode', () => {
-  test.skip('toggles dark mode via settings', async ({ page }) => {
+  test.skip('toggles dark mode via settings', async ({ page: _page }) => {
     // Feature not yet implemented
     // When implemented, add these tests:
     //
@@ -19,7 +19,7 @@ test.describe('Dark Mode', () => {
     test.skip();
   });
 
-  test.skip('persists dark mode preference in localStorage', async ({ page }) => {
+  test.skip('persists dark mode preference in localStorage', async ({ page: _page }) => {
     // 1. Enable dark mode
     // 2. Check localStorage has darkMode: true
     // 3. Reload page
@@ -28,7 +28,7 @@ test.describe('Dark Mode', () => {
     test.skip();
   });
 
-  test.skip('respects system dark mode preference', async ({ page }) => {
+  test.skip('respects system dark mode preference', async ({ page: _page }) => {
     // 1. Set system color scheme to dark (via emulation)
     // 2. Load page without localStorage pref
     // 3. Page loads in dark mode automatically
@@ -36,7 +36,7 @@ test.describe('Dark Mode', () => {
     test.skip();
   });
 
-  test.skip('maintains readability in dark mode', async ({ page }) => {
+  test.skip('maintains readability in dark mode', async ({ page: _page }) => {
     // 1. Enable dark mode
     // 2. Check all text has sufficient contrast ratio (4.5:1)
     // 3. Use axe-core for a11y check
@@ -44,7 +44,7 @@ test.describe('Dark Mode', () => {
     test.skip();
   });
 
-  test.skip('dark mode forms remain usable', async ({ page }) => {
+  test.skip('dark mode forms remain usable', async ({ page: _page }) => {
     // 1. Enable dark mode
     // 2. Open add company form
     // 3. All inputs visible and usable

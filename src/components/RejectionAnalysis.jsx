@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { X, Loader2, Heart, Save } from 'lucide-react';
 import { analyzeRejection, isAIReady } from '../services/aiAssistant';
 import MarkdownText from './MarkdownText';
@@ -7,19 +7,11 @@ export default function RejectionAnalysis({ company, language, t, onClose, onOpe
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [started, setStarted] = useState(false);
   const [saved, setSaved] = useState(false);
 
   const aiReady = isAIReady();
 
-  useEffect(() => {
-    if (aiReady) {
-      setStarted(true);
-      run();
-    }
-  }, []);
-
-  const run = async () => {
+  const run = useCallback(async () => {
     setLoading(true);
     setError('');
     setText('');
@@ -29,7 +21,11 @@ export default function RejectionAnalysis({ company, language, t, onClose, onOpe
       setError(e.message || 'Error generating analysis');
     }
     setLoading(false);
-  };
+  }, [company, language]);
+
+  useEffect(() => {
+    if (aiReady) run();
+  }, [aiReady, run]);
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -47,7 +43,7 @@ export default function RejectionAnalysis({ company, language, t, onClose, onOpe
         </div>
 
         <div className="p-6">
-          {!aiReady && !started ? (
+          {!aiReady && !loading && !text && !error ? (
             <div className="text-center space-y-4">
               <p className="text-gray-600 text-sm">{t('rejection.aiNeeded', 'Enable AI to get personalized improvement suggestions.')}</p>
               <button

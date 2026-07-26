@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Trash2, Download, X } from 'lucide-react';
 
 /**

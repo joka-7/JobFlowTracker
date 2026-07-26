@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { X, FileText, Loader2, Save } from 'lucide-react';
 import { getResumeAdvice, isAIReady } from '../services/aiAssistant';
 import MarkdownText from './MarkdownText';

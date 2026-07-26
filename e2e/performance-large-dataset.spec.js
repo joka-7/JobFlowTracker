@@ -28,7 +28,7 @@ function generateLargeDataset(count, mode = 'jobseeker') {
 test.describe('Performance - Large Datasets', () => {
   test('app handles moderate dataset loading', async ({ page }) => {
     await initJobSeekerApp(page);
-    await page.goto('http://localhost:5199');
+    await page.goto('/');
     await page.getByRole('heading', { name: 'Job Search Tracker', exact: true }).waitFor();
 
     // Generate moderate dataset
@@ -58,7 +58,7 @@ test.describe('Performance - Large Datasets', () => {
 
   test('board view is accessible with loaded data', async ({ page }) => {
     await initJobSeekerApp(page);
-    await page.goto('http://localhost:5199');
+    await page.goto('/');
     await page.getByRole('heading', { name: 'Job Search Tracker', exact: true }).waitFor();
 
     // Load small dataset
@@ -84,7 +84,7 @@ test.describe('Performance - Large Datasets', () => {
 
   test('search filters large dataset efficiently', async ({ page }) => {
     await initJobSeekerApp(page);
-    await page.goto('http://localhost:5199');
+    await page.goto('/');
     await page.getByRole('heading', { name: 'Job Search Tracker', exact: true }).waitFor();
 
     // Create large dataset with searchable names
@@ -110,7 +110,7 @@ test.describe('Performance - Large Datasets', () => {
 
   test('batch operations process large datasets efficiently', async ({ page }) => {
     await initJobSeekerApp(page);
-    await page.goto('http://localhost:5199');
+    await page.goto('/');
     await page.getByRole('heading', { name: 'Job Search Tracker', exact: true }).waitFor();
 
     // Generate large dataset
@@ -129,7 +129,7 @@ test.describe('Performance - Large Datasets', () => {
 
   test('app remains responsive with moderate dataset', async ({ page }) => {
     await initJobSeekerApp(page);
-    await page.goto('http://localhost:5199');
+    await page.goto('/');
     await page.getByRole('heading', { name: 'Job Search Tracker', exact: true }).waitFor();
 
     // Generate moderate dataset

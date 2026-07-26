@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Sparkles, X, Loader2, AlertTriangle, ArrowLeft, FileText, MessageSquare, Save } from 'lucide-react';
 import { getInterviewPrep, analyzePatterns, debriefInterview, getSchedulingAdvice, isAIReady } from '../services/aiAssistant';
 import ChatModal from './ChatModal';
