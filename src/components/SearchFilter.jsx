@@ -59,18 +59,18 @@ export default function SearchFilter({
   return (
     <div className="space-y-3">
       <div className="relative flex items-center">
-        <Search size={16} className="absolute left-3 text-gray-400" />
+        <Search size={16} className="absolute start-3 text-gray-400" />
         <input
           type="text"
           value={searchText}
           onChange={(e) => handleSearch(e.target.value)}
           placeholder={placeholder}
-          className="w-full pl-9 pr-8 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+          className="w-full ps-9 pe-8 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
         />
         {hasActiveFilters && (
           <button
             onClick={handleClear}
-            className="absolute right-2 text-gray-400 hover:text-gray-600"
+            className="absolute end-2 text-gray-400 hover:text-gray-600"
             title="Clear search and filters"
           >
             <X size={18} />

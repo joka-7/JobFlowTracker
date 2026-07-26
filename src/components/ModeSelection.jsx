@@ -108,7 +108,7 @@ export default function ModeSelection({ onSelect }) {
                 }`}
               >
                 {isActive && (
-                  <div className="absolute top-3 right-3 bg-indigo-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow">
+                  <div className="absolute top-3 end-3 bg-indigo-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow">
                     <Check size={14} />
                   </div>
                 )}
