@@ -41,35 +41,37 @@ describe('App integration', () => {
     expect(screen.getByRole('heading', { name: /Recruiting/i })).toBeInTheDocument();
   });
 
-  it('loads recruiter UI when appMode is recruiter', () => {
+  it('loads recruiter UI when appMode is recruiter', async () => {
     localStorage.setItem('appMode', 'recruiter');
     localStorage.setItem('hasCompletedOnboarding', '1');
     render(<App />);
-    expect(screen.getByRole('heading', { name: 'Recruiter Pipeline', exact: true })).toBeInTheDocument();
+    // JobTrackerApp/TasksApp are React.lazy — their content appears after
+    // the dynamic import resolves, so these need an async find, not get.
+    expect(await screen.findByRole('heading', { name: 'Recruiter Pipeline', exact: true })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Add Candidate/i })).toBeInTheDocument();
   });
 
-  it('loads job seeker UI when appMode is jobseeker', () => {
+  it('loads job seeker UI when appMode is jobseeker', async () => {
     localStorage.setItem('appMode', 'jobseeker');
     localStorage.setItem('hasCompletedOnboarding', '1');
     render(<App />);
-    expect(screen.getByRole('heading', { name: 'Job Search Tracker', exact: true })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Job Search Tracker', exact: true })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Add Company/i })).toBeInTheDocument();
   });
 
-  it('selecting recruiter in mode screen navigates to recruiter app', () => {
+  it('selecting recruiter in mode screen navigates to recruiter app', async () => {
     render(<App />);
     fireEvent.click(screen.getByRole('heading', { name: /Recruiting/i }));
     fireEvent.click(screen.getByRole('button', { name: /Get Started|התחל|Commencer/i }));
     expect(localStorage.getItem('appMode')).toBe('recruiter');
-    expect(screen.getByRole('heading', { name: 'Recruiter Pipeline', exact: true })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Recruiter Pipeline', exact: true })).toBeInTheDocument();
   });
 
-  it('auto-migrates legacy data to jobseeker without mode screen', () => {
+  it('auto-migrates legacy data to jobseeker without mode screen', async () => {
     localStorage.setItem('jobTrackerAppV2Data', JSON.stringify([{ id: '1', name: 'Old Co', status: 'applied' }]));
     render(<App />);
     expect(localStorage.getItem('appMode')).toBe('jobseeker');
     expect(screen.queryByText(/How will you use JobFlowTracker/i)).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Add Company/i })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /Add Company/i })).toBeInTheDocument();
   });
 });
