@@ -174,6 +174,14 @@ export function filterItemsForMode(items, mode) {
     const jobseekerShape = looksLikeJobseekerRecord(item);
     const recruiterShape = looksLikeRecruiterRecord(item);
 
+    // An explicit mode stamp (added when the record was saved or loaded from a
+    // mode-scoped source) is authoritative — no need to guess from field shape.
+    // Un-stamped records (legacy data, or a JSON import from the other mode)
+    // fall back to the shape heuristic below.
+    if (item.mode === 'jobseeker' || item.mode === 'recruiter') {
+      return item.mode === mode;
+    }
+
     if (mode === 'recruiter') {
       if (JOBSEEKER_ONLY_STATUSES.has(status)) return false;
       if (jobseekerShape && !recruiterShape) return false;

@@ -126,6 +126,7 @@ function ChatModalInner({
   const sendingRef = useRef(false);
   const mountedRef = useRef(true);
   const autoStartGen = useRef(0);
+  const abortRef = useRef(null);
 
   const [aiReady, setAiReady] = useState(() => loadAIConfigFromStorage());
 
@@ -155,10 +156,11 @@ function ChatModalInner({
 
   useEffect(() => {
     mountedRef.current = true;
-    return () => { mountedRef.current = false; };
+    return () => { mountedRef.current = false; abortRef.current?.abort(); };
   }, []);
 
   useEffect(() => {
+    abortRef.current?.abort();
     setMessages([]);
     setInput('');
     setError('');
@@ -215,11 +217,14 @@ function ChatModalInner({
 
     const apiMessages = buildApiMessages(historyForApi, { appendSimBegin: isTrigger });
 
+    const controller = new AbortController();
+    abortRef.current = controller;
     try {
       await streamChat(
         apiMessages,
         systemPrompt,
         (partial) => patchStreamingAssistant(partial, true),
+        { signal: controller.signal },
       );
       if (mountedRef.current) {
         setMessages(prev => {
@@ -231,7 +236,7 @@ function ChatModalInner({
         });
       }
     } catch (e) {
-      if (mountedRef.current) {
+      if (mountedRef.current && e?.name !== 'AbortError') {
         setMessages(prev => prev.filter(m => !m.streaming));
         const providerName = PROVIDERS[getCurrentProvider()]?.name || 'AI';
         setError(e?.message || `Request failed (${providerName}). Check your API key and provider in settings.`);

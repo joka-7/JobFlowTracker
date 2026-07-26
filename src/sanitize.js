@@ -121,10 +121,15 @@ function sanitizeContacts(contacts) {
 }
 
 /** Whitelist fields for job seeker / recruiter tracker records (import + localStorage). */
-export function sanitizeTrackerRecords(importedArray, { unnamedLabel = 'Unnamed' } = {}) {
+export function sanitizeTrackerRecords(importedArray, { unnamedLabel = 'Unnamed', mode } = {}) {
   if (!Array.isArray(importedArray)) return [];
+  const fallbackMode = mode === 'jobseeker' || mode === 'recruiter' ? mode : undefined;
   return importedArray.slice(0, 10000).map((c) => ({
     id: c.id ? String(c.id).slice(0, 64) : generateId(),
+    // Preserve an existing valid stamp (e.g. from a cross-mode JSON import) so
+    // filterItemsForMode can still reject it; only records with no stamp at all
+    // fall back to the mode this batch was loaded for.
+    mode: c.mode === 'jobseeker' || c.mode === 'recruiter' ? c.mode : fallbackMode,
     name: safeStr(c.name || c.company || unnamedLabel),
     role: safeStr(c.role || c.position || ''),
     status: safeStr(c.status || ''),

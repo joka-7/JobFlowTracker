@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Sparkles, X, Loader2, AlertTriangle, ArrowLeft, FileText, MessageSquare, Save } from 'lucide-react';
 import { getInterviewPrep, analyzePatterns, debriefInterview, getSchedulingAdvice, isAIReady } from '../services/aiAssistant';
 import ChatModal from './ChatModal';
@@ -28,6 +28,9 @@ function DebriefScreen({ t, language, company, onBack, onOpenSettings, onSaveToC
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
+  const abortRef = useRef(null);
+
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   const saveResult = () => {
     if (onSaveToCompany && streamText) {
@@ -42,10 +45,12 @@ function DebriefScreen({ t, language, company, onBack, onOpenSettings, onSaveToC
     setStreamText('');
     setError('');
     setLoading(true);
+    const controller = new AbortController();
+    abortRef.current = controller;
     try {
-      await debriefInterview(notes.trim(), context.trim(), language, setStreamText);
+      await debriefInterview(notes.trim(), context.trim(), language, setStreamText, { signal: controller.signal });
     } catch (e) {
-      setError(e.message || 'Error');
+      if (e.name !== 'AbortError') setError(e.message || 'Error');
     }
     setLoading(false);
   };
@@ -151,6 +156,9 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [resultSaved, setResultSaved] = useState(false);
+  const abortRef = useRef(null);
+
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   const saveResult = () => {
     if (onSaveToCompany && streamText) {
@@ -163,6 +171,7 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
   const aiReady = isAIReady();
 
   const openPanel = () => { setIsOpen(true); setScreen('menu'); setStreamText(''); setError(''); };
+  const closePanel = () => { abortRef.current?.abort(); setIsOpen(false); };
 
   const run = async (mode) => {
     if (!aiReady) { onOpenSettings(); return; }
@@ -170,19 +179,21 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
     setStreamText('');
     setError('');
     setLoading(true);
+    const controller = new AbortController();
+    abortRef.current = controller;
     try {
       if (mode === 'prep' && company) {
         const interviewType = company.interviews?.length
           ? company.interviews[company.interviews.length - 1].type || 'General'
           : 'General';
-        await getInterviewPrep(company, interviewType, language, setStreamText);
+        await getInterviewPrep(company, interviewType, language, setStreamText, { signal: controller.signal });
       } else if (mode === 'patterns') {
-        await analyzePatterns(companies, language, setStreamText);
+        await analyzePatterns(companies, language, setStreamText, { signal: controller.signal });
       } else if (mode === 'schedule' && company) {
-        await getSchedulingAdvice(company, language, setStreamText);
+        await getSchedulingAdvice(company, language, setStreamText, { signal: controller.signal });
       }
     } catch (e) {
-      setError(e.message || 'Error');
+      if (e.name !== 'AbortError') setError(e.message || 'Error');
     }
     setLoading(false);
   };
@@ -200,7 +211,7 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
             <div className="flex items-center gap-2 text-white font-bold text-sm">
               <Sparkles size={15} /> {t('ai.title', 'AI Assistant')}
             </div>
-            <button onClick={() => setIsOpen(false)} className="text-white/70 hover:text-white">
+            <button onClick={closePanel} className="text-white/70 hover:text-white">
               <X size={16} />
             </button>
           </div>
@@ -254,7 +265,7 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
               </button>
 
               <button
-                onClick={() => { setIsOpen(false); setChatOpen(true); }}
+                onClick={() => { closePanel(); setChatOpen(true); }}
                 className="w-full flex items-center gap-2 p-3 rounded-lg text-sm font-medium transition-colors text-left bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700"
               >
                 <MessageSquare size={15} />
@@ -262,7 +273,7 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
               </button>
 
               <button
-                onClick={() => { if (aiReady) { setIsOpen(false); setResumeOpen(true); } else onOpenSettings(); }}
+                onClick={() => { if (aiReady) { closePanel(); setResumeOpen(true); } else onOpenSettings(); }}
                 disabled={noCompany || loading}
                 className={`w-full flex items-center gap-2 p-3 rounded-lg text-sm font-medium transition-colors text-left ${
                   noCompany ? 'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-100' :
@@ -340,7 +351,7 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
       )}
 
       <button
-        onClick={() => isOpen ? setIsOpen(false) : openPanel()}
+        onClick={() => isOpen ? closePanel() : openPanel()}
         className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-all ${
           isOpen
             ? 'bg-gray-600 hover:bg-gray-700'

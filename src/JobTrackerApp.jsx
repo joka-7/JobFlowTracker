@@ -126,7 +126,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          const sanitized = sanitizeTrackerRecords(parsed);
+          const sanitized = sanitizeTrackerRecords(parsed, { mode });
           return filterItemsForMode(sanitized, mode);
         }
       }
@@ -178,7 +178,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
       } else {
         try {
           const parsed = JSON.parse(saved);
-          const sanitized = Array.isArray(parsed) ? sanitizeTrackerRecords(parsed) : [];
+          const sanitized = Array.isArray(parsed) ? sanitizeTrackerRecords(parsed, { mode }) : [];
           setCompanies(filterItemsForMode(sanitized, mode));
         } catch {
           setCompanies([]);
@@ -194,7 +194,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
     setShowOnboarding(mode !== 'recruiter' && !localStorage.getItem(STORAGE_KEYS.jobSeekerOnboarding));
   }, [mode]);
 
-  const initialFormState = makeInitialFormState(isRecruiter);
+  const initialFormState = useMemo(() => makeInitialFormState(isRecruiter), [isRecruiter]);
   const [formData, setFormData] = useState(() => makeInitialFormState(isRecruiter));
 
   useEffect(() => {
@@ -210,7 +210,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
 
   const { user, syncing, syncNow } = useCloudSync({
     mode,
-    sanitizeAndFilter: (data, m) => filterItemsForMode(sanitizeTrackerRecords(data), m),
+    sanitizeAndFilter: (data, m) => filterItemsForMode(sanitizeTrackerRecords(data, { mode: m }), m),
     onData: setCompanies,
     onSignedIn: (hasData) => showToast(hasData ? tMode('toast.driveConnectedWithData') : tMode('toast.driveConnectedEmpty')),
   });
@@ -370,6 +370,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
     if (!formData.name) { alert(tMode('form.requiredName')); return; }
     const dataToSave = {
       ...formData,
+      mode: isRecruiter ? 'recruiter' : 'jobseeker',
       rejection: rejectedStatuses.includes(formData.status)
         ? (formData.rejection || { date: '', method: '', notes: '' })
         : { date: '', method: '', notes: '' },

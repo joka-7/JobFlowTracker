@@ -4,6 +4,7 @@ import {
   getStorageKey, resolveInitialAppMode, filterItemsForMode,
   STATUSES_JOBSEEKER, STATUSES_RECRUITER,
 } from '../statuses';
+import { sanitizeTrackerRecords } from '../sanitize';
 
 describe('statuses', () => {
   beforeEach(() => {
@@ -71,5 +72,34 @@ describe('statuses', () => {
       { id: '2', name: 'Job Co', status: 'applied', interviews: [] },
     ];
     expect(filterItemsForMode(mixed, 'tasks').map(t => t.id)).toEqual(['1']);
+  });
+
+  // A6: a minimal recruiter candidate with none of the shape-signalling fields
+  // (linkedinCandidate/source/expectedSalary/currentRole) used to be silently
+  // dropped by the heuristic. An explicit mode stamp is now authoritative.
+  it('filterItemsForMode trusts an explicit mode stamp over the shape heuristic', () => {
+    const minimalCandidate = { id: '1', name: 'Alex', role: 'Engineer', status: 'applied', mode: 'recruiter' };
+    expect(filterItemsForMode([minimalCandidate], 'recruiter').map(c => c.id)).toEqual(['1']);
+    expect(filterItemsForMode([minimalCandidate], 'jobseeker')).toEqual([]);
+
+    const minimalCompany = { id: '2', name: 'Acme', role: 'Engineer', status: 'applied', mode: 'jobseeker' };
+    expect(filterItemsForMode([minimalCompany], 'jobseeker').map(c => c.id)).toEqual(['2']);
+    expect(filterItemsForMode([minimalCompany], 'recruiter')).toEqual([]);
+  });
+
+  it('filterItemsForMode falls back to the shape heuristic for un-stamped records', () => {
+    const legacyMinimalCandidate = { id: '1', name: 'Alex', role: 'Engineer', status: 'applied' };
+    // No mode stamp and no recruiter-shaped fields — same defect A6 originally described.
+    expect(filterItemsForMode([legacyMinimalCandidate], 'recruiter')).toEqual([]);
+  });
+
+  it('sanitizeTrackerRecords stamps mode for un-stamped records but preserves an existing stamp', () => {
+    const input = [
+      { id: '1', name: 'Alex' }, // no mode - should get the batch default
+      { id: '2', name: 'Sam', mode: 'jobseeker' }, // pre-stamped from a cross-mode import - preserved
+    ];
+    const sanitized = sanitizeTrackerRecords(input, { mode: 'recruiter' });
+    expect(sanitized.find(r => r.id === '1').mode).toBe('recruiter');
+    expect(sanitized.find(r => r.id === '2').mode).toBe('jobseeker');
   });
 });
