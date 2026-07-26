@@ -14,8 +14,8 @@ import {
 } from './utils/templateQuestions';
 import ChatModal from './components/ChatModal';
 import {
-  signInWithGoogle, signOut, onAuthChange, loadAllItems, formatSignInError,
-  updateItem, deleteItem, batchSaveItems, loadUserProfile, saveUserProfile,
+  signInWithGoogle, signOut, formatSignInError,
+  updateItem, deleteItem, batchSaveItems, loadUserProfile,
 } from './firebase';
 import { getStorageKey, STATUSES_TASKS, filterItemsForMode } from './statuses';
 import ModeDropdown from './components/ModeDropdown';
@@ -34,6 +34,7 @@ import {
 import { saveJsonFile } from './utils/saveFile';
 import { formatDate } from './utils/date';
 import { appendNote } from './utils/notes';
+import { useCloudSync } from './hooks/useCloudSync';
 import LabelPicker, { LabelChipsReadOnly } from './components/LabelPicker';
 import CardColorPicker from './components/CardColorPicker';
 import { LABEL_COLOR_PALETTE, readableTextColor } from './utils/labelColors';
@@ -122,8 +123,6 @@ export default function TasksApp({ onModeChange }) {
   const [labelFilter, setLabelFilter] = useState('all');
   const [toastMessage, setToastMessage] = useState('');
   const [isSaved, setIsSaved] = useState(true);
-  const [user, setUser] = useState(null);
-  const [syncing, setSyncing] = useState(false);
   const [newStepTitle, setNewStepTitle] = useState('');
   const [visibleCount, setVisibleCount] = useState(25);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -168,43 +167,12 @@ export default function TasksApp({ onModeChange }) {
     initAI(provider, apiKey, model, ollamaUrl);
   }, []);
 
-  const userRef = useRef(null);
-  useEffect(() => { userRef.current = user; }, [user]);
-
-  useEffect(() => {
-    const unsub = onAuthChange(async (firebaseUser) => {
-      setUser(firebaseUser);
-      if (firebaseUser) {
-        setSyncing(true);
-        try {
-          await saveUserProfile(firebaseUser.uid, { appMode: MODE });
-          const data = await loadAllItems(firebaseUser.uid, MODE);
-          if (data && data.length > 0) {
-            setTasks(filterItemsForMode(sanitizeTaskRecords(data), MODE));
-            showToast(tt('toast.imported', 'Data loaded from cloud!'));
-          }
-        } catch (e) { console.error(e); }
-        setSyncing(false);
-      }
-    });
-    return unsub;
-  }, []);
-
-  useEffect(() => {
-    const handleVisibility = async () => {
-      const firebaseUser = userRef.current;
-      if (document.visibilityState === 'visible' && firebaseUser) {
-        setSyncing(true);
-        try {
-          const data = await loadAllItems(firebaseUser.uid, MODE);
-          if (data && data.length > 0) setTasks(filterItemsForMode(sanitizeTaskRecords(data), MODE));
-        } catch (e) { console.error(e); }
-        setSyncing(false);
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => document.removeEventListener('visibilitychange', handleVisibility);
-  }, []);
+  const { user, syncing, syncNow } = useCloudSync({
+    mode: MODE,
+    sanitizeAndFilter: (data, m) => filterItemsForMode(sanitizeTaskRecords(data), m),
+    onData: setTasks,
+    onSignedIn: (hasData) => { if (hasData) showToast(tt('toast.imported', 'Data loaded from cloud!')); },
+  });
 
   const saveTasks = useCallback(async (newTasks) => {
     setTasks(newTasks);
@@ -231,16 +199,6 @@ export default function TasksApp({ onModeChange }) {
       try { await deleteItem(user.uid, MODE, id); } catch { /* ignore */ }
     }
   }, [user]);
-
-  const handleSyncNow = async () => {
-    if (!user || syncing) return;
-    setSyncing(true);
-    try {
-      const data = await loadAllItems(user.uid, MODE);
-      if (data && data.length > 0) setTasks(filterItemsForMode(sanitizeTaskRecords(data), MODE));
-    } catch (e) { console.error(e); }
-    setSyncing(false);
-  };
 
   const openNewForm = useCallback(() => {
     setFormData(makeInitialTask());
@@ -1492,7 +1450,7 @@ Rules:
                   <span className="hidden sm:inline shrink-0 max-w-[5rem] truncate sm:max-w-none">{syncing ? t('header.driveSyncing') : user.displayName?.split(' ')[0] || t('header.driveOn')}</span>
                 </button>
                 <button
-                  onClick={handleSyncNow}
+                  onClick={syncNow}
                   disabled={syncing}
                   title={t('header.syncNow')}
                   className="hidden md:flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-blue-100 transition-colors min-h-[44px] touch-manipulation disabled:opacity-50"
@@ -1617,7 +1575,7 @@ Rules:
                       </div>
                     </div>
                     {user && (
-                      <button onClick={() => { handleSyncNow(); setMobileMenuOpen(false); }} disabled={syncing} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50">
+                      <button onClick={() => { syncNow(); setMobileMenuOpen(false); }} disabled={syncing} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50">
                         <RefreshCw size={16} className={`text-blue-500 ${syncing ? 'animate-spin' : ''}`} /> {t('header.syncNow')}
                       </button>
                     )}
