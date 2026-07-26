@@ -203,7 +203,7 @@ export default function TasksApp({ onModeChange }) {
           await saveUserProfile(firebaseUser.uid, { appMode: MODE });
           const data = await loadAllItems(firebaseUser.uid, MODE);
           if (data && data.length > 0) {
-            setTasks(filterItemsForMode(data, MODE));
+            setTasks(filterItemsForMode(sanitizeTaskRecords(data), MODE));
             showToast(tt('toast.imported', 'Data loaded from cloud!'));
           }
         } catch (e) { console.error(e); }
@@ -220,7 +220,7 @@ export default function TasksApp({ onModeChange }) {
         setSyncing(true);
         try {
           const data = await loadAllItems(firebaseUser.uid, MODE);
-          if (data && data.length > 0) setTasks(filterItemsForMode(data, MODE));
+          if (data && data.length > 0) setTasks(filterItemsForMode(sanitizeTaskRecords(data), MODE));
         } catch (e) { console.error(e); }
         setSyncing(false);
       }
@@ -260,7 +260,7 @@ export default function TasksApp({ onModeChange }) {
     setSyncing(true);
     try {
       const data = await loadAllItems(user.uid, MODE);
-      if (data && data.length > 0) setTasks(filterItemsForMode(data, MODE));
+      if (data && data.length > 0) setTasks(filterItemsForMode(sanitizeTaskRecords(data), MODE));
     } catch (e) { console.error(e); }
     setSyncing(false);
   };
@@ -325,7 +325,7 @@ export default function TasksApp({ onModeChange }) {
     try {
       const task = {
         ...formData,
-        id: formData.id || Date.now().toString(),
+        id: formData.id || generateId(),
         name: safeStr(formData.name).trim(),
       };
       await saveTask(task);
@@ -375,7 +375,7 @@ export default function TasksApp({ onModeChange }) {
     const title = newStepTitle.trim();
     if (!title) return;
     const newStep = {
-      id: Date.now().toString() + Math.random(), title, status: 'todo', notes: '', dueDate: '',
+      id: generateId(), title, status: 'todo', notes: '', dueDate: '',
       duration: makeInitialDuration(), labelIds: [],
     };
     setFormData(prev => ({ ...prev, steps: [...(prev.steps || []), newStep] }));
