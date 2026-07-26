@@ -83,10 +83,11 @@ export async function initMockAI(page) {
     localStorage.setItem('aiProvider', 'gemini');
     localStorage.setItem('aiApiKey', 'e2e-test-key');
     localStorage.setItem('aiModel', 'gemini-2.0-flash');
+    localStorage.setItem('e2eDisableRateLimit', '1');
   });
 }
 
-/** Configure Groq as AI provider for rate limiting tests. */
+/** Configure Groq as AI provider for rate limiting tests (real throttling stays on). */
 export async function initGroqConfig(page) {
   await page.addInitScript(() => {
     localStorage.setItem('aiProvider', 'groq');

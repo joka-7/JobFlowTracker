@@ -55,10 +55,14 @@ let config = { provider: 'gemini', apiKey: '', model: '', ollamaUrl: 'http://loc
 // Rate limiting: track last call time per action
 const rateLimitMap = new Map();
 const RATE_LIMIT_MS = 3000; // 3 second throttle between calls
-// Disable rate limiting in browser environments (where E2E tests run) and Node.js test environments
-const inBrowser = typeof window !== 'undefined';
 const isNodeTest = typeof process !== 'undefined' && (process.env.NODE_ENV === 'test' || process.env.VITEST);
-let rateLimitingEnabled = !inBrowser && !isNodeTest;
+// E2E suites opt out explicitly (see e2e/helpers.js) rather than getting a blanket
+// browser-wide bypass, so real users keep real throttling.
+function isE2ETestMode() {
+  if (typeof window === 'undefined') return false;
+  try { return window.localStorage.getItem('e2eDisableRateLimit') === '1'; } catch { return false; }
+}
+let rateLimitingEnabled = !isNodeTest && !isE2ETestMode();
 
 function checkRateLimit(key) {
   // Skip rate limiting in test environment
@@ -155,10 +159,10 @@ async function streamOpenAICompat(url, apiKey, body, onChunk) {
 
 // Gemini SSE stream
 async function streamGemini(apiKey, model, prompt, onChunk) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`;
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
     body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] }),
   });
   if (!res.ok) {
@@ -307,7 +311,7 @@ export async function streamChat(messages, systemPrompt, onChunk) {
   }
 
   if (provider === 'gemini') {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`;
     const contents = apiMessages.map(m => ({
       role: m.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: m.content }],
@@ -316,7 +320,7 @@ export async function streamChat(messages, systemPrompt, onChunk) {
     if (systemPrompt) body.systemInstruction = { parts: [{ text: systemPrompt }] };
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
       body: JSON.stringify(body),
     });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `HTTP ${res.status}`); }

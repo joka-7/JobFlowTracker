@@ -35,7 +35,7 @@ import {
   getLocalizedQuestions, getLocalizedCategoryLabel, formatQuestionList,
 } from './utils/templateQuestions';
 import { usePwaInstall } from './usePwaInstall';
-import { sanitizeTrackerRecords, parseTrackerImportPayload } from './sanitize';
+import { sanitizeTrackerRecords, parseTrackerImportPayload, generateId } from './sanitize';
 import { saveJsonFile } from './utils/saveFile';
 
 const Linkedin = ({ size = 16, ...p }) => (
@@ -145,7 +145,8 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
     try {
       const date = new Date(strDate);
       if (isNaN(date.getTime())) return strDate;
-      return new Intl.DateTimeFormat(isRTL ? 'he-IL' : 'en-US', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date);
+      const locale = i18n.language === 'he' ? 'he-IL' : i18n.language === 'fr' ? 'fr-FR' : 'en-US';
+      return new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date);
     } catch { return strDate; }
   };
 
@@ -232,7 +233,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
 
   useEffect(() => {
     try {
-      if (companies.length > 0) {
+      if (companies.length > 0 || window.localStorage.getItem(getStorageKey(mode))) {
         setIsSaved(false);
         window.localStorage.setItem(getStorageKey(mode), JSON.stringify(companies));
         const timer = setTimeout(() => setIsSaved(true), 800);
@@ -455,7 +456,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
       setCompanies(companies.map(c => String(c.id) === String(dataToSave.id) ? dataToSave : c));
       if (user) updateItem(user.uid, mode, dataToSave).catch(console.error);
     } else {
-      const newCompany = { ...dataToSave, id: Date.now().toString() };
+      const newCompany = { ...dataToSave, id: generateId() };
       setCompanies([newCompany, ...companies]);
       setSelectedId(newCompany.id);
       setFormData({
@@ -1516,17 +1517,17 @@ Rules:
                         <div className={`grid grid-cols-1 md:grid-cols-3 gap-3 mb-3 ${isRTL ? 'pl-6' : 'pr-6'}`}>
                           <select
                             value={safeStr(interview.type)}
-                            onChange={e => { const a = [...formData.interviews]; a[index].type = e.target.value; setFormData({...formData, interviews: a}); }}
+                            onChange={e => { const a = [...formData.interviews]; a[index] = { ...a[index], type: e.target.value }; setFormData({...formData, interviews: a}); }}
                             className="w-full p-2 text-sm border rounded bg-white"
                           >
                             <option value="" disabled>{tMode('form.selectInterviewType')}</option>
                             {INTERVIEW_TYPE_KEYS.map(key => <option key={key} value={key}>{tInterviewType(key)}</option>)}
                             {interview.type && !INTERVIEW_TYPE_KEYS.includes(interview.type) && <option value={safeStr(interview.type)}>{safeStr(interview.type)}</option>}
                           </select>
-                          <input type="date" dir="ltr" value={safeStr(interview.date)} onChange={e => { const a = [...formData.interviews]; a[index].date = e.target.value; setFormData({...formData, interviews: a}); }} className="w-full p-2 text-sm border rounded" />
-                          <input type="text" placeholder={tMode('form.interviewerPlaceholder')} value={safeStr(interview.interviewer)} onChange={e => { const a = [...formData.interviews]; a[index].interviewer = e.target.value; setFormData({...formData, interviews: a}); }} className="w-full p-2 text-sm border rounded" />
+                          <input type="date" dir="ltr" value={safeStr(interview.date)} onChange={e => { const a = [...formData.interviews]; a[index] = { ...a[index], date: e.target.value }; setFormData({...formData, interviews: a}); }} className="w-full p-2 text-sm border rounded" />
+                          <input type="text" placeholder={tMode('form.interviewerPlaceholder')} value={safeStr(interview.interviewer)} onChange={e => { const a = [...formData.interviews]; a[index] = { ...a[index], interviewer: e.target.value }; setFormData({...formData, interviews: a}); }} className="w-full p-2 text-sm border rounded" />
                         </div>
-                        <textarea placeholder={tMode('form.summaryPlaceholder')} value={safeStr(interview.summary)} onChange={e => { const a = [...formData.interviews]; a[index].summary = e.target.value; setFormData({...formData, interviews: a}); }} className="w-full p-2 text-sm border rounded h-16"></textarea>
+                        <textarea placeholder={tMode('form.summaryPlaceholder')} value={safeStr(interview.summary)} onChange={e => { const a = [...formData.interviews]; a[index] = { ...a[index], summary: e.target.value }; setFormData({...formData, interviews: a}); }} className="w-full p-2 text-sm border rounded h-16"></textarea>
                       </div>
                     ))}
                   </div>
