@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, FileText, Loader2, Save } from 'lucide-react';
 import { getResumeAdvice, isAIReady } from '../services/aiAssistant';
 import MarkdownText from './MarkdownText';
@@ -9,18 +9,23 @@ export default function ResumeReview({ company, language, t, onClose, onOpenSett
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
+  const abortRef = useRef(null);
 
   const aiReady = isAIReady();
+
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   const handleAnalyze = async () => {
     if (!resumeText.trim()) return;
     setLoading(true);
     setError('');
     setResult('');
+    const controller = new AbortController();
+    abortRef.current = controller;
     try {
-      await getResumeAdvice(company, resumeText, language, (partial) => setResult(partial));
+      await getResumeAdvice(company, resumeText, language, (partial) => setResult(partial), { signal: controller.signal });
     } catch (e) {
-      setError(e.message || 'Error');
+      if (e.name !== 'AbortError') setError(e.message || 'Error');
     }
     setLoading(false);
   };

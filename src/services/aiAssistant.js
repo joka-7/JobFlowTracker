@@ -122,18 +122,36 @@ export function getCurrentProvider() {
   return config.provider;
 }
 
+// Hard ceiling on how long a single AI request may run — a hung provider
+// (dropped connection, stalled proxy) would otherwise wait forever, since
+// fetch() has no default timeout. Combined with any caller-supplied signal
+// (e.g. "abort because the modal closed") via AbortSignal.any.
+const AI_REQUEST_TIMEOUT_MS = 60_000;
+
+function requestSignal(signal) {
+  const timeoutSignal = AbortSignal.timeout(AI_REQUEST_TIMEOUT_MS);
+  return signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal;
+}
+
+/** A 200 with no body (adblocker, misbehaving proxy) would otherwise throw a raw TypeError on getReader(). */
+function getBodyReader(res) {
+  if (!res.body) throw new Error('Empty response body from AI provider.');
+  return res.body.getReader();
+}
+
 // SSE stream parser for OpenAI-compatible APIs (OpenAI, Groq)
-async function streamOpenAICompat(url, apiKey, body, onChunk) {
+async function streamOpenAICompat(url, apiKey, body, onChunk, signal) {
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({ ...body, stream: true }),
+    body: JSON.stringify({ max_tokens: 1024, ...body, stream: true }),
+    signal: requestSignal(signal),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error?.message || `HTTP ${res.status}`);
   }
-  const reader = res.body.getReader();
+  const reader = getBodyReader(res);
   const dec = new TextDecoder();
   let buf = '';
   let full = '';
@@ -157,18 +175,22 @@ async function streamOpenAICompat(url, apiKey, body, onChunk) {
 }
 
 // Gemini SSE stream
-async function streamGemini(apiKey, model, prompt, onChunk) {
+async function streamGemini(apiKey, model, prompt, onChunk, signal) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`;
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-    body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] }),
+    body: JSON.stringify({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: { maxOutputTokens: 1024 },
+    }),
+    signal: requestSignal(signal),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error?.message || `HTTP ${res.status}`);
   }
-  const reader = res.body.getReader();
+  const reader = getBodyReader(res);
   const dec = new TextDecoder();
   let buf = '';
   let full = '';
@@ -206,15 +228,16 @@ function validateOllamaUrl(url) {
 }
 
 // Ollama newline-delimited JSON stream
-async function streamOllama(baseUrl, model, prompt, onChunk) {
+async function streamOllama(baseUrl, model, prompt, onChunk, signal) {
   const validUrl = validateOllamaUrl(baseUrl);
   const res = await fetch(`${validUrl}/api/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, prompt, stream: true }),
+    body: JSON.stringify({ model, prompt, stream: true, options: { num_predict: 1024 } }),
+    signal: requestSignal(signal),
   });
   if (!res.ok) throw new Error(`Ollama error: HTTP ${res.status}. Is Ollama running?`);
-  const reader = res.body.getReader();
+  const reader = getBodyReader(res);
   const dec = new TextDecoder();
   let buf = '';
   let full = '';
@@ -236,14 +259,14 @@ async function streamOllama(baseUrl, model, prompt, onChunk) {
 }
 
 // Anthropic SDK stream
-async function streamAnthropic(apiKey, model, prompt, onChunk) {
+async function streamAnthropic(apiKey, model, prompt, onChunk, signal) {
   const { default: Anthropic } = await import('@anthropic-ai/sdk');
   const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
   const stream = await client.messages.stream({
     model,
     max_tokens: 600,
     messages: [{ role: 'user', content: prompt }],
-  });
+  }, { signal: requestSignal(signal) });
   let full = '';
   for await (const chunk of stream) {
     if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
@@ -289,7 +312,7 @@ export function buildApiMessages(uiMessages, { appendSimBegin = false } = {}) {
 }
 
 // Multi-turn chat streaming (messages must already be normalized via buildApiMessages)
-export async function streamChat(messages, systemPrompt, onChunk) {
+export async function streamChat(messages, systemPrompt, onChunk, { signal } = {}) {
   // Rate limit check
   checkRateLimit('chat-stream');
 
@@ -316,15 +339,16 @@ export async function streamChat(messages, systemPrompt, onChunk) {
       role: m.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: m.content }],
     }));
-    const body = { contents };
+    const body = { contents, generationConfig: { maxOutputTokens: 1024 } };
     if (systemPrompt) body.systemInstruction = { parts: [{ text: systemPrompt }] };
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
       body: JSON.stringify(body),
+      signal: requestSignal(signal),
     });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `HTTP ${res.status}`); }
-    const reader = res.body.getReader();
+    const reader = getBodyReader(res);
     const dec = new TextDecoder();
     let buf = '', full = '';
     while (true) {
@@ -347,7 +371,7 @@ export async function streamChat(messages, systemPrompt, onChunk) {
       model, max_tokens: 1024,
       ...(systemPrompt ? { system: systemPrompt } : {}),
       messages: apiMessages,
-    });
+    }, { signal: requestSignal(signal) });
     let full = '';
     for await (const chunk of stream) {
       if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
@@ -366,10 +390,12 @@ export async function streamChat(messages, systemPrompt, onChunk) {
         model,
         messages: systemPrompt ? [{ role: 'system', content: systemPrompt }, ...apiMessages] : apiMessages,
         stream: true,
+        options: { num_predict: 1024 },
       }),
+      signal: requestSignal(signal),
     });
     if (!res.ok) throw new Error(`Ollama error: HTTP ${res.status}`);
-    const reader = res.body.getReader();
+    const reader = getBodyReader(res);
     const dec = new TextDecoder();
     let buf = '', full = '';
     while (true) {
@@ -392,20 +418,22 @@ export async function streamChat(messages, systemPrompt, onChunk) {
     apiKey,
     { model, messages: systemPrompt ? [{ role: 'system', content: systemPrompt }, ...apiMessages] : apiMessages },
     emit,
+    signal,
   );
 }
 
-async function runStream(prompt, onChunk) {
+async function runStream(prompt, onChunk, signal) {
   const { provider, apiKey, model, ollamaUrl } = config;
   switch (provider) {
     case 'gemini':
-      return streamGemini(apiKey, model, prompt, onChunk);
+      return streamGemini(apiKey, model, prompt, onChunk, signal);
     case 'groq':
       return streamOpenAICompat(
         'https://api.groq.com/openai/v1/chat/completions',
         apiKey,
         { model, messages: [{ role: 'user', content: prompt }] },
         onChunk,
+        signal,
       );
     case 'openai':
       return streamOpenAICompat(
@@ -413,11 +441,12 @@ async function runStream(prompt, onChunk) {
         apiKey,
         { model, messages: [{ role: 'user', content: prompt }] },
         onChunk,
+        signal,
       );
     case 'ollama':
-      return streamOllama(ollamaUrl, model, prompt, onChunk);
+      return streamOllama(ollamaUrl, model, prompt, onChunk, signal);
     case 'anthropic':
-      return streamAnthropic(apiKey, model, prompt, onChunk);
+      return streamAnthropic(apiKey, model, prompt, onChunk, signal);
     default:
       throw new Error(`Unknown provider: ${provider}`);
   }
@@ -425,7 +454,7 @@ async function runStream(prompt, onChunk) {
 
 const LANG = { en: 'Respond in English.', he: 'ענה בעברית.', fr: 'Réponds en français.' };
 
-export async function getInterviewPrep(company, interviewType, language = 'en', onChunk) {
+export async function getInterviewPrep(company, interviewType, language = 'en', onChunk, { signal } = {}) {
   checkRateLimit('interview-prep');
   const interviewCount = company.interviews?.length || 0;
   const prompt = `You are a job search coach helping someone prepare for a ${interviewType} interview at ${delimUserField(company.name)}.
@@ -439,10 +468,10 @@ Give exactly 3 focused preparation tips. For each tip:
 - Be specific and practical
 
 ${LANG[language] || LANG.en}`;
-  return runStream(prompt, onChunk);
+  return runStream(prompt, onChunk, signal);
 }
 
-export async function analyzeRejection(company, language = 'en', onChunk) {
+export async function analyzeRejection(company, language = 'en', onChunk, { signal } = {}) {
   checkRateLimit('analyze-rejection');
   const interviews = Array.isArray(company.interviews) ? company.interviews : [];
   const r = company.rejection || {};
@@ -461,10 +490,10 @@ Give 3 constructive, empathetic improvement suggestions. Each should:
 End with one short encouraging sentence.
 
 ${LANG[language] || LANG.en}`;
-  return runStream(prompt, onChunk);
+  return runStream(prompt, onChunk, signal);
 }
 
-export async function analyzePatterns(companies, language = 'en', onChunk) {
+export async function analyzePatterns(companies, language = 'en', onChunk, { signal } = {}) {
   checkRateLimit('analyze-patterns');
   const rejected = companies.filter(c => ['rejected', 'ghosted'].includes(c.status)).length;
   const active = companies.filter(c => !['rejected', 'ghosted', 'withdrawn'].includes(c.status)).length;
@@ -489,10 +518,10 @@ Identify 3 patterns or insights. For each:
 - 1-2 sentences with a specific, actionable recommendation
 
 ${LANG[language] || LANG.en}`;
-  return runStream(prompt, onChunk);
+  return runStream(prompt, onChunk, signal);
 }
 
-export async function getSchedulingAdvice(company, language = 'en', onChunk) {
+export async function getSchedulingAdvice(company, language = 'en', onChunk, { signal } = {}) {
   checkRateLimit('scheduling-advice');
   const upcoming = (company.interviews || []).filter(
     i => i.date && new Date(i.date) > new Date()
@@ -523,10 +552,10 @@ For each upcoming interview, create a focused day-by-day prep plan starting from
 Keep each day's tasks brief and actionable. Do not include any personal data beyond what is listed above.
 
 ${LANG[language] || LANG.en}`;
-  return runStream(prompt, onChunk);
+  return runStream(prompt, onChunk, signal);
 }
 
-export async function getResumeAdvice(company, resumeText, language = 'en', onChunk) {
+export async function getResumeAdvice(company, resumeText, language = 'en', onChunk, { signal } = {}) {
   checkRateLimit('resume-advice');
   const prompt = `You are a job application coach helping tailor a resume for a specific role.
 
@@ -547,7 +576,7 @@ Based on the resume above, suggest 3 specific experiences or achievements to hig
 Be specific to the content provided. Keep tips actionable.
 
 ${LANG[language] || LANG.en}`;
-  return runStream(prompt, onChunk);
+  return runStream(prompt, onChunk, signal);
 }
 
 export function getJobFinderSystemPrompt(companies = [], language = 'en') {
@@ -620,7 +649,7 @@ Start by asking what they want to focus on: defining a new goal, finding project
 ${langInstruction}`;
 }
 
-export async function debriefInterview(notes, context, language = 'en', onChunk) {
+export async function debriefInterview(notes, context, language = 'en', onChunk, { signal } = {}) {
   checkRateLimit('interview-debrief');
   const prompt = `You are an expert interview coach. Analyze these post-interview notes written by the candidate:
 
@@ -644,5 +673,5 @@ Provide a structured debrief with these 4 sections:
 (1-3 concrete next steps before next interview or follow-up)
 
 Be direct, specific, and constructive. ${LANG[language] || LANG.en}`;
-  return runStream(prompt, onChunk);
+  return runStream(prompt, onChunk, signal);
 }

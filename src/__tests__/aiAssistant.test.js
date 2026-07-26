@@ -789,3 +789,50 @@ describe('getGoalsTasksSystemPrompt', () => {
     expect(prompt.toLowerCase()).toContain('volunteer');
   });
 });
+
+// ---------------------------------------------------------------------------
+// A14: request cancellation, bounded output, and empty-body handling
+// ---------------------------------------------------------------------------
+
+describe('AI call timeouts, cancellation, and output bounds', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('caps output tokens on the request body for every HTTP-based provider', async () => {
+    initAI('groq', 'gsk_test', 'llama-3.1-8b-instant', '');
+    const mockFetch = vi.fn().mockResolvedValue(makeOkResponse(makeOpenAIStream('tip1')));
+    vi.stubGlobal('fetch', mockFetch);
+
+    await getInterviewPrep({ name: 'Acme', interviews: [] }, 'technical', 'en', () => {});
+
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(body.max_tokens).toBeGreaterThan(0);
+  });
+
+  it('forwards the caller-supplied AbortSignal to fetch', async () => {
+    initAI('groq', 'gsk_test', 'llama-3.1-8b-instant', '');
+    const mockFetch = vi.fn().mockResolvedValue(makeOkResponse(makeOpenAIStream('tip1')));
+    vi.stubGlobal('fetch', mockFetch);
+
+    const controller = new AbortController();
+    await getInterviewPrep({ name: 'Acme', interviews: [] }, 'technical', 'en', () => {}, { signal: controller.signal });
+
+    const forwardedSignal = mockFetch.mock.calls[0][1].signal;
+    expect(forwardedSignal).toBeInstanceOf(AbortSignal);
+    // The forwarded signal is the caller's combined with an internal timeout,
+    // not the raw controller.signal — aborting the caller's must abort it too.
+    controller.abort();
+    expect(forwardedSignal.aborted).toBe(true);
+  });
+
+  it('rejects instead of throwing a raw TypeError when the response has no body', async () => {
+    initAI('groq', 'gsk_test', 'llama-3.1-8b-instant', '');
+    const mockFetch = vi.fn().mockResolvedValue({ ok: true, body: null, json: async () => ({}) });
+    vi.stubGlobal('fetch', mockFetch);
+
+    await expect(
+      getInterviewPrep({ name: 'Acme', interviews: [] }, 'technical', 'en', () => {})
+    ).rejects.toThrow(/empty response body/i);
+  });
+});

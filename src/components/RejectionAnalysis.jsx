@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Loader2, Heart, Save } from 'lucide-react';
 import { analyzeRejection, isAIReady } from '../services/aiAssistant';
 import MarkdownText from './MarkdownText';
@@ -8,6 +8,7 @@ export default function RejectionAnalysis({ company, language, t, onClose, onOpe
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
+  const abortRef = useRef(null);
 
   const aiReady = isAIReady();
 
@@ -15,16 +16,19 @@ export default function RejectionAnalysis({ company, language, t, onClose, onOpe
     setLoading(true);
     setError('');
     setText('');
+    const controller = new AbortController();
+    abortRef.current = controller;
     try {
-      await analyzeRejection(company, language || 'en', setText);
+      await analyzeRejection(company, language || 'en', setText, { signal: controller.signal });
     } catch (e) {
-      setError(e.message || 'Error generating analysis');
+      if (e.name !== 'AbortError') setError(e.message || 'Error generating analysis');
     }
     setLoading(false);
   }, [company, language]);
 
   useEffect(() => {
     if (aiReady) run();
+    return () => abortRef.current?.abort();
   }, [aiReady, run]);
 
   return (
