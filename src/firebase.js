@@ -272,27 +272,3 @@ export async function batchSaveItems(uid, mode, items) {
     await batch.commit();
   }
 }
-
-export async function loadAllCompanies(uid) {
-  return loadAllItems(uid, 'jobseeker');
-}
-
-export async function updateCompany(uid, company) {
-  return updateItem(uid, 'jobseeker', company);
-}
-
-export async function deleteFirestoreCompany(uid, id) {
-  return deleteItem(uid, 'jobseeker', id);
-}
-
-export async function batchSaveCompanies(uid, companies) {
-  return batchSaveItems(uid, 'jobseeker', companies);
-}
-
-export async function loadUserData(uid) {
-  return loadAllCompanies(uid);
-}
-
-export async function saveUserData(uid, companies) {
-  return batchSaveCompanies(uid, companies);
-}
