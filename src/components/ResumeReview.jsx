@@ -1,19 +1,7 @@
 import { useState } from 'react';
 import { X, FileText, Loader2, Save } from 'lucide-react';
 import { getResumeAdvice, isAIReady } from '../services/aiAssistant';
-
-function MarkdownText({ text }) {
-  if (!text) return null;
-  return (
-    <span>
-      {text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
-        part.startsWith('**') && part.endsWith('**')
-          ? <strong key={i}>{part.slice(2, -2)}</strong>
-          : <span key={i}>{part}</span>
-      )}
-    </span>
-  );
-}
+import MarkdownText from './MarkdownText';
 
 export default function ResumeReview({ company, language, t, onClose, onOpenSettings, onSave }) {
   const [resumeText, setResumeText] = useState('');

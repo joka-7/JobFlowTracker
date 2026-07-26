@@ -1,20 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { X, Loader2, Heart, Save } from 'lucide-react';
 import { analyzeRejection, isAIReady } from '../services/aiAssistant';
-
-function MarkdownText({ text }) {
-  if (!text) return null;
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
-  return (
-    <span>
-      {parts.map((part, i) =>
-        part.startsWith('**') && part.endsWith('**')
-          ? <strong key={i}>{part.slice(2, -2)}</strong>
-          : <span key={i}>{part}</span>
-      )}
-    </span>
-  );
-}
+import MarkdownText from './MarkdownText';
 
 export default function RejectionAnalysis({ company, language, t, onClose, onOpenSettings, onSave }) {
   const [text, setText] = useState('');
