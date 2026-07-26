@@ -19,6 +19,17 @@ function withTemplateQuestions(base, tq) {
   };
 }
 
+const RTL_LANGUAGES = new Set(['he']);
+
+/** Keep <html lang>/dir in sync so screen readers use the right voice/rules
+ * and the document-level dir (scrollbar, context menu, ::selection) is
+ * correct — previously only an inner <div> got dir=rtl. */
+function syncDocumentLanguage(lng) {
+  if (typeof document === 'undefined') return;
+  document.documentElement.lang = lng;
+  document.documentElement.dir = RTL_LANGUAGES.has(lng) ? 'rtl' : 'ltr';
+}
+
 i18n
   .use(initReactI18next)
   .init({
@@ -31,5 +42,8 @@ i18n
     fallbackLng: 'en',
     interpolation: { escapeValue: false },
   });
+
+syncDocumentLanguage(i18n.language);
+i18n.on('languageChanged', syncDocumentLanguage);
 
 export default i18n;

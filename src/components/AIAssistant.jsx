@@ -193,7 +193,7 @@ export default function AIAssistant({ company, companies, language, t, onOpenSet
   ));
 
   return (
-    <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
+    <div className="fixed bottom-6 end-6 z-40 flex flex-col items-end gap-2">
       {isOpen && (
         <div className="w-80 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden mb-2 flex flex-col max-h-[560px]">
           <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-3 flex items-center justify-between flex-shrink-0">
