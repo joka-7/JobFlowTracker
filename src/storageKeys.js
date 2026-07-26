@@ -29,29 +29,3 @@ export const APP_MODES = {
   recruiter: 'recruiter',
   tasks: 'tasks',
 };
-
-/** Mock AI config for chat e2e (single init script — avoids addInitScript ordering issues). */
-export const E2E_AI_STORAGE = {
-  aiProvider: 'gemini',
-  aiApiKey: 'e2e-test-key',
-  aiModel: 'gemini-2.0-flash',
-};
-
-/** Required localStorage entries for each e2e init helper (enforced by unit test). */
-export const E2E_MODE_INIT = {
-  jobseeker: {
-    [STORAGE_KEYS.appMode]: APP_MODES.jobseeker,
-    [STORAGE_KEYS.jobSeekerOnboarding]: '1',
-    ...E2E_AI_STORAGE,
-  },
-  recruiter: {
-    [STORAGE_KEYS.appMode]: APP_MODES.recruiter,
-    [STORAGE_KEYS.recruiterOnboarding]: '1',
-    ...E2E_AI_STORAGE,
-  },
-  tasks: {
-    [STORAGE_KEYS.appMode]: APP_MODES.tasks,
-    [STORAGE_KEYS.tasksWelcome]: '1',
-    ...E2E_AI_STORAGE,
-  },
-};
