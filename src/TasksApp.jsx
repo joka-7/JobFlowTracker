@@ -33,6 +33,7 @@ import {
 } from './sanitize';
 import { saveJsonFile } from './utils/saveFile';
 import { formatDate } from './utils/date';
+import { appendNote } from './utils/notes';
 import LabelPicker, { LabelChipsReadOnly } from './components/LabelPicker';
 import CardColorPicker from './components/CardColorPicker';
 import { LABEL_COLOR_PALETTE, readableTextColor } from './utils/labelColors';
@@ -459,7 +460,7 @@ export default function TasksApp({ onModeChange }) {
   const handleSaveToTask = useCallback((taskId, text) => {
     setTasks(prev => prev.map(t => {
       if (t.id !== taskId) return t;
-      const merged = { ...t, notes: t.notes ? `${t.notes}\n\n---\n${text}` : text };
+      const merged = { ...t, notes: appendNote(t.notes, text) };
       if (user) updateItem(user.uid, MODE, merged).catch(() => {});
       return merged;
     }));

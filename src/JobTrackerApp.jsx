@@ -38,6 +38,7 @@ import { usePwaInstall } from './usePwaInstall';
 import { sanitizeTrackerRecords, parseTrackerImportPayload, generateId, safeStr } from './sanitize';
 import { pickAvatarColor, getInitials } from './utils/avatarColor';
 import { formatDate as formatDateShared } from './utils/date';
+import { appendNote } from './utils/notes';
 import { saveJsonFile } from './utils/saveFile';
 
 const Linkedin = ({ size = 16, ...p }) => (
@@ -496,7 +497,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
     if (!target) return;
     const updated = {
       ...target,
-      generalNotes: target.generalNotes ? `${target.generalNotes}\n\n---\n${text}` : text,
+      generalNotes: appendNote(target.generalNotes, text),
     };
     setCompanies(prev => prev.map(c => String(c.id) === String(companyId) ? updated : c));
     if (user) updateItem(user.uid, mode, updated).catch(console.error);
@@ -518,7 +519,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
     if (!target) return;
     const updated = {
       ...target,
-      generalNotes: target.generalNotes ? `${target.generalNotes}\n\n---\n${text}` : text,
+      generalNotes: appendNote(target.generalNotes, text),
     };
     setCompanies(prev => prev.map(c => c.id === rejectionCompany.id ? updated : c));
     if (user) updateItem(user.uid, mode, updated).catch(console.error);
