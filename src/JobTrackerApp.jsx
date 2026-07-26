@@ -135,7 +135,10 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
   const rejectedStatuses = getRejectedStatuses(mode);
   const terminalStatuses = getTerminalStatuses(mode);
 
-  const tMode = (key, fallback) => t(isRecruiter ? `recruiter.${key}` : key, fallback);
+  const tMode = useCallback(
+    (key, fallback) => t(isRecruiter ? `recruiter.${key}` : key, fallback),
+    [t, isRecruiter]
+  );
   const tStatus = (id) => t(isRecruiter ? `recruiter.status.${id}` : `status.${id}`);
   const tInterviewType = (key) => t(isRecruiter ? `recruiter.interviewType.${key}` : `interviewType.${key}`, key);
 
@@ -229,7 +232,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
   }, [mode]);
 
   const initialFormState = makeInitialFormState(isRecruiter);
-  const [formData, setFormData] = useState(initialFormState);
+  const [formData, setFormData] = useState(() => makeInitialFormState(isRecruiter));
 
   useEffect(() => {
     try {
@@ -439,10 +442,10 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
       .sort((a, b) => new Date(safeStr(a.date)) - new Date(safeStr(b.date)));
   }, [timelineEvents]);
 
-  const showToast = (msg) => {
+  const showToast = useCallback((msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(''), 3000);
-  };
+  }, []);
 
   const handleSave = () => {
     if (!formData.name) { alert(tMode('form.requiredName')); return; }
