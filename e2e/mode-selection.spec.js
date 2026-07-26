@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { clearAppStorage, chooseJobSeekerMode, chooseRecruiterMode, initJobSeekerApp, initRecruiterApp, fillLabeledInput, saveForm } from './helpers.js';
+import { clearAppStorage, chooseJobSeekerMode, chooseRecruiterMode } from './helpers.js';
 
 test.describe('Mode selection (first launch)', () => {
   test.beforeEach(async ({ page }) => {

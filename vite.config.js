@@ -47,5 +47,28 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     exclude: ['**/node_modules/**', '**/e2e/**'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      exclude: [
+        'node_modules/**',
+        'e2e/**',
+        'dist/**',
+        'src/__tests__/**',
+        '**/*.config.js',
+        'scripts/**',
+      ],
+      // Floor set just below the current baseline (~36/28/25/40 at the time
+      // this was added) — a regression gate, not a target. Most of the gap
+      // is UI-heavy files (TasksApp.jsx, CalendarView.jsx, several modals)
+      // that need real component tests, not just more unit coverage; raise
+      // these as that work lands rather than chasing the number directly.
+      thresholds: {
+        statements: 34,
+        branches: 26,
+        functions: 23,
+        lines: 38,
+      },
+    },
   },
 })
