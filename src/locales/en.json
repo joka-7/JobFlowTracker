@@ -40,6 +40,7 @@
     "subtitle": "Sign in to sync across devices · use JSON for offline backup",
     "addCompany": "Add Company",
     "downloadTooltip": "Download backup copy to computer (Recommended!)",
+    "downloadCsvTooltip": "Download as CSV (for spreadsheets)",
     "uploadTooltip": "Load existing backup file",
     "driveOn": "Drive On",
     "driveSyncing": "Syncing...",
@@ -191,6 +192,7 @@
     "saved": "Changes saved successfully!",
     "deleted": "Company deleted.",
     "exported": "Backup file downloaded - save it somewhere safe!",
+    "exportedCsv": "CSV file downloaded!",
     "imported": "File loaded successfully!",
     "driveConnectedWithData": "Drive connected — data loaded from Drive!",
     "driveConnectedEmpty": "Drive connected — data will sync automatically.",
@@ -528,6 +530,7 @@
       "saved": "Task saved!",
       "deleted": "Task deleted.",
       "exported": "Backup file downloaded!",
+      "exportedCsv": "CSV file downloaded!",
       "imported": "File loaded successfully!"
     },
     "alert": {
@@ -663,6 +666,7 @@
       "saved": "Changes saved successfully!",
       "deleted": "Candidate deleted.",
       "exported": "Backup file downloaded - save it somewhere safe!",
+      "exportedCsv": "CSV file downloaded!",
       "imported": "File loaded successfully!",
       "driveConnectedWithData": "Drive connected — data loaded from Drive!",
       "driveConnectedEmpty": "Drive connected — data will sync automatically.",

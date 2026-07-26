@@ -50,6 +50,7 @@
     "subtitle": "התחבר לסנכרון בין מכשירים · השתמש ב-JSON לגיבוי אופליין",
     "addCompany": "הוסף חברה",
     "downloadTooltip": "הורד עותק גיבוי למחשב (מומלץ!)",
+    "downloadCsvTooltip": "הורד כקובץ CSV (לגיליון אלקטרוני)",
     "uploadTooltip": "טען קובץ גיבוי קיים",
     "driveOn": "Drive פעיל",
     "driveSyncing": "מסנכרן...",
@@ -191,6 +192,7 @@
     "saved": "השינויים נשמרו בהצלחה!",
     "deleted": "החברה נמחקה.",
     "exported": "קובץ גיבוי הורד בהצלחה - שמור אותו במקום בטוח!",
+    "exportedCsv": "קובץ CSV הורד!",
     "imported": "הקובץ נטען בהצלחה!",
     "driveConnectedWithData": "Drive מחובר — הנתונים נטענו מ-Drive!",
     "driveConnectedEmpty": "Drive מחובר — הנתונים יסונכרנו אוטומטית.",
@@ -528,6 +530,7 @@
       "saved": "המשימה נשמרה!",
       "deleted": "המשימה נמחקה.",
       "exported": "קובץ גיבוי הורד!",
+      "exportedCsv": "קובץ CSV הורד!",
       "imported": "הקובץ נטען בהצלחה!"
     },
     "alert": {
@@ -663,6 +666,7 @@
       "saved": "השינויים נשמרו בהצלחה!",
       "deleted": "המועמד נמחק.",
       "exported": "קובץ הגיבוי הורד - שמור אותו במקום בטוח!",
+      "exportedCsv": "קובץ CSV הורד!",
       "imported": "הקובץ נטען בהצלחה!",
       "driveConnectedWithData": "Drive מחובר — הנתונים נטענו!",
       "driveConnectedEmpty": "Drive מחובר — הנתונים יסונכרנו אוטומטית.",

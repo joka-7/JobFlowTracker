@@ -4,7 +4,7 @@ import {
   Search, Plus, MapPin, Globe, Calendar,
   User, CheckCircle, Clock, Trash2, Edit2,
   ArrowLeft, ArrowRight, Download, Upload, Layout, List, Activity, AlertTriangle,
-  Cloud, CloudOff, Languages, BarChart2, Settings, MoreVertical, Smartphone, RefreshCw
+  Cloud, CloudOff, Languages, BarChart2, Settings, MoreVertical, Smartphone, RefreshCw, FileSpreadsheet
 } from 'lucide-react';
 import {
   signInWithGoogle, signOut, onAuthChange, loadAllItems, updateItem, deleteItem,
@@ -36,7 +36,8 @@ import {
 } from './utils/templateQuestions';
 import { usePwaInstall } from './usePwaInstall';
 import { sanitizeTrackerRecords, parseTrackerImportPayload, generateId } from './sanitize';
-import { saveJsonFile } from './utils/saveFile';
+import { saveJsonFile, saveCsvFile } from './utils/saveFile';
+import { toCSV } from './utils/csv';
 import { useBackGestureGuard } from './hooks/useBackGestureGuard';
 
 const Linkedin = ({ size = 16, ...p }) => (
@@ -591,6 +592,28 @@ Rules:
     if (await saveJsonFile(name, companies)) showToast(tMode('toast.exported'));
   };
 
+  const handleExportCsv = async () => {
+    const columns = [
+      { key: 'name', label: tMode('form.companyName') },
+      { key: 'role', label: tMode('form.role') },
+      { key: 'location', label: tMode('form.locationPlaceholder') },
+      { key: 'status', label: tMode('form.processStatus'), get: c => tStatus(c.status) },
+      { key: 'priority', label: tMode('form.priority') },
+      { key: 'source', label: tMode('form.sourcePlaceholder') },
+      {
+        key: 'applicationSource',
+        label: t('form.applicationSource', 'How did I start?'),
+        get: c => c.applicationSource ? t(`applicationSource.${c.applicationSource}`, c.applicationSource.replace(/_/g, ' ')) : '',
+      },
+      { key: 'website', label: tMode('form.websitePlaceholder') },
+      { key: 'expectedSalary', label: tMode('form.expectedSalaryPlaceholder') },
+      { key: 'rejectionDate', label: tMode('form.rejectionDate', 'Rejection Date'), get: c => c.rejection?.date },
+      { key: 'rejectionMethod', label: tMode('form.rejectionMethod', 'How Were You Notified'), get: c => c.rejection?.method },
+    ];
+    const name = `${isRecruiter ? 'recruiter-tracker' : 'job-tracker'}-export-${new Date().toISOString().split('T')[0]}.csv`;
+    if (await saveCsvFile(name, toCSV(companies, columns))) showToast(tMode('toast.exportedCsv', 'CSV file downloaded!'));
+  };
+
   const handleImport = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -1127,6 +1150,9 @@ Rules:
               <button onClick={handleExport} title={t('header.downloadTooltip')} className="p-2 bg-green-500/20 hover:bg-green-500/40 rounded text-white transition-colors border border-green-400/30">
                 <Download size={18} />
               </button>
+              <button onClick={handleExportCsv} title={t('header.downloadCsvTooltip', 'Download as CSV (for spreadsheets)')} className="p-2 hover:bg-white/20 rounded text-white transition-colors">
+                <FileSpreadsheet size={18} />
+              </button>
               <label className="p-2 hover:bg-white/20 rounded text-white transition-colors cursor-pointer" title={t('header.uploadTooltip')}>
                 <Upload size={18} />
                 <input id="main-file-upload" type="file" accept=".json" onChange={handleImport} className="hidden" />
@@ -1197,6 +1223,9 @@ Rules:
                     )}
                     <button onClick={() => { handleExport(); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                       <Download size={16} className="text-green-600" /> {t('header.downloadTooltip')}
+                    </button>
+                    <button onClick={() => { handleExportCsv(); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                      <FileSpreadsheet size={16} className="text-emerald-600" /> {t('header.downloadCsvTooltip', 'Download as CSV (for spreadsheets)')}
                     </button>
                     <label className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100 cursor-pointer">
                       <Upload size={16} className="text-blue-600" /> {t('header.uploadTooltip')}

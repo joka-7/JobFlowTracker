@@ -50,6 +50,7 @@
     "subtitle": "Connectez-vous pour synchroniser · JSON pour sauvegarde hors ligne",
     "addCompany": "Ajouter une entreprise",
     "downloadTooltip": "Télécharger une copie de sauvegarde (Recommandé !)",
+    "downloadCsvTooltip": "Télécharger en CSV (pour tableur)",
     "uploadTooltip": "Charger un fichier de sauvegarde",
     "driveOn": "Drive actif",
     "driveSyncing": "Synchronisation...",
@@ -191,6 +192,7 @@
     "saved": "Modifications enregistrées !",
     "deleted": "Entreprise supprimée.",
     "exported": "Sauvegarde téléchargée !",
+    "exportedCsv": "Fichier CSV téléchargé !",
     "imported": "Fichier chargé avec succès !",
     "driveConnectedWithData": "Drive connecté — données chargées !",
     "driveConnectedEmpty": "Drive connecté — synchronisation automatique activée.",
@@ -528,6 +530,7 @@
       "saved": "Tâche enregistrée !",
       "deleted": "Tâche supprimée.",
       "exported": "Fichier de sauvegarde téléchargé !",
+      "exportedCsv": "Fichier CSV téléchargé !",
       "imported": "Fichier chargé avec succès !"
     },
     "alert": {
@@ -663,6 +666,7 @@
       "saved": "Modifications enregistrées !",
       "deleted": "Candidat supprimé.",
       "exported": "Sauvegarde téléchargée — conservez-la en lieu sûr !",
+      "exportedCsv": "Fichier CSV téléchargé !",
       "imported": "Fichier chargé avec succès !",
       "driveConnectedWithData": "Drive connecté — données chargées !",
       "driveConnectedEmpty": "Drive connecté — sync automatique activée.",
