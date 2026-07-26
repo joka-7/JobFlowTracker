@@ -139,6 +139,23 @@ function getBodyReader(res) {
   return res.body.getReader();
 }
 
+// Shared newline-buffered stream reader: feeds each complete line from the
+// response body to onLine, so each provider parser only needs to know its
+// own line format (SSE "data: " frames vs. bare NDJSON).
+async function consumeLines(res, onLine) {
+  const reader = getBodyReader(res);
+  const dec = new TextDecoder();
+  let buf = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const lines = buf.split('\n');
+    buf = lines.pop();
+    for (const line of lines) onLine(line);
+  }
+}
+
 // SSE stream parser for OpenAI-compatible APIs (OpenAI, Groq)
 async function streamOpenAICompat(url, apiKey, body, onChunk, signal) {
   const res = await fetch(url, {
@@ -151,64 +168,45 @@ async function streamOpenAICompat(url, apiKey, body, onChunk, signal) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error?.message || `HTTP ${res.status}`);
   }
-  const reader = getBodyReader(res);
-  const dec = new TextDecoder();
-  let buf = '';
   let full = '';
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buf += dec.decode(value, { stream: true });
-    const lines = buf.split('\n');
-    buf = lines.pop();
-    for (const line of lines) {
-      if (!line.startsWith('data: ')) continue;
-      const raw = line.slice(6).trim();
-      if (raw === '[DONE]') continue;
-      try {
-        const delta = JSON.parse(raw).choices?.[0]?.delta?.content;
-        if (delta) { full += delta; onChunk(full); }
-      } catch { /* skip malformed */ }
-    }
-  }
+  await consumeLines(res, (line) => {
+    if (!line.startsWith('data: ')) return;
+    const raw = line.slice(6).trim();
+    if (raw === '[DONE]') return;
+    try {
+      const delta = JSON.parse(raw).choices?.[0]?.delta?.content;
+      if (delta) { full += delta; onChunk(full); }
+    } catch { /* skip malformed */ }
+  });
   return full;
 }
 
-// Gemini SSE stream
-async function streamGemini(apiKey, model, prompt, onChunk, signal) {
+// Gemini SSE stream. `contents` is the full provider-format turn list, so
+// this serves both single-shot prompts (runStream) and multi-turn chat
+// (streamChat) — the caller builds `contents`, this just does the request/parse.
+async function streamGemini(apiKey, model, contents, onChunk, signal, systemInstruction) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`;
+  const body = { contents, generationConfig: { maxOutputTokens: 1024 } };
+  if (systemInstruction) body.systemInstruction = { parts: [{ text: systemInstruction }] };
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-    body: JSON.stringify({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: { maxOutputTokens: 1024 },
-    }),
+    body: JSON.stringify(body),
     signal: requestSignal(signal),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error?.message || `HTTP ${res.status}`);
   }
-  const reader = getBodyReader(res);
-  const dec = new TextDecoder();
-  let buf = '';
   let full = '';
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buf += dec.decode(value, { stream: true });
-    const lines = buf.split('\n');
-    buf = lines.pop();
-    for (const line of lines) {
-      if (!line.startsWith('data: ')) continue;
-      const raw = line.slice(6).trim();
-      try {
-        const text = JSON.parse(raw).candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text) { full += text; onChunk(full); }
-      } catch { /* skip */ }
-    }
-  }
+  await consumeLines(res, (line) => {
+    if (!line.startsWith('data: ')) return;
+    const raw = line.slice(6).trim();
+    try {
+      const text = JSON.parse(raw).candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) { full += text; onChunk(full); }
+    } catch { /* skip */ }
+  });
   return full;
 }
 
@@ -227,45 +225,46 @@ function validateOllamaUrl(url) {
   }
 }
 
-// Ollama newline-delimited JSON stream
-async function streamOllama(baseUrl, model, prompt, onChunk, signal) {
+// Ollama stream. Single-shot prompts (runStream) use the lighter /api/generate
+// endpoint; multi-turn chat (streamChat) needs /api/chat for message history —
+// these are genuinely different Ollama APIs, not just cosmetic variants, so
+// the caller picks by passing either `prompt` or `messages`.
+async function streamOllama(baseUrl, model, { prompt, messages }, onChunk, signal) {
   const validUrl = validateOllamaUrl(baseUrl);
-  const res = await fetch(`${validUrl}/api/generate`, {
+  const isChat = Array.isArray(messages);
+  const body = isChat
+    ? { model, messages, stream: true, options: { num_predict: 1024 } }
+    : { model, prompt, stream: true, options: { num_predict: 1024 } };
+  const res = await fetch(`${validUrl}/api/${isChat ? 'chat' : 'generate'}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, prompt, stream: true, options: { num_predict: 1024 } }),
+    body: JSON.stringify(body),
     signal: requestSignal(signal),
   });
   if (!res.ok) throw new Error(`Ollama error: HTTP ${res.status}. Is Ollama running?`);
-  const reader = getBodyReader(res);
-  const dec = new TextDecoder();
-  let buf = '';
   let full = '';
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buf += dec.decode(value, { stream: true });
-    const lines = buf.split('\n');
-    buf = lines.pop();
-    for (const line of lines) {
-      if (!line.trim()) continue;
-      try {
-        const obj = JSON.parse(line);
-        if (obj.response) { full += obj.response; onChunk(full); }
-      } catch { /* skip */ }
-    }
-  }
+  await consumeLines(res, (line) => {
+    if (!line.trim()) return;
+    try {
+      const obj = JSON.parse(line);
+      const text = isChat ? obj.message?.content : obj.response;
+      if (text) { full += text; onChunk(full); }
+    } catch { /* skip */ }
+  });
   return full;
 }
 
-// Anthropic SDK stream
-async function streamAnthropic(apiKey, model, prompt, onChunk, signal) {
+// Anthropic SDK stream. `maxTokens` differs by call site (short single-shot
+// tips vs. longer multi-turn chat replies), so it stays caller-supplied
+// rather than being folded into one shared default.
+async function streamAnthropic(apiKey, model, messages, onChunk, signal, { systemPrompt, maxTokens = 600 } = {}) {
   const { default: Anthropic } = await import('@anthropic-ai/sdk');
   const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
   const stream = await client.messages.stream({
     model,
-    max_tokens: 600,
-    messages: [{ role: 'user', content: prompt }],
+    max_tokens: maxTokens,
+    ...(systemPrompt ? { system: systemPrompt } : {}),
+    messages,
   }, { signal: requestSignal(signal) });
   let full = '';
   for await (const chunk of stream) {
@@ -334,81 +333,20 @@ export async function streamChat(messages, systemPrompt, onChunk, { signal } = {
   }
 
   if (provider === 'gemini') {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`;
     const contents = apiMessages.map(m => ({
       role: m.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: m.content }],
     }));
-    const body = { contents, generationConfig: { maxOutputTokens: 1024 } };
-    if (systemPrompt) body.systemInstruction = { parts: [{ text: systemPrompt }] };
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-      body: JSON.stringify(body),
-      signal: requestSignal(signal),
-    });
-    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `HTTP ${res.status}`); }
-    const reader = getBodyReader(res);
-    const dec = new TextDecoder();
-    let buf = '', full = '';
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buf += dec.decode(value, { stream: true });
-      const lines = buf.split('\n'); buf = lines.pop();
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        try { const t = JSON.parse(line.slice(6)).candidates?.[0]?.content?.parts?.[0]?.text; if (t) { full += t; emit(full); } } catch { /* skip */ }
-      }
-    }
-    return full;
+    return streamGemini(apiKey, model, contents, emit, signal, systemPrompt);
   }
 
   if (provider === 'anthropic') {
-    const { default: Anthropic } = await import('@anthropic-ai/sdk');
-    const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
-    const stream = await client.messages.stream({
-      model, max_tokens: 1024,
-      ...(systemPrompt ? { system: systemPrompt } : {}),
-      messages: apiMessages,
-    }, { signal: requestSignal(signal) });
-    let full = '';
-    for await (const chunk of stream) {
-      if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-        full += chunk.delta.text; emit(full);
-      }
-    }
-    return full;
+    return streamAnthropic(apiKey, model, apiMessages, emit, signal, { systemPrompt, maxTokens: 1024 });
   }
 
   if (provider === 'ollama') {
-    const validUrl = validateOllamaUrl(ollamaUrl);
-    const res = await fetch(`${validUrl}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        messages: systemPrompt ? [{ role: 'system', content: systemPrompt }, ...apiMessages] : apiMessages,
-        stream: true,
-        options: { num_predict: 1024 },
-      }),
-      signal: requestSignal(signal),
-    });
-    if (!res.ok) throw new Error(`Ollama error: HTTP ${res.status}`);
-    const reader = getBodyReader(res);
-    const dec = new TextDecoder();
-    let buf = '', full = '';
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buf += dec.decode(value, { stream: true });
-      const lines = buf.split('\n'); buf = lines.pop();
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        try { const t = JSON.parse(line).message?.content; if (t) { full += t; emit(full); } } catch { /* skip */ }
-      }
-    }
-    return full;
+    const ollamaMessages = systemPrompt ? [{ role: 'system', content: systemPrompt }, ...apiMessages] : apiMessages;
+    return streamOllama(ollamaUrl, model, { messages: ollamaMessages }, emit, signal);
   }
 
   // OpenAI / Groq
@@ -426,7 +364,7 @@ async function runStream(prompt, onChunk, signal) {
   const { provider, apiKey, model, ollamaUrl } = config;
   switch (provider) {
     case 'gemini':
-      return streamGemini(apiKey, model, prompt, onChunk, signal);
+      return streamGemini(apiKey, model, [{ role: 'user', parts: [{ text: prompt }] }], onChunk, signal);
     case 'groq':
       return streamOpenAICompat(
         'https://api.groq.com/openai/v1/chat/completions',
@@ -444,9 +382,9 @@ async function runStream(prompt, onChunk, signal) {
         signal,
       );
     case 'ollama':
-      return streamOllama(ollamaUrl, model, prompt, onChunk, signal);
+      return streamOllama(ollamaUrl, model, { prompt }, onChunk, signal);
     case 'anthropic':
-      return streamAnthropic(apiKey, model, prompt, onChunk, signal);
+      return streamAnthropic(apiKey, model, [{ role: 'user', content: prompt }], onChunk, signal);
     default:
       throw new Error(`Unknown provider: ${provider}`);
   }

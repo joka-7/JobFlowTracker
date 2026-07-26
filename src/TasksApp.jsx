@@ -4,7 +4,7 @@ import {
   Plus, Search, Download, Upload, Layout, List, BarChart2, Activity, FileSpreadsheet,
   Trash2, Edit2, ArrowLeft, ArrowRight, CheckCircle2, CheckCircle, Circle,
   Clock, AlertCircle, Calendar, Cloud, CloudOff, RefreshCw,
-  ClipboardList, X, GripVertical, Languages, MoreVertical, Settings, Smartphone, Sparkles,
+  ClipboardList, X, GripVertical, MoreVertical, Settings, Smartphone, Sparkles,
   Timer,
 } from 'lucide-react';
 import { initAI, getGoalsTasksSystemPrompt } from './services/aiAssistant';
@@ -19,6 +19,8 @@ import {
 } from './firebase';
 import { getStorageKey, STATUSES_TASKS, filterItemsForMode } from './statuses';
 import ModeDropdown from './components/ModeDropdown';
+import LanguageSwitcher from './components/LanguageSwitcher';
+import MobileOverflowMenu from './components/MobileOverflowMenu';
 import CalendarView from './components/CalendarView';
 import TemplateLibrary from './components/TemplateLibrary';
 import APIKeySettings from './components/APIKeySettings';
@@ -37,6 +39,7 @@ import { useBackGestureGuard } from './hooks/useBackGestureGuard';
 import { formatDate } from './utils/date';
 import { appendNote } from './utils/notes';
 import { useCloudSync } from './hooks/useCloudSync';
+import { useToast } from './hooks/useToast';
 import LabelPicker, { LabelChipsReadOnly } from './components/LabelPicker';
 import CardColorPicker from './components/CardColorPicker';
 import { LABEL_COLOR_PALETTE, readableTextColor } from './utils/labelColors';
@@ -123,7 +126,7 @@ export default function TasksApp({ onModeChange }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [labelFilter, setLabelFilter] = useState('all');
-  const [toastMessage, setToastMessage] = useState('');
+  const { toastMessage, showToast } = useToast();
   const [isSaved, setIsSaved] = useState(true);
   const [newStepTitle, setNewStepTitle] = useState('');
   const [visibleCount, setVisibleCount] = useState(25);
@@ -140,11 +143,6 @@ export default function TasksApp({ onModeChange }) {
 
   const dragTaskId = useRef(null);
   const fileInputRef = useRef(null);
-
-  const showToast = useCallback((msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(''), 3000);
-  }, []);
 
   useEffect(() => {
     try {
@@ -1520,18 +1518,7 @@ Rules:
             )}
 
             {/* Desktop controls */}
-            <div className="hidden md:flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-white/10 border border-white/20">
-              <Languages size={16} className="text-green-100 flex-shrink-0" />
-              <select
-                value={i18n.language}
-                onChange={e => { i18n.changeLanguage(e.target.value); localStorage.setItem('appLanguage', e.target.value); }}
-                className="bg-transparent text-green-100 text-sm font-bold border-none outline-none cursor-pointer"
-              >
-                <option value="en" className="text-gray-800">English</option>
-                <option value="he" className="text-gray-800">עברית</option>
-                <option value="fr" className="text-gray-800">Français</option>
-              </select>
-            </div>
+            <LanguageSwitcher accentClassName="text-green-100" />
 
             <div className="hidden md:flex bg-white/10 rounded-lg p-1">
               <button onClick={handleExport} title={t('header.downloadTooltip')} className="p-2 bg-green-500/20 hover:bg-green-500/40 rounded text-white transition-colors border border-green-400/30">
@@ -1587,61 +1574,45 @@ Rules:
                 <MoreVertical size={20} />
               </button>
               {mobileMenuOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setMobileMenuOpen(false)} />
-                  <div className={`absolute ${isRTL ? 'left-0' : 'right-0'} top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-100 z-50 min-w-[200px] py-2`}>
-                    <div className="px-3 py-2 border-b border-gray-100">
-                      <div className="flex items-center gap-1.5">
-                        <Languages size={14} className="text-gray-400" />
-                        <select
-                          value={i18n.language}
-                          onChange={e => { i18n.changeLanguage(e.target.value); localStorage.setItem('appLanguage', e.target.value); setMobileMenuOpen(false); }}
-                          className="text-gray-700 text-sm font-bold border-none outline-none cursor-pointer bg-transparent flex-1"
-                        >
-                          <option value="en">English</option>
-                          <option value="he">עברית</option>
-                          <option value="fr">Français</option>
-                        </select>
-                      </div>
-                    </div>
-                    {user && (
-                      <button onClick={() => { syncNow(); setMobileMenuOpen(false); }} disabled={syncing} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50">
-                        <RefreshCw size={16} className={`text-blue-500 ${syncing ? 'animate-spin' : ''}`} /> {t('header.syncNow')}
-                      </button>
-                    )}
-                    <button onClick={() => { handleExport(); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
-                      <Download size={16} className="text-green-600" /> {t('header.downloadTooltip')}
+                <MobileOverflowMenu isRTL={isRTL} onClose={() => setMobileMenuOpen(false)}>
+                  <LanguageSwitcher variant="mobile" onSelect={() => setMobileMenuOpen(false)} />
+                  {user && (
+                    <button onClick={() => { syncNow(); setMobileMenuOpen(false); }} disabled={syncing} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50">
+                      <RefreshCw size={16} className={`text-blue-500 ${syncing ? 'animate-spin' : ''}`} /> {t('header.syncNow')}
                     </button>
-                    <button onClick={() => { handleExportCsv(); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
-                      <FileSpreadsheet size={16} className="text-emerald-600" /> {t('header.downloadCsvTooltip', 'Download as CSV (for spreadsheets)')}
+                  )}
+                  <button onClick={() => { handleExport(); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                    <Download size={16} className="text-green-600" /> {t('header.downloadTooltip')}
+                  </button>
+                  <button onClick={() => { handleExportCsv(); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                    <FileSpreadsheet size={16} className="text-emerald-600" /> {t('header.downloadCsvTooltip', 'Download as CSV (for spreadsheets)')}
+                  </button>
+                  <label className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100 cursor-pointer">
+                    <Upload size={16} className="text-blue-600" /> {t('header.uploadTooltip')}
+                    <input type="file" accept=".json" onChange={e => { handleImport(e); setMobileMenuOpen(false); }} className="hidden" />
+                  </label>
+                  <button type="button" data-testid="open-templates" onClick={() => { setShowTemplates(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                    <span>📚</span> {t('templates.titleTasks', 'Task Planning Prompts')}
+                  </button>
+                  <button onClick={() => { setShowGoalsFinder(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                    <span>🎯</span> {t('ai.goalsAndTasks', 'Goals & Tasks')}
+                  </button>
+                  <button onClick={() => { setShowAISettings(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                    <Settings size={16} className="text-gray-500" /> {t('header.aiSettings', 'AI Settings')}
+                  </button>
+                  <button onClick={() => { setShowTasksWelcome(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                    <span>💡</span> {tt('board.viewTutorial', 'View welcome')}
+                  </button>
+                  {canInstall && (
+                    <button
+                      type="button"
+                      onClick={() => { runInstall(t); setMobileMenuOpen(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-emerald-700 hover:bg-emerald-50 active:bg-emerald-100 border-t border-gray-100"
+                    >
+                      <Smartphone size={16} className="text-emerald-600" /> {t('header.installApp')}
                     </button>
-                    <label className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100 cursor-pointer">
-                      <Upload size={16} className="text-blue-600" /> {t('header.uploadTooltip')}
-                      <input type="file" accept=".json" onChange={e => { handleImport(e); setMobileMenuOpen(false); }} className="hidden" />
-                    </label>
-                    <button type="button" data-testid="open-templates" onClick={() => { setShowTemplates(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
-                      <span>📚</span> {t('templates.titleTasks', 'Task Planning Prompts')}
-                    </button>
-                    <button onClick={() => { setShowGoalsFinder(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
-                      <span>🎯</span> {t('ai.goalsAndTasks', 'Goals & Tasks')}
-                    </button>
-                    <button onClick={() => { setShowAISettings(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
-                      <Settings size={16} className="text-gray-500" /> {t('header.aiSettings', 'AI Settings')}
-                    </button>
-                    <button onClick={() => { setShowTasksWelcome(true); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
-                      <span>💡</span> {tt('board.viewTutorial', 'View welcome')}
-                    </button>
-                    {canInstall && (
-                      <button
-                        type="button"
-                        onClick={() => { runInstall(t); setMobileMenuOpen(false); }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-emerald-700 hover:bg-emerald-50 active:bg-emerald-100 border-t border-gray-100"
-                      >
-                        <Smartphone size={16} className="text-emerald-600" /> {t('header.installApp')}
-                      </button>
-                    )}
-                  </div>
-                </>
+                  )}
+                </MobileOverflowMenu>
               )}
             </div>
           </div>
