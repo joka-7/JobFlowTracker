@@ -32,6 +32,7 @@ import {
   parseTaskLabelsStoragePayload,
 } from './sanitize';
 import { saveJsonFile } from './utils/saveFile';
+import { useBackGestureGuard } from './hooks/useBackGestureGuard';
 import LabelPicker, { LabelChipsReadOnly } from './components/LabelPicker';
 import CardColorPicker from './components/CardColorPicker';
 import { LABEL_COLOR_PALETTE, readableTextColor } from './utils/labelColors';
@@ -302,17 +303,12 @@ export default function TasksApp({ onModeChange }) {
     window.history.pushState({ tab, selectedId: taskId }, '');
   }, []);
 
-  useEffect(() => {
-    const onPop = (e) => {
-      const s = e.state;
-      if (!s) return;
-      setActiveTab(s.tab || 'board');
-      setSelectedId(s.selectedId || null);
-      setIsEditing(false);
-    };
-    window.addEventListener('popstate', onPop);
-    return () => window.removeEventListener('popstate', onPop);
-  }, []);
+  useBackGestureGuard({
+    activeTab,
+    selectedId,
+    onNavigate: (tab, itemId) => { setActiveTab(tab); setSelectedId(itemId); setIsEditing(false); },
+    onExit: () => { setActiveTab('board'); setSelectedId(null); setIsEditing(false); },
+  });
 
   const isSavingRef = useRef(false);
   const handleSave = async () => {

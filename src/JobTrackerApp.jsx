@@ -37,6 +37,7 @@ import {
 import { usePwaInstall } from './usePwaInstall';
 import { sanitizeTrackerRecords, parseTrackerImportPayload, generateId } from './sanitize';
 import { saveJsonFile } from './utils/saveFile';
+import { useBackGestureGuard } from './hooks/useBackGestureGuard';
 
 const Linkedin = ({ size = 16, ...p }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
@@ -310,32 +311,12 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange, autoOn
     }
   }, []);
 
-  useEffect(() => {
-    // Ensure the bottom-most entry has a null state (the "exit" sentinel below),
-    // so popstate's `if (!s)` branch can catch it and re-arm instead of letting
-    // the back gesture leave the document entirely.
-    window.history.replaceState(null, '');
-    window.history.pushState({ tab: activeTab, selectedId }, '');
-
-    const onPop = (e) => {
-      const s = e.state;
-      if (!s) {
-        // Reached the bottom of the stack (e.g. mobile back gesture trying to exit) —
-        // re-arm a history entry and fall back to the board instead of letting the app close.
-        window.history.pushState({ tab: 'board', selectedId: null }, '');
-        setActiveTab('board');
-        setSelectedId(null);
-        setIsEditing(false);
-        return;
-      }
-      setActiveTab(s.tab || 'board');
-      setSelectedId(s.selectedId || null);
-      setIsEditing(false);
-    };
-    window.addEventListener('popstate', onPop);
-    return () => window.removeEventListener('popstate', onPop);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useBackGestureGuard({
+    activeTab,
+    selectedId,
+    onNavigate: (tab, itemId) => { setActiveTab(tab); setSelectedId(itemId); setIsEditing(false); },
+    onExit: () => { setActiveTab('board'); setSelectedId(null); setIsEditing(false); },
+  });
 
   const handleSignIn = async () => {
     try {
