@@ -136,7 +136,7 @@ Supports Google Gemini, Groq (free tier), Ollama (free/local), Anthropic Claude,
 
 **Job seeker only:** A 5-step onboarding wizard may appear after mode selection. Click through or dismiss with **X**.
 
-Sign in with Google using **Connect Drive** in the header. Your data is private and tied to your Google account.
+Sign in with Google using **Sign In** in the header. Your data is private and tied to your Google account.
 
 ### 2. Job seeker — Adding Your First Company
 
@@ -243,7 +243,7 @@ src/
 ├── i18n.js                  # react-i18next setup
 ├── components/
 │   ├── ModeSelection.jsx    # First-launch 3-mode picker
-│   ├── ModeSwitcher.jsx     # Header mode switcher (3 icon buttons)
+│   ├── ModeDropdown.jsx     # Header mode switcher
 │   ├── AIAssistant.jsx      # Floating AI panel (job seeker only)
 │   ├── Onboarding.jsx       # First-visit wizard (job seeker only)
 │   ├── SearchFilter.jsx     # Search box + multi-status filter pills (list view)
@@ -299,7 +299,7 @@ OLLAMA_ORIGINS=* ollama serve
 
 **Using the [live app](https://job-flow-tracker-ten.vercel.app)?** You do not need a Firebase account or any backend setup.
 
-1. Open the app and sign in with Google (**Connect Drive** in the header).
+1. Open the app and sign in with Google (**Sign In** in the header).
 2. Your data is stored under your personal user ID (`users/{your-uid}/...`).
 3. Firestore security rules ensure you can only read and write **your own** data.
 

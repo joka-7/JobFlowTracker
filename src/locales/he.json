@@ -52,12 +52,12 @@
     "downloadTooltip": "הורד עותק גיבוי למחשב (מומלץ!)",
     "downloadCsvTooltip": "הורד כקובץ CSV (לגיליון אלקטרוני)",
     "uploadTooltip": "טען קובץ גיבוי קיים",
-    "driveOn": "Drive פעיל",
+    "driveOn": "מסונכרן",
     "driveSyncing": "מסנכרן...",
     "syncNow": "סנכרן עכשיו",
-    "connectDrive": "חבר Drive",
-    "driveOnTooltip": "Drive מסנכרן — לחץ לניתוק",
-    "connectDriveTooltip": "חבר Google Drive לסנכרון בין מכשירים",
+    "connectDrive": "התחברות",
+    "driveOnTooltip": "סנכרון פעיל — לחץ לניתוק",
+    "connectDriveTooltip": "התחברות עם Google לסנכרון בין מכשירים",
     "aiSettings": "הגדרות",
     "installApp": "התקנת אפליקציה",
     "iosInstallHint": "ב-iPhone/iPad: הקש Share (□↑) ב-Safari, ואז «הוסף למסך הבית».",
@@ -201,10 +201,10 @@
     "exported": "קובץ גיבוי הורד בהצלחה - שמור אותו במקום בטוח!",
     "exportedCsv": "קובץ CSV הורד!",
     "imported": "הקובץ נטען בהצלחה!",
-    "driveConnectedWithData": "Drive מחובר — הנתונים נטענו מ-Drive!",
-    "driveConnectedEmpty": "Drive מחובר — הנתונים יסונכרנו אוטומטית.",
-    "driveFailed": "החיבור ל-Drive נכשל.",
-    "driveDisconnected": "Drive נותק."
+    "driveConnectedWithData": "מחובר — הנתונים נטענו!",
+    "driveConnectedEmpty": "מחובר — הנתונים יסונכרנו אוטומטית.",
+    "driveFailed": "ההתחברות נכשלה.",
+    "driveDisconnected": "ההתחברות נותקה."
   },
   "alert": {
     "deleteConfirm": "האם אתה בטוח שברצונך למחוק חברה זו?",
@@ -682,10 +682,10 @@
       "exported": "קובץ הגיבוי הורד - שמור אותו במקום בטוח!",
       "exportedCsv": "קובץ CSV הורד!",
       "imported": "הקובץ נטען בהצלחה!",
-      "driveConnectedWithData": "Drive מחובר — הנתונים נטענו!",
-      "driveConnectedEmpty": "Drive מחובר — הנתונים יסונכרנו אוטומטית.",
-      "driveFailed": "חיבור Drive נכשל.",
-      "driveDisconnected": "Drive מנותק."
+      "driveConnectedWithData": "מחובר — הנתונים נטענו!",
+      "driveConnectedEmpty": "מחובר — הנתונים יסונכרנו אוטומטית.",
+      "driveFailed": "ההתחברות נכשלה.",
+      "driveDisconnected": "ההתחברות נותקה."
     },
     "alert": {
       "deleteConfirm": "האם אתה בטוח שברצונך למחוק מועמד זה?",

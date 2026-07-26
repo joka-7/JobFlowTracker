@@ -52,12 +52,12 @@
     "downloadTooltip": "Télécharger une copie de sauvegarde (Recommandé !)",
     "downloadCsvTooltip": "Télécharger en CSV (pour tableur)",
     "uploadTooltip": "Charger un fichier de sauvegarde",
-    "driveOn": "Drive actif",
+    "driveOn": "Synchronisé",
     "driveSyncing": "Synchronisation...",
     "syncNow": "Synchroniser",
-    "connectDrive": "Connecter Drive",
-    "driveOnTooltip": "Drive synchronisé — cliquer pour déconnecter",
-    "connectDriveTooltip": "Connecter Google Drive pour synchroniser sur tous les appareils",
+    "connectDrive": "Se connecter",
+    "driveOnTooltip": "Synchronisation active — cliquer pour déconnecter",
+    "connectDriveTooltip": "Se connecter avec Google pour synchroniser sur tous les appareils",
     "aiSettings": "Paramètres",
     "installApp": "Installer l'app",
     "iosInstallHint": "Sur iPhone/iPad : touchez Partager (□↑) dans Safari, puis « Sur l'écran d'accueil ».",
@@ -201,10 +201,10 @@
     "exported": "Sauvegarde téléchargée !",
     "exportedCsv": "Fichier CSV téléchargé !",
     "imported": "Fichier chargé avec succès !",
-    "driveConnectedWithData": "Drive connecté — données chargées !",
-    "driveConnectedEmpty": "Drive connecté — synchronisation automatique activée.",
-    "driveFailed": "Échec de la connexion Drive.",
-    "driveDisconnected": "Drive déconnecté."
+    "driveConnectedWithData": "Connecté — données chargées !",
+    "driveConnectedEmpty": "Connecté — synchronisation automatique activée.",
+    "driveFailed": "Échec de la connexion.",
+    "driveDisconnected": "Déconnecté."
   },
   "onboarding": {
     "welcomeTitle": "Bienvenue sur JobFlowTracker !",
@@ -682,10 +682,10 @@
       "exported": "Sauvegarde téléchargée — conservez-la en lieu sûr !",
       "exportedCsv": "Fichier CSV téléchargé !",
       "imported": "Fichier chargé avec succès !",
-      "driveConnectedWithData": "Drive connecté — données chargées !",
-      "driveConnectedEmpty": "Drive connecté — sync automatique activée.",
-      "driveFailed": "Échec de connexion Drive.",
-      "driveDisconnected": "Drive déconnecté."
+      "driveConnectedWithData": "Connecté — données chargées !",
+      "driveConnectedEmpty": "Connecté — sync automatique activée.",
+      "driveFailed": "Échec de connexion.",
+      "driveDisconnected": "Déconnecté."
     },
     "alert": {
       "deleteConfirm": "Supprimer ce candidat ?",
