@@ -4,10 +4,11 @@ updates:
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
     groups:
       dev-dependencies:
         dependency-type: development
+        update-types: ["minor", "patch"]
     commit-message:
       prefix: chore
       include: scope
@@ -16,6 +17,9 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      github-actions:
+        patterns: ["*"]
     commit-message:
       prefix: chore
       include: scope
