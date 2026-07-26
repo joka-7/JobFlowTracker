@@ -181,7 +181,7 @@ export default function TemplateLibrary({ t: tProp, onClose, onStartSimulation, 
                   {t('templates.noSearchResults', 'No questions match your search.')}
                 </div>
               ) : (
-                searchResults.map(({ question, categoryKey, categoryLabel, categoryIcon, color }, i) => {
+                searchResults.map(({ question, categoryLabel, categoryIcon, color }, i) => {
                   const colors = COLOR_MAP[color] || COLOR_MAP.indigo;
                   return (
                     <div

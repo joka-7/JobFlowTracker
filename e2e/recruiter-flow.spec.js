@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import {
   initRecruiterApp, fillLabeledInput, fillPlaceholderInput, selectLabeledOption,
-  saveForm, goToBoardTab, goToListTab, selectListItem, acceptNextDialog, dragCardToColumn,
+  saveForm, goToBoardTab, goToListTab, acceptNextDialog, dragCardToColumn,
 } from './helpers.js';
 
 test.describe('Recruiter mode flows', () => {

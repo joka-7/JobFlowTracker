@@ -1,9 +1,9 @@
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Plus, Search, Download, Upload, Layout, List, BarChart2, Activity,
   Trash2, Edit2, ArrowLeft, ArrowRight, CheckCircle2, CheckCircle, Circle,
-  Clock, AlertCircle, ChevronDown, Calendar, Cloud, CloudOff, RefreshCw,
+  Clock, AlertCircle, Calendar, Cloud, CloudOff, RefreshCw,
   ClipboardList, X, GripVertical, Languages, MoreVertical, Settings, Smartphone, Sparkles,
   Timer,
 } from 'lucide-react';
@@ -15,7 +15,7 @@ import {
 import ChatModal from './components/ChatModal';
 import {
   signInWithGoogle, signOut, onAuthChange, loadAllItems, formatSignInError,
-  updateItem, deleteItem, batchSaveItems, loadUserProfile, saveUserProfile,
+  updateItem, deleteItem, batchSaveItems, saveUserProfile,
 } from './firebase';
 import { getStorageKey, STATUSES_TASKS, filterItemsForMode } from './statuses';
 import ModeDropdown from './components/ModeDropdown';
@@ -110,14 +110,6 @@ const formatDuration = (duration, tt) => {
   if (!value) return null;
   const unit = DURATION_UNITS.includes(duration?.unit) ? duration.unit : 'hour';
   return `${value} ${tt(`duration.${unit}`, unit)}`;
-};
-
-const getAvatarColor = (name) => {
-  const s = safeStr(name);
-  if (!s) return 'bg-gray-500';
-  const colors = ['bg-emerald-500', 'bg-teal-500', 'bg-cyan-500', 'bg-green-500', 'bg-lime-600', 'bg-indigo-500', 'bg-violet-500'];
-  const idx = s.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  return colors[idx % colors.length];
 };
 
 export default function TasksApp({ onModeChange }) {
@@ -691,7 +683,6 @@ Rules:
                 </div>
                 <div className="p-2 sm:p-3 space-y-2 sm:space-y-3 sm:flex-1 sm:overflow-y-auto sm:custom-scrollbar">
                   {columnTasks.map(task => {
-                    const prog = getProgress(task);
                     const next = getNextPendingStep(task);
                     return (
                       <div
