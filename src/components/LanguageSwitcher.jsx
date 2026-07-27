@@ -13,7 +13,7 @@ const LANGUAGES = [
  * the menu-row styling; the default renders the desktop pill.
  */
 export default function LanguageSwitcher({ variant = 'desktop', onSelect, accentClassName = 'text-blue-100' }) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const changeLanguage = (value) => {
     i18n.changeLanguage(value);
@@ -27,6 +27,7 @@ export default function LanguageSwitcher({ variant = 'desktop', onSelect, accent
         <div className="flex items-center gap-1.5">
           <Languages size={14} className="text-gray-400" />
           <select
+            aria-label={t('header.language', 'Language')}
             value={i18n.language}
             onChange={e => changeLanguage(e.target.value)}
             className="text-gray-700 text-sm font-bold border-none outline-none cursor-pointer bg-transparent flex-1"
@@ -44,6 +45,7 @@ export default function LanguageSwitcher({ variant = 'desktop', onSelect, accent
     <div className="hidden md:flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-white/10 border border-white/20">
       <Languages size={16} className={`${accentClassName} flex-shrink-0`} />
       <select
+        aria-label={t('header.language', 'Language')}
         value={i18n.language}
         onChange={e => changeLanguage(e.target.value)}
         className={`bg-transparent ${accentClassName} text-sm font-bold border-none outline-none cursor-pointer`}

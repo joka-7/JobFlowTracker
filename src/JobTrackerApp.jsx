@@ -700,7 +700,7 @@ Rules:
 
             <button
               onClick={openNewForm}
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-bold text-base py-3.5 px-6 rounded-xl shadow transition-transform hover:scale-105 active:scale-95 flex items-center justify-center gap-3 mb-3"
+              className="w-full bg-green-700 hover:bg-green-800 text-white font-bold text-base py-3.5 px-6 rounded-xl shadow transition-transform hover:scale-105 active:scale-95 flex items-center justify-center gap-3 mb-3"
             >
               <Plus size={20} /> {tMode('board.addFirstButton', 'Add your first entry')}
             </button>
@@ -720,7 +720,7 @@ Rules:
             </button>
 
             <div className="grid grid-cols-2 gap-3 text-left text-xs text-gray-500">
-              <div className="bg-indigo-50 p-3 rounded-lg">
+              <div className="bg-indigo-50 p-3 rounded-lg text-gray-600">
                 <div className="font-bold text-indigo-700 mb-1 flex items-center gap-1"><Cloud size={12} /> {tMode('board.modeCloudTitle')}</div>
                 <p>{tMode('board.modeCloudDesc')}</p>
               </div>
@@ -1021,7 +1021,7 @@ Rules:
           </div>
 
           <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-            <button onClick={openNewForm} className={`flex items-center gap-1.5 bg-white ${isRecruiter ? 'text-yellow-600 hover:bg-yellow-50 active:bg-yellow-100' : 'text-indigo-700 hover:bg-blue-50 active:bg-blue-100'} px-2 sm:px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-xs sm:text-sm min-h-[40px]`}>
+            <button onClick={openNewForm} className={`flex items-center gap-1.5 bg-white ${isRecruiter ? 'text-yellow-700 hover:bg-yellow-50 active:bg-yellow-100' : 'text-indigo-700 hover:bg-blue-50 active:bg-blue-100'} px-2 sm:px-4 py-2 rounded-lg font-bold shadow-sm transition-colors text-xs sm:text-sm min-h-[40px]`}>
               <Plus size={16} className="shrink-0" />
               <span className="shrink-0">{tMode('header.addCompany')}</span>
             </button>
@@ -1333,23 +1333,23 @@ Rules:
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-1">{tMode('form.companyName')}</label>
-                      <input type="text" value={safeStr(formData.name)} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" />
+                      <label htmlFor="company-form-name" className="block text-sm font-bold text-gray-700 mb-1">{tMode('form.companyName')}</label>
+                      <input id="company-form-name" type="text" value={safeStr(formData.name)} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" />
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-1">{tMode('form.role')}</label>
-                      <input type="text" value={safeStr(formData.role)} onChange={e => setFormData({...formData, role: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" />
+                      <label htmlFor="company-form-role" className="block text-sm font-bold text-gray-700 mb-1">{tMode('form.role')}</label>
+                      <input id="company-form-role" type="text" value={safeStr(formData.role)} onChange={e => setFormData({...formData, role: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" />
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-1">{tMode('form.processStatus')}</label>
-                      <select value={formData.status || 'applied'} onChange={e => setFormData({...formData, status: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white">
+                      <label htmlFor="company-form-status" className="block text-sm font-bold text-gray-700 mb-1">{tMode('form.processStatus')}</label>
+                      <select id="company-form-status" value={formData.status || 'applied'} onChange={e => setFormData({...formData, status: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white">
                         {STATUSES.map(s => <option key={s.id} value={s.id}>{tStatus(s.id)}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-1">{tMode('form.priority')}</label>
+                      <label htmlFor="company-form-priority" className="block text-sm font-bold text-gray-700 mb-1">{tMode('form.priority')}</label>
                       <Tooltip text={t('tooltips.priority')} position="top">
-                        <select value={formData.priority || 'medium'} onChange={e => setFormData({...formData, priority: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white">
+                        <select id="company-form-priority" value={formData.priority || 'medium'} onChange={e => setFormData({...formData, priority: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white">
                           {PRIORITIES.map(p => <option key={p.id} value={p.id}>{t(`priority.${p.id}`)}</option>)}
                         </select>
                       </Tooltip>
@@ -1391,8 +1391,8 @@ Rules:
                     <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">🏢 {t('form.companyDetailsSection', 'Company Details')}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">{t('form.companySize', 'Company Size')}</label>
-                        <select value={formData.companySize || ''} onChange={e => setFormData({...formData, companySize: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md bg-white">
+                        <label htmlFor="company-form-size" className="block text-xs font-semibold text-gray-500 mb-1">{t('form.companySize', 'Company Size')}</label>
+                        <select id="company-form-size" value={formData.companySize || ''} onChange={e => setFormData({...formData, companySize: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md bg-white">
                           <option value="">—</option>
                           <option value="1-10">1–10</option>
                           <option value="11-50">11–50</option>
@@ -1404,12 +1404,12 @@ Rules:
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">{t('form.companySector', 'Sector')}</label>
-                        <input type="text" placeholder={t('form.companySectorPlaceholder', 'e.g. FinTech, HealthTech…')} value={safeStr(formData.companySector)} onChange={e => setFormData({...formData, companySector: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md" />
+                        <label htmlFor="company-form-sector" className="block text-xs font-semibold text-gray-500 mb-1">{t('form.companySector', 'Sector')}</label>
+                        <input id="company-form-sector" type="text" placeholder={t('form.companySectorPlaceholder', 'e.g. FinTech, HealthTech…')} value={safeStr(formData.companySector)} onChange={e => setFormData({...formData, companySector: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md" />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-gray-500 mb-1">{t('form.applicationSource', 'How did I start?')}</label>
-                        <select value={formData.applicationSource || ''} onChange={e => setFormData({...formData, applicationSource: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md bg-white">
+                        <label htmlFor="company-form-app-source" className="block text-xs font-semibold text-gray-500 mb-1">{t('form.applicationSource', 'How did I start?')}</label>
+                        <select id="company-form-app-source" value={formData.applicationSource || ''} onChange={e => setFormData({...formData, applicationSource: e.target.value})} className="w-full p-2 text-sm border border-gray-300 rounded-md bg-white">
                           <option value="">—</option>
                           <option value="me_linkedin">{t('applicationSource.me_linkedin', 'Me → LinkedIn')}</option>
                           <option value="me_job_search">{t('applicationSource.me_job_search', 'Me → Job Board')}</option>
@@ -1467,8 +1467,9 @@ Rules:
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
-                          <label className="block text-sm font-bold text-gray-700 mb-1">{tMode('form.rejectionDate', 'Rejection Date')}</label>
+                          <label htmlFor="company-form-rejection-date" className="block text-sm font-bold text-gray-700 mb-1">{tMode('form.rejectionDate', 'Rejection Date')}</label>
                           <input
+                            id="company-form-rejection-date"
                             type="date"
                             dir="ltr"
                             value={safeStr(formData.rejection?.date)}
@@ -1477,8 +1478,9 @@ Rules:
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-bold text-gray-700 mb-1">{tMode('form.rejectionMethod', 'How Were You Notified')}</label>
+                          <label htmlFor="company-form-rejection-method" className="block text-sm font-bold text-gray-700 mb-1">{tMode('form.rejectionMethod', 'How Were You Notified')}</label>
                           <select
+                            id="company-form-rejection-method"
                             value={safeStr(formData.rejection?.method)}
                             onChange={e => setFormData({...formData, rejection: {...(formData.rejection || {}), method: e.target.value}})}
                             className="w-full p-2.5 border border-red-200 rounded-lg focus:ring-2 focus:ring-red-400 bg-white"
@@ -1489,8 +1491,9 @@ Rules:
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-1">{tMode('form.rejectionNotes', 'Notes / Feedback')}</label>
+                        <label htmlFor="company-form-rejection-notes" className="block text-sm font-bold text-gray-700 mb-1">{tMode('form.rejectionNotes', 'Notes / Feedback')}</label>
                         <textarea
+                          id="company-form-rejection-notes"
                           value={safeStr(formData.rejection?.notes)}
                           onChange={e => setFormData({...formData, rejection: {...(formData.rejection || {}), notes: e.target.value}})}
                           className="w-full p-2.5 border border-red-200 rounded-lg focus:ring-2 focus:ring-red-400 h-20 resize-none"

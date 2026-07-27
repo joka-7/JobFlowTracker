@@ -35,6 +35,7 @@
   },
   "header": {
     "title": "Job Search Tracker",
+    "language": "Language",
     "savedInBrowser": "Saved in browser",
     "saving": "Saving...",
     "subtitle": "Sign in to sync across devices · use JSON for offline backup",

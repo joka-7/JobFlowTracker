@@ -617,7 +617,7 @@ Rules:
             <p className="text-sm text-gray-500 mb-6">{tt('board.emptyDesc', 'Add your first task to get started.')}</p>
             <button
               onClick={openNewForm}
-              className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-emerald-700 transition-colors mb-3"
+              className="bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-emerald-800 transition-colors mb-3"
             >
               {tt('board.addFirstButton', 'Add your first task')}
             </button>
@@ -876,10 +876,11 @@ Rules:
           </div>
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              <label htmlFor="task-form-name" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
                 {tt('form.taskName', 'Task Name *')}
               </label>
               <input
+                id="task-form-name"
                 value={safeStr(formData.name)}
                 onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-400 text-sm"
@@ -890,10 +891,11 @@ Rules:
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                <label htmlFor="task-form-status" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
                   {tt('form.status', 'Status')}
                 </label>
                 <select
+                  id="task-form-status"
                   value={formData.status}
                   onChange={e => setFormData(prev => ({ ...prev, status: e.target.value }))}
                   className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-400 text-sm"
@@ -904,10 +906,11 @@ Rules:
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                <label htmlFor="task-form-priority" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
                   {tt('form.priority', 'Priority')}
                 </label>
                 <select
+                  id="task-form-priority"
                   value={formData.priority}
                   onChange={e => setFormData(prev => ({ ...prev, priority: e.target.value }))}
                   className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-400 text-sm"
@@ -921,10 +924,11 @@ Rules:
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                <label htmlFor="task-form-due-date" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
                   {tt('form.dueDate', 'Due Date')}
                 </label>
                 <input
+                  id="task-form-due-date"
                   type="date"
                   value={safeStr(formData.dueDate)}
                   onChange={e => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
@@ -947,6 +951,7 @@ Rules:
                     className="w-1/2 border border-gray-200 rounded-xl px-3 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-400 text-sm"
                   />
                   <select
+                    aria-label={tt('form.durationUnit', 'Duration unit')}
                     value={formData.duration?.unit || 'hour'}
                     onChange={e => setFormData(prev => ({
                       ...prev, duration: { value: prev.duration?.value || '', unit: e.target.value },
@@ -1046,7 +1051,7 @@ Rules:
             <div className={`flex gap-3 pt-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <button
                 onClick={handleSave}
-                className="flex-1 bg-emerald-600 text-white py-2.5 rounded-xl font-semibold hover:bg-emerald-700 transition-colors text-sm"
+                className="flex-1 bg-emerald-700 text-white py-2.5 rounded-xl font-semibold hover:bg-emerald-800 transition-colors text-sm"
               >
                 {tt('form.save', 'Save Changes')}
               </button>
