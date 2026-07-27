@@ -22,7 +22,7 @@ Personal **job search**, **recruiter pipeline**, and **task management** tracker
 
 Choose your starting mode on first visit. Switch freely at any time using the **mode switcher** in the app header — each mode keeps its own data independently.
 
-See [docs/RECRUITER_MODE.md](docs/RECRUITER_MODE.md) for full recruiter details.
+See [docs/LLD.md](docs/LLD.md#2-data-schema) for the full recruiter status list and data schema.
 
 ---
 
@@ -249,13 +249,15 @@ src/
 │   ├── SearchFilter.jsx     # Search box + multi-status filter pills (list view)
 │   ├── BulkActionsBar.jsx   # Sticky bar for bulk status/export/delete on selection
 │   └── ...
+├── hooks/                   # useCloudSync, useToast, useBackGestureGuard
+├── utils/                   # csv, saveFile, date, avatarColor, notes, labelColors, ...
 ├── locales/                 # en.json, he.json, fr.json
 ├── __tests__/               # Vitest unit + integration tests
 e2e/                         # Playwright end-to-end tests
+scripts/                     # check-bundle-size.mjs, generate-icons.py
 docs/
 ├── HLD.md
 ├── LLD.md
-├── RECRUITER_MODE.md
 └── screenshots/
 firestore.rules
 playwright.config.js
@@ -408,7 +410,7 @@ The repo includes `.gitleaks.toml` which allowlists `src/firebase.js` (public pr
 **Task status values:** `active`, `on_hold`, `completed`, `cancelled`  
 **Step status values:** `todo`, `in_progress`, `done`, `blocked`
 
-**Company / candidate document** — see [docs/RECRUITER_MODE.md](docs/RECRUITER_MODE.md) for full field list.
+**Company / candidate document** — see [docs/LLD.md](docs/LLD.md#2-data-schema) for the full field list.
 
 ---
 
