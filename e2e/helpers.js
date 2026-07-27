@@ -72,9 +72,13 @@ export async function acceptNextDialog(page) {
 
 /** Drag a kanban card into a column identified by its status header text. */
 export async function dragCardToColumn(page, cardName, columnHeaderPattern) {
-  const card = page.locator('[draggable="true"]').filter({ hasText: cardName });
+  const card = page.locator('[data-kanban-card]').filter({ hasText: cardName });
   const column = page.locator('.board-column').filter({ has: page.getByText(columnHeaderPattern) });
-  await card.dragTo(column.locator('.bg-gray-100').first());
+  const targetCard = column.locator('[data-kanban-card]').first();
+  const target = (await targetCard.count()) > 0
+    ? targetCard
+    : column.locator('[data-kanban-column-list]').first();
+  await card.dragTo(target);
 }
 
 /** Configure localStorage so isAIReady() is true (gemini + fake key). */

@@ -32,6 +32,7 @@ import MobileOverflowMenu from './components/MobileOverflowMenu';
 import CalendarView from './components/CalendarView';
 import SearchFilter from './components/SearchFilter';
 import BulkActionsBar from './components/BulkActionsBar';
+import KanbanDndBoard, { SortableKanbanCard } from './components/KanbanDndBoard';
 import { TEMPLATES } from './data/interviewTemplates';
 import {
   getLocalizedQuestions, getLocalizedCategoryLabel, formatQuestionList,
@@ -46,6 +47,7 @@ import { useToast } from './hooks/useToast';
 import { saveJsonFile, saveCsvFile } from './utils/saveFile';
 import { toCSV } from './utils/csv';
 import { useBackGestureGuard } from './hooks/useBackGestureGuard';
+import { itemsInColumn } from './utils/boardOrder';
 
 const Linkedin = ({ size = 16, ...p }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
@@ -142,8 +144,6 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
   const [visibleCount, setVisibleCount] = useState(25);
   const [activeTab, setActiveTab] = useState('board');
   const { toastMessage, showToast } = useToast();
-
-  const dragCompanyId = useRef(null);
 
   const [showOnboarding, setShowOnboarding] = useState(() => {
     const key = isRecruiter ? STORAGE_KEYS.recruiterOnboarding : STORAGE_KEYS.jobSeekerOnboarding;
@@ -588,99 +588,83 @@ Rules:
 
   const triggerFileInput = () => document.getElementById('main-file-upload').click();
 
-  const handleDragStart = (e, companyId) => {
-    dragCompanyId.current = companyId;
-    e.currentTarget.style.opacity = '0.5';
-  };
-  const handleDragEnd = (e) => { e.currentTarget.style.opacity = '1'; dragCompanyId.current = null; };
-  const handleDragOver = (e) => { e.preventDefault(); };
-  const handleDrop = (e, statusId) => {
-    e.preventDefault();
-    const id = dragCompanyId.current;
-    if (!id) return;
-    const company = companies.find(c => String(c.id) === String(id));
-    setCompanies(prev => prev.map(c => String(c.id) === String(id) ? { ...c, status: statusId } : c));
-    dragCompanyId.current = null;
+  const handleBoardReorder = useCallback(({ items: nextItems, changed }) => {
+    setCompanies(nextItems);
     showToast(tMode('toast.saved'));
-    if (user && company) updateItem(user.uid, mode, { ...company, status: statusId }).catch(console.error);
-  };
+    if (user && changed.length) {
+      batchSaveItems(user.uid, mode, changed).catch(console.error);
+    }
+  }, [user, mode, tMode, showToast]);
 
   const timelineBorder = isRTL ? 'border-r-2 pr-6' : 'border-l-2 pl-6';
   const timelineDot = isRTL ? '-right-[31px]' : '-left-[31px]';
   const BackArrow = isRTL ? ArrowRight : ArrowLeft;
 
-  const renderBoard = () => (
-    <div className="flex-1 overflow-x-auto p-3 sm:p-6 bg-slate-50 min-h-0 flex flex-col sm:flex-row gap-4 sm:gap-6">
-      {STATUSES.map(statusObj => {
-        const statusCompanies = filteredCompanies.filter(c => c.status === statusObj.id);
-        if (statusCompanies.length === 0) return null;
-        return (
-          <div
-            key={statusObj.id}
-            className="board-column w-full sm:w-80 sm:flex-shrink-0 flex flex-col sm:h-full"
-            onDragOver={handleDragOver}
-            onDrop={e => handleDrop(e, statusObj.id)}
-          >
-            <div className={`rounded-t-xl px-4 py-3 font-bold border-b-4 shadow-sm ${statusObj.color}`}>
-              {tStatus(statusObj.id)} ({statusCompanies.length})
-            </div>
-            <div className="bg-gray-100 rounded-b-xl p-3 flex-1 overflow-y-auto space-y-3 custom-scrollbar">
-              {statusCompanies.map(company => {
-                const journeySteps = getJourneySteps(company);
-                const isRejected = rejectedStatuses.includes(company.status);
-                return (
-                  <div
-                    key={company.id}
-                    draggable
-                    onDragStart={e => handleDragStart(e, company.id)}
-                    onDragEnd={handleDragEnd}
-                    onClick={() => { selectCompany(company); navigateTo('list', company.id); }}
-                    style={company.cardColor ? { backgroundColor: company.cardColor } : undefined}
-                    className={`${company.cardColor ? '' : 'bg-white'} p-4 rounded-lg shadow-sm border border-gray-200 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow`}
-                  >
-                    <div className="font-bold text-gray-800 mb-1">{safeStr(company.name)}</div>
-                    <div className="text-sm text-gray-600">{safeStr(company.role)}</div>
-                    {company.location && (
-                      <div className="text-xs text-gray-500 mt-2 flex items-center gap-1">
-                        <MapPin size={12} /> {safeStr(company.location)}
-                      </div>
-                    )}
-                    {(company.companySector || company.companySize || company.applicationSource) && (
-                      <div className="mt-1.5 flex flex-wrap gap-1">
-                        {company.companySector && <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-500 font-medium">{safeStr(company.companySector)}</span>}
-                        {company.companySize && <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 font-medium">👥 {safeStr(company.companySize)}</span>}
-                        {company.applicationSource && <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-500 font-medium">{t(`applicationSource.${company.applicationSource}`, company.applicationSource.replace(/_/g, ' '))}</span>}
-                      </div>
-                    )}
-                    {journeySteps.length > 0 && (
-                      <div className="mt-2 flex flex-wrap items-center gap-0.5">
-                        {journeySteps.map((step, i) => (
-                          <React.Fragment key={i}>
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${isRejected ? 'bg-red-50 text-red-500' : 'bg-indigo-50 text-indigo-500'}`}>
-                              {tInterviewType(step)}
-                            </span>
-                            {i < journeySteps.length - 1 && <span className="text-gray-300 text-[10px]">›</span>}
-                          </React.Fragment>
-                        ))}
-                        {isRejected && (
-                          <>
-                            <span className="text-gray-300 text-[10px]">›</span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-red-100 text-red-600">
-                              {tStatus(company.status)}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+  const renderCompanyCard = (company, { overlay } = {}) => {
+    const journeySteps = getJourneySteps(company);
+    const isRejected = rejectedStatuses.includes(company.status);
+    const body = (
+      <>
+        <div className="font-bold text-gray-800 mb-1">{safeStr(company.name)}</div>
+        <div className="text-sm text-gray-600">{safeStr(company.role)}</div>
+        {company.location && (
+          <div className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+            <MapPin size={12} /> {safeStr(company.location)}
           </div>
-        );
-      })}
+        )}
+        {(company.companySector || company.companySize || company.applicationSource) && (
+          <div className="mt-1.5 flex flex-wrap gap-1">
+            {company.companySector && <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-500 font-medium">{safeStr(company.companySector)}</span>}
+            {company.companySize && <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 font-medium">👥 {safeStr(company.companySize)}</span>}
+            {company.applicationSource && <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-500 font-medium">{t(`applicationSource.${company.applicationSource}`, company.applicationSource.replace(/_/g, ' '))}</span>}
+          </div>
+        )}
+        {journeySteps.length > 0 && (
+          <div className="mt-2 flex flex-wrap items-center gap-0.5">
+            {journeySteps.map((step, i) => (
+              <React.Fragment key={i}>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${isRejected ? 'bg-red-50 text-red-500' : 'bg-indigo-50 text-indigo-500'}`}>
+                  {tInterviewType(step)}
+                </span>
+                {i < journeySteps.length - 1 && <span className="text-gray-300 text-[10px]">›</span>}
+              </React.Fragment>
+            ))}
+            {isRejected && (
+              <>
+                <span className="text-gray-300 text-[10px]">›</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-red-100 text-red-600">
+                  {tStatus(company.status)}
+                </span>
+              </>
+            )}
+          </div>
+        )}
+      </>
+    );
+    const cardClass = `${company.cardColor ? '' : 'bg-white'} p-4 rounded-lg shadow-sm border border-gray-200 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow touch-manipulation`;
+    const cardStyle = company.cardColor ? { backgroundColor: company.cardColor } : undefined;
+    if (overlay) {
+      return (
+        <div style={cardStyle} className={`${cardClass} shadow-lg rotate-1 scale-105`}>
+          {body}
+        </div>
+      );
+    }
+    return (
+      <SortableKanbanCard
+        id={company.id}
+        style={cardStyle}
+        className={cardClass}
+        onOpen={() => { selectCompany(company); navigateTo('list', company.id); }}
+      >
+        {body}
+      </SortableKanbanCard>
+    );
+  };
 
-      {companies.length === 0 && (
+  const renderBoard = () => (
+    <div className="flex-1 overflow-x-auto p-3 sm:p-6 bg-slate-50 min-h-0 flex flex-col">
+      {companies.length === 0 ? (
         <div className="w-full flex flex-col items-center justify-center p-8">
           <div className="bg-white p-10 rounded-2xl shadow-xl border border-gray-200 text-center max-w-lg w-full">
             <div className="bg-indigo-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 p-3">
@@ -731,6 +715,22 @@ Rules:
             </div>
           </div>
         </div>
+      ) : (
+        <KanbanDndBoard
+          items={companies}
+          statuses={STATUSES}
+          onReorder={handleBoardReorder}
+          getColumnItems={(items, statusId) => itemsInColumn(items, statusId).filter((c) => filteredCompanies.some((f) => String(f.id) === String(c.id)))}
+          className="flex flex-col sm:flex-row gap-4 sm:gap-6 sm:h-full min-h-0"
+          columnClassName="w-full sm:w-80 sm:flex-shrink-0 flex flex-col sm:h-full"
+          listClassName="bg-gray-100 rounded-b-xl p-3 flex-1 overflow-y-auto space-y-3 custom-scrollbar"
+          renderColumnHeader={(statusObj, statusCompanies) => (
+            <div className={`rounded-t-xl px-4 py-3 font-bold border-b-4 shadow-sm ${statusObj.color}`}>
+              {tStatus(statusObj.id)} ({statusCompanies.length})
+            </div>
+          )}
+          renderCard={renderCompanyCard}
+        />
       )}
     </div>
   );

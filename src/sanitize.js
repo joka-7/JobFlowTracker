@@ -1,4 +1,5 @@
 import { STATUSES_TASKS, normalizeInterviewType } from './statuses';
+import { sanitizeBoardOrder } from './utils/boardOrder';
 
 /** Generate a cryptographically random ID (fallback to timestamp if crypto unavailable) */
 export function generateId() {
@@ -149,6 +150,9 @@ export function sanitizeTrackerRecords(importedArray, { unnamedLabel = 'Unnamed'
     generalNotes: safeStr(c.generalNotes || ''),
     priority: safeStr(c.priority || 'medium'),
     cardColor: sanitizeCardColor(c.cardColor),
+    ...(sanitizeBoardOrder(c.boardOrder) !== undefined
+      ? { boardOrder: sanitizeBoardOrder(c.boardOrder) }
+      : {}),
     interviews: sanitizeInterviews(c.interviews),
     homeworks: sanitizeHomeworks(c.homeworks),
     contacts: sanitizeContacts(c.contacts),
@@ -195,6 +199,9 @@ export function sanitizeTaskRecords(rows) {
     duration: sanitizeDuration(t.duration),
     labelIds: sanitizeLabelIds(t.labelIds),
     cardColor: sanitizeCardColor(t.cardColor),
+    ...(sanitizeBoardOrder(t.boardOrder) !== undefined
+      ? { boardOrder: sanitizeBoardOrder(t.boardOrder) }
+      : {}),
     steps: sanitizeTaskSteps(t.steps),
     notes: safeStr(t.notes || ''),
   }));

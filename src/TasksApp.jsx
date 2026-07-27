@@ -42,6 +42,8 @@ import { useCloudSync } from './hooks/useCloudSync';
 import { useToast } from './hooks/useToast';
 import LabelPicker, { LabelChipsReadOnly } from './components/LabelPicker';
 import CardColorPicker from './components/CardColorPicker';
+import KanbanDndBoard, { SortableKanbanCard } from './components/KanbanDndBoard';
+import { itemsInColumn } from './utils/boardOrder';
 import { LABEL_COLOR_PALETTE, readableTextColor } from './utils/labelColors';
 
 const TASKS_LABELS_KEY = 'tasksLabelsV1';
@@ -141,7 +143,6 @@ export default function TasksApp({ onModeChange }) {
   );
   const { canInstall, runInstall } = usePwaInstall();
 
-  const dragTaskId = useRef(null);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -386,20 +387,13 @@ export default function TasksApp({ onModeChange }) {
     }));
   }, []);
 
-  const handleDragStart = (taskId) => { dragTaskId.current = taskId; };
-  const handleDragOver = (e) => { e.preventDefault(); };
-  const handleDrop = (statusId) => {
-    const id = dragTaskId.current;
-    if (!id) return;
-    setTasks(prev => {
-      const updated = prev.map(t => t.id === id ? { ...t, status: statusId } : t);
-      const task = updated.find(t => t.id === id);
-      if (task && user) updateItem(user.uid, MODE, task).catch(() => {});
-      return updated;
-    });
-    dragTaskId.current = null;
+  const handleBoardReorder = useCallback(({ items: nextItems, changed }) => {
+    setTasks(nextItems);
     showToast(tt('toast.saved', 'Saved!'));
-  };
+    if (user && changed.length) {
+      batchSaveItems(user.uid, MODE, changed).catch(() => {});
+    }
+  }, [user, showToast, tt]);
 
   const handleExport = async () => {
     const saved = await saveJsonFile(`tasks-backup-${Date.now()}.json`, tasks);
@@ -605,8 +599,68 @@ Rules:
     );
   };
 
+  const renderTaskCard = (task, { overlay } = {}) => {
+    const next = getNextPendingStep(task);
+    const body = (
+      <>
+        <div className="flex items-start justify-between gap-2 mb-1">
+          <p className="font-semibold text-gray-800 text-xs sm:text-sm leading-snug flex-1">{safeStr(task.name)}</p>
+          <GripVertical size={14} className="text-gray-300 shrink-0 mt-0.5 group-hover:text-gray-400 hidden sm:block" />
+        </div>
+        {task.priority && (
+          <span className={`inline-block text-xs px-1.5 py-0.5 rounded border font-medium ${PRIORITY_COLORS[task.priority]}`}>
+            {t(`priority.${task.priority}`, task.priority)}
+          </span>
+        )}
+        {task.dueDate && (
+          <div className="flex items-center gap-1 text-xs text-gray-400 mt-1">
+            <Calendar size={10} />
+            {formatDate(task.dueDate, lang)}
+          </div>
+        )}
+        {formatDuration(task.duration, tt) && (
+          <div className="flex items-center gap-1 text-xs text-gray-400 mt-1">
+            <Timer size={10} />
+            {formatDuration(task.duration, tt)}
+          </div>
+        )}
+        {(task.labelIds || []).length > 0 && (
+          <div className="mt-1.5">
+            <LabelChipsReadOnly labels={labels} labelIds={task.labelIds} />
+          </div>
+        )}
+        {renderProgressBar(task)}
+        {next && (
+          <div className="mt-2 text-xs text-gray-500 truncate">
+            <span className="text-gray-400">{tt('detail.nextStep', 'Next')}: </span>
+            {safeStr(next.title)}
+          </div>
+        )}
+      </>
+    );
+    const cardClass = `${task.cardColor ? '' : 'bg-white'} border border-gray-200 rounded-xl p-2.5 sm:p-3 cursor-grab active:cursor-grabbing hover:shadow-md hover:border-emerald-300 active:bg-emerald-50/50 transition-all group touch-manipulation`;
+    const cardStyle = task.cardColor ? { backgroundColor: task.cardColor } : undefined;
+    if (overlay) {
+      return (
+        <div style={cardStyle} className={`${cardClass} shadow-lg rotate-1 scale-105`}>
+          {body}
+        </div>
+      );
+    }
+    return (
+      <SortableKanbanCard
+        id={task.id}
+        style={cardStyle}
+        className={cardClass}
+        onOpen={() => navigateTo('list', task.id)}
+      >
+        {body}
+      </SortableKanbanCard>
+    );
+  };
+
   const renderBoard = () => (
-    <div className="flex-1 overflow-y-auto overflow-x-hidden sm:overflow-x-auto sm:overflow-y-hidden p-3 sm:p-4 bg-slate-50 min-h-0 flex flex-col sm:flex-row gap-3 sm:gap-4">
+    <div className="flex-1 overflow-y-auto overflow-x-hidden sm:overflow-x-auto sm:overflow-y-hidden p-3 sm:p-4 bg-slate-50 min-h-0 flex flex-col">
       {tasks.length === 0 ? (
         <div className="flex items-center justify-center flex-1 min-h-[200px]">
           <div className="text-center max-w-sm px-4">
@@ -631,78 +685,26 @@ Rules:
           </div>
         </div>
       ) : (
-        <>
-          {STATUSES_TASKS.map(status => {
-            const columnTasks = tasks.filter(t => t.status === status.id);
-            if (columnTasks.length === 0) return null;
-            return (
-              <div
-                key={status.id}
-                className="board-column w-full sm:w-72 sm:flex-shrink-0 flex flex-col sm:h-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
-                onDragOver={handleDragOver}
-                onDrop={() => handleDrop(status.id)}
-              >
-                <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-b border-gray-100 flex items-center justify-between shrink-0">
-                  <div className="flex items-center gap-2">
-                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold border ${status.color}`}>
-                      {tt(`status.${status.id}`, status.id)}
-                    </span>
-                    <span className="text-gray-400 text-xs sm:text-sm font-medium">{columnTasks.length}</span>
-                  </div>
-                </div>
-                <div className="p-2 sm:p-3 space-y-2 sm:space-y-3 sm:flex-1 sm:overflow-y-auto sm:custom-scrollbar">
-                  {columnTasks.map(task => {
-                    const next = getNextPendingStep(task);
-                    return (
-                      <div
-                        key={task.id}
-                        draggable
-                        onDragStart={() => handleDragStart(task.id)}
-                        onClick={() => navigateTo('list', task.id)}
-                        style={task.cardColor ? { backgroundColor: task.cardColor } : undefined}
-                        className={`${task.cardColor ? '' : 'bg-white'} border border-gray-200 rounded-xl p-2.5 sm:p-3 cursor-pointer hover:shadow-md hover:border-emerald-300 active:bg-emerald-50/50 transition-all group`}
-                      >
-                        <div className="flex items-start justify-between gap-2 mb-1">
-                          <p className="font-semibold text-gray-800 text-xs sm:text-sm leading-snug flex-1">{safeStr(task.name)}</p>
-                          <GripVertical size={14} className="text-gray-300 shrink-0 mt-0.5 group-hover:text-gray-400 hidden sm:block" />
-                        </div>
-                        {task.priority && (
-                          <span className={`inline-block text-xs px-1.5 py-0.5 rounded border font-medium ${PRIORITY_COLORS[task.priority]}`}>
-                            {t(`priority.${task.priority}`, task.priority)}
-                          </span>
-                        )}
-                        {task.dueDate && (
-                          <div className="flex items-center gap-1 text-xs text-gray-400 mt-1">
-                            <Calendar size={10} />
-                            {formatDate(task.dueDate, lang)}
-                          </div>
-                        )}
-                        {formatDuration(task.duration, tt) && (
-                          <div className="flex items-center gap-1 text-xs text-gray-400 mt-1">
-                            <Timer size={10} />
-                            {formatDuration(task.duration, tt)}
-                          </div>
-                        )}
-                        {(task.labelIds || []).length > 0 && (
-                          <div className="mt-1.5">
-                            <LabelChipsReadOnly labels={labels} labelIds={task.labelIds} />
-                          </div>
-                        )}
-                        {renderProgressBar(task)}
-                        {next && (
-                          <div className="mt-2 text-xs text-gray-500 truncate">
-                            <span className="text-gray-400">{tt('detail.nextStep', 'Next')}: </span>
-                            {safeStr(next.title)}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+        <KanbanDndBoard
+          items={tasks}
+          statuses={STATUSES_TASKS}
+          onReorder={handleBoardReorder}
+          getColumnItems={itemsInColumn}
+          className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:h-full min-h-0"
+          columnClassName="w-full sm:w-72 sm:flex-shrink-0 flex flex-col sm:h-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+          listClassName="p-2 sm:p-3 space-y-2 sm:space-y-3 sm:flex-1 sm:overflow-y-auto sm:custom-scrollbar"
+          renderColumnHeader={(status, columnTasks) => (
+            <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-b border-gray-100 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2">
+                <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold border ${status.color}`}>
+                  {tt(`status.${status.id}`, status.id)}
+                </span>
+                <span className="text-gray-400 text-xs sm:text-sm font-medium">{columnTasks.length}</span>
               </div>
-            );
-          })}
-        </>
+            </div>
+          )}
+          renderCard={renderTaskCard}
+        />
       )}
     </div>
   );
