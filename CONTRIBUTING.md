@@ -82,7 +82,7 @@ The repository owner can merge their own PRs after CI passes without a separate 
 | Area | Location |
 |------|----------|
 | Main UI | `src/JobTrackerApp.jsx`, `src/components/` |
-| Modes / statuses | `src/statuses.js`, `docs/RECRUITER_MODE.md` |
+| Modes / statuses | `src/statuses.js`, `docs/LLD.md` |
 | Firebase | `src/firebase.js`, `firestore.rules` |
 | AI | `src/services/aiAssistant.js`, `src/components/AIAssistant.jsx` |
 | Tests | `src/__tests__/`, `e2e/` |

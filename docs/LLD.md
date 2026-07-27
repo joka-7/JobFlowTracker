@@ -99,7 +99,21 @@ See `STATUSES_JOBSEEKER` in `src/statuses.js` (11 statuses).
 
 ### Status IDs — Recruiter
 
-See `STATUSES_RECRUITER` in `src/statuses.js` (9 statuses). Documented in [RECRUITER_MODE.md](RECRUITER_MODE.md).
+See `STATUSES_RECRUITER` in `src/statuses.js` (9 statuses).
+
+| ID | Display (EN) | Color (Tailwind) |
+|---|---|---|
+| `applied` | Application Received | `bg-blue-100 text-blue-800` |
+| `screening` | Initial Screening | `bg-purple-100 text-purple-800` |
+| `phone_screen` | Phone Screen | `bg-yellow-100 text-yellow-800` |
+| `technical` | Technical Interview | `bg-orange-100 text-orange-800` |
+| `final_interview` | Final Interview | `bg-indigo-100 text-indigo-800` |
+| `offer_extended` | Offer Extended | `bg-teal-100 text-teal-800` |
+| `offer_accepted` | Offer Accepted | `bg-green-100 text-green-800` |
+| `rejected` | Rejected | `bg-red-100 text-red-800` |
+| `withdrawn` | Withdrawn | `bg-stone-100 text-stone-700` |
+
+Terminal (inactive pipeline): `rejected`, `withdrawn`, `offer_accepted`.
 
 ### Status IDs (legacy table — job seeker)
 
