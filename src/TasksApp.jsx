@@ -649,6 +649,7 @@ Rules:
     }
     return (
       <SortableKanbanCard
+        key={task.id}
         id={task.id}
         style={cardStyle}
         className={cardClass}
