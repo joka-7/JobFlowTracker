@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -17,8 +17,10 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { applyBoardDrag, itemsInColumn } from '../utils/boardOrder';
 
-/** Mouse + touch sensors: delay on touch so column scroll still works on phones. */
-export function useKanbanSensors() {
+/** Mouse + touch sensors: delay on touch so column scroll still works on phones.
+ * Not exported — used only by the default export below; a component file
+ * exporting a non-component value trips react-refresh/only-export-components. */
+function useKanbanSensors() {
   return useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 220, tolerance: 6 } }),
