@@ -70,7 +70,18 @@ export async function acceptNextDialog(page) {
   page.once('dialog', (dialog) => dialog.accept());
 }
 
-/** Drag a kanban card into a column identified by its status header text. */
+/**
+ * Drag a kanban card into a column identified by its status header text.
+ *
+ * The board uses @dnd-kit, which tracks the pointer via real pointermove
+ * events and recomputes collision detection as it travels — not a single
+ * jump from A to B. `locator.dragTo()` moves the mouse in one step, which
+ * satisfies dnd-kit's activation-distance threshold (so a drag *starts*)
+ * but never produces the intermediate samples collision detection needs
+ * to recognize the target as "hovered" — the drop lands back on the
+ * card's own start position instead. Driving `page.mouse` directly with
+ * `steps` on the move fixes that.
+ */
 export async function dragCardToColumn(page, cardName, columnHeaderPattern) {
   const card = page.locator('[data-kanban-card]').filter({ hasText: cardName });
   const column = page.locator('.board-column').filter({ has: page.getByText(columnHeaderPattern) });
@@ -78,7 +89,22 @@ export async function dragCardToColumn(page, cardName, columnHeaderPattern) {
   const target = (await targetCard.count()) > 0
     ? targetCard
     : column.locator('[data-kanban-column-list]').first();
-  await card.dragTo(target);
+
+  const cardBox = await card.boundingBox();
+  const targetBox = await target.boundingBox();
+  const startX = cardBox.x + cardBox.width / 2;
+  const startY = cardBox.y + cardBox.height / 2;
+  const endX = targetBox.x + targetBox.width / 2;
+  const endY = targetBox.y + targetBox.height / 2;
+
+  await page.mouse.move(startX, startY);
+  await page.mouse.down();
+  // Clear the MouseSensor activationConstraint distance (8px) first, then
+  // travel to the target in enough steps for collision detection to track
+  // the pointer along the way.
+  await page.mouse.move(startX + 10, startY + 10);
+  await page.mouse.move(endX, endY, { steps: 15 });
+  await page.mouse.up();
 }
 
 /** Configure localStorage so isAIReady() is true (gemini + fake key). */
