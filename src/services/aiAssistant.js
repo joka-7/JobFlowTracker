@@ -1,4 +1,8 @@
 import { delimUserField } from '../utils/promptSafety';
+import {
+  streamComplete as agentStreamComplete,
+  buildMessages as agentBuildMessages,
+} from '@joka-7/modeldispatcher-browser-agent';
 
 export const PROVIDERS = {
   gemini: {
@@ -122,159 +126,13 @@ export function getCurrentProvider() {
   return config.provider;
 }
 
-// Hard ceiling on how long a single AI request may run — a hung provider
-// (dropped connection, stalled proxy) would otherwise wait forever, since
-// fetch() has no default timeout. Combined with any caller-supplied signal
-// (e.g. "abort because the modal closed") via AbortSignal.any.
-const AI_REQUEST_TIMEOUT_MS = 60_000;
-
-function requestSignal(signal) {
-  const timeoutSignal = AbortSignal.timeout(AI_REQUEST_TIMEOUT_MS);
-  return signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal;
-}
-
-/** A 200 with no body (adblocker, misbehaving proxy) would otherwise throw a raw TypeError on getReader(). */
-function getBodyReader(res) {
-  if (!res.body) throw new Error('Empty response body from AI provider.');
-  return res.body.getReader();
-}
-
-// Shared newline-buffered stream reader: feeds each complete line from the
-// response body to onLine, so each provider parser only needs to know its
-// own line format (SSE "data: " frames vs. bare NDJSON).
-async function consumeLines(res, onLine) {
-  const reader = getBodyReader(res);
-  const dec = new TextDecoder();
-  let buf = '';
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buf += dec.decode(value, { stream: true });
-    const lines = buf.split('\n');
-    buf = lines.pop();
-    for (const line of lines) onLine(line);
-  }
-}
-
-// SSE stream parser for OpenAI-compatible APIs (OpenAI, Groq)
-async function streamOpenAICompat(url, apiKey, body, onChunk, signal) {
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({ max_tokens: 1024, ...body, stream: true }),
-    signal: requestSignal(signal),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error?.message || `HTTP ${res.status}`);
-  }
-  let full = '';
-  await consumeLines(res, (line) => {
-    if (!line.startsWith('data: ')) return;
-    const raw = line.slice(6).trim();
-    if (raw === '[DONE]') return;
-    try {
-      const delta = JSON.parse(raw).choices?.[0]?.delta?.content;
-      if (delta) { full += delta; onChunk(full); }
-    } catch { /* skip malformed */ }
-  });
-  return full;
-}
-
-// Gemini SSE stream. `contents` is the full provider-format turn list, so
-// this serves both single-shot prompts (runStream) and multi-turn chat
-// (streamChat) — the caller builds `contents`, this just does the request/parse.
-async function streamGemini(apiKey, model, contents, onChunk, signal, systemInstruction) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`;
-  const body = { contents, generationConfig: { maxOutputTokens: 1024 } };
-  if (systemInstruction) body.systemInstruction = { parts: [{ text: systemInstruction }] };
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-    body: JSON.stringify(body),
-    signal: requestSignal(signal),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error?.message || `HTTP ${res.status}`);
-  }
-  let full = '';
-  await consumeLines(res, (line) => {
-    if (!line.startsWith('data: ')) return;
-    const raw = line.slice(6).trim();
-    try {
-      const text = JSON.parse(raw).candidates?.[0]?.content?.parts?.[0]?.text;
-      if (text) { full += text; onChunk(full); }
-    } catch { /* skip */ }
-  });
-  return full;
-}
-
-// Validate Ollama URL for security (HTTPS only or localhost)
-function validateOllamaUrl(url) {
-  try {
-    const parsed = new URL(url);
-    // Allow localhost/127.0.0.1 over HTTP (for development)
-    const isLocalhost = ['localhost', '127.0.0.1', '::1'].includes(parsed.hostname);
-    if (!isLocalhost && parsed.protocol !== 'https:') {
-      throw new Error('Remote Ollama must use HTTPS. For local testing, use http://localhost:11434');
-    }
-    return parsed.origin;
-  } catch (err) {
-    throw new Error(`Invalid Ollama URL: ${err.message}`, { cause: err });
-  }
-}
-
-// Ollama stream. Single-shot prompts (runStream) use the lighter /api/generate
-// endpoint; multi-turn chat (streamChat) needs /api/chat for message history —
-// these are genuinely different Ollama APIs, not just cosmetic variants, so
-// the caller picks by passing either `prompt` or `messages`.
-async function streamOllama(baseUrl, model, { prompt, messages }, onChunk, signal) {
-  const validUrl = validateOllamaUrl(baseUrl);
-  const isChat = Array.isArray(messages);
-  const body = isChat
-    ? { model, messages, stream: true, options: { num_predict: 1024 } }
-    : { model, prompt, stream: true, options: { num_predict: 1024 } };
-  const res = await fetch(`${validUrl}/api/${isChat ? 'chat' : 'generate'}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    signal: requestSignal(signal),
-  });
-  if (!res.ok) throw new Error(`Ollama error: HTTP ${res.status}. Is Ollama running?`);
-  let full = '';
-  await consumeLines(res, (line) => {
-    if (!line.trim()) return;
-    try {
-      const obj = JSON.parse(line);
-      const text = isChat ? obj.message?.content : obj.response;
-      if (text) { full += text; onChunk(full); }
-    } catch { /* skip */ }
-  });
-  return full;
-}
-
-// Anthropic SDK stream. `maxTokens` differs by call site (short single-shot
-// tips vs. longer multi-turn chat replies), so it stays caller-supplied
-// rather than being folded into one shared default.
-async function streamAnthropic(apiKey, model, messages, onChunk, signal, { systemPrompt, maxTokens = 600 } = {}) {
-  const { default: Anthropic } = await import('@anthropic-ai/sdk');
-  const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
-  const stream = await client.messages.stream({
-    model,
-    max_tokens: maxTokens,
-    ...(systemPrompt ? { system: systemPrompt } : {}),
-    messages,
-  }, { signal: requestSignal(signal) });
-  let full = '';
-  for await (const chunk of stream) {
-    if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-      full += chunk.delta.text;
-      onChunk(full);
-    }
-  }
-  return full;
-}
+// Request/response translation, SSE/NDJSON parsing, retry, and timeout for
+// every provider now live in @joka-7/modeldispatcher-browser-agent (the
+// shared core extracted from this file — and KanDOne/HighFive/StepByLearn,
+// which had each independently built the same thing). This file keeps only
+// what's genuinely app-specific: the PROVIDERS table's own copy/wording
+// (rendered verbatim in APIKeySettings), config state, rate limiting, and
+// the job-search prompts below.
 
 /**
  * Build a provider-safe chat history from UI messages.
@@ -282,32 +140,12 @@ async function streamAnthropic(apiKey, model, messages, onChunk, signal, { syste
  * Validates and sanitizes message roles to prevent injection.
  */
 const SIM_TRIGGER = '__sim_start__';
-const VALID_ROLES = new Set(['user', 'assistant']);
 
 export function buildApiMessages(uiMessages, { appendSimBegin = false } = {}) {
-  let msgs = (Array.isArray(uiMessages) ? uiMessages : [])
-    .map(({ role, content }) => ({
-      role: VALID_ROLES.has(role) ? role : 'user', // Strict role validation
-      content: String(content ?? '').trim().slice(0, 4000), // Cap message length
-    }))
-    .filter(m => m.content.length > 0 && m.content !== SIM_TRIGGER);
-
-  if (appendSimBegin) {
-    msgs = [...msgs, { role: 'user', content: 'begin' }];
-  } else if (msgs.length > 0 && msgs[0].role === 'assistant') {
-    msgs = [{ role: 'user', content: 'begin' }, ...msgs];
-  }
-
-  const out = [];
-  for (const msg of msgs) {
-    const last = out[out.length - 1];
-    if (last && last.role === msg.role) {
-      last.content = `${last.content}\n\n${msg.content}`;
-    } else {
-      out.push({ ...msg });
-    }
-  }
-  return out.length > 0 ? out : [{ role: 'user', content: 'begin' }];
+  return agentBuildMessages(uiMessages, {
+    forceTrailingFiller: appendSimBegin,
+    dropContent: SIM_TRIGGER,
+  });
 }
 
 // Multi-turn chat streaming (messages must already be normalized via buildApiMessages)
@@ -315,7 +153,7 @@ export async function streamChat(messages, systemPrompt, onChunk, { signal } = {
   // Rate limit check
   checkRateLimit('chat-stream');
 
-  const { provider, apiKey, model, ollamaUrl } = config;
+  const { provider, apiKey } = config;
   const apiMessages = Array.isArray(messages) && messages.length > 0
     ? messages
     : buildApiMessages(messages);
@@ -332,62 +170,19 @@ export async function streamChat(messages, systemPrompt, onChunk, { signal } = {
     throw new Error('API key is not configured');
   }
 
-  if (provider === 'gemini') {
-    const contents = apiMessages.map(m => ({
-      role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.content }],
-    }));
-    return streamGemini(apiKey, model, contents, emit, signal, systemPrompt);
-  }
-
-  if (provider === 'anthropic') {
-    return streamAnthropic(apiKey, model, apiMessages, emit, signal, { systemPrompt, maxTokens: 1024 });
-  }
-
-  if (provider === 'ollama') {
-    const ollamaMessages = systemPrompt ? [{ role: 'system', content: systemPrompt }, ...apiMessages] : apiMessages;
-    return streamOllama(ollamaUrl, model, { messages: ollamaMessages }, emit, signal);
-  }
-
-  // OpenAI / Groq
-  const urls = { openai: 'https://api.openai.com/v1/chat/completions', groq: 'https://api.groq.com/openai/v1/chat/completions' };
-  return streamOpenAICompat(
-    urls[provider],
-    apiKey,
-    { model, messages: systemPrompt ? [{ role: 'system', content: systemPrompt }, ...apiMessages] : apiMessages },
-    emit,
+  return agentStreamComplete(config, apiMessages, {
+    systemInstruction: systemPrompt,
+    onChunk: emit,
     signal,
-  );
+  });
 }
 
 async function runStream(prompt, onChunk, signal) {
-  const { provider, apiKey, model, ollamaUrl } = config;
-  switch (provider) {
-    case 'gemini':
-      return streamGemini(apiKey, model, [{ role: 'user', parts: [{ text: prompt }] }], onChunk, signal);
-    case 'groq':
-      return streamOpenAICompat(
-        'https://api.groq.com/openai/v1/chat/completions',
-        apiKey,
-        { model, messages: [{ role: 'user', content: prompt }] },
-        onChunk,
-        signal,
-      );
-    case 'openai':
-      return streamOpenAICompat(
-        'https://api.openai.com/v1/chat/completions',
-        apiKey,
-        { model, messages: [{ role: 'user', content: prompt }] },
-        onChunk,
-        signal,
-      );
-    case 'ollama':
-      return streamOllama(ollamaUrl, model, { prompt }, onChunk, signal);
-    case 'anthropic':
-      return streamAnthropic(apiKey, model, [{ role: 'user', content: prompt }], onChunk, signal);
-    default:
-      throw new Error(`Unknown provider: ${provider}`);
+  const { provider } = config;
+  if (!provider || !PROVIDERS[provider]) {
+    throw new Error(`Unknown provider: ${provider}`);
   }
+  return agentStreamComplete(config, prompt, { onChunk, signal });
 }
 
 const LANG = { en: 'Respond in English.', he: 'ענה בעברית.', fr: 'Réponds en français.' };

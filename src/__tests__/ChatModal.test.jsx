@@ -182,6 +182,39 @@ describe('ChatModal', () => {
     });
   });
 
+  it('offers external AI chat links for the failed message once streamChat rejects', async () => {
+    mockStreamChat.mockRejectedValueOnce(new Error('network down'));
+    const user = userEvent.setup();
+    render(<ChatModal {...defaultProps} />);
+    const textarea = screen.getByRole('textbox');
+    await user.type(textarea, 'How do I answer a salary question?');
+    fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+
+    await waitFor(() => {
+      expect(screen.getByText('network down')).toBeInTheDocument();
+    });
+    const claudeLink = screen.getByRole('link', { name: 'Claude' });
+    expect(claudeLink).toHaveAttribute('target', '_blank');
+    const url = new URL(claudeLink.getAttribute('href'));
+    expect(url.hostname).toBe('claude.ai');
+    expect(url.searchParams.get('q')).toBe('How do I answer a salary question?');
+    expect(screen.getByRole('link', { name: 'ChatGPT' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Gemini (Google AI Mode)' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Groq' })).toBeInTheDocument();
+  });
+
+  it('does not show external AI chat links when there is no error', async () => {
+    const user = userEvent.setup();
+    render(<ChatModal {...defaultProps} />);
+    const textarea = screen.getByRole('textbox');
+    await user.type(textarea, 'Hello');
+    fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+    await waitFor(() => {
+      expect(screen.getByText('Test response')).toBeInTheDocument();
+    });
+    expect(screen.queryByRole('link', { name: 'Claude' })).toBeNull();
+  });
+
   it('shows company context in empty state when company provided', () => {
     const company = { id: '1', name: 'BestCorp', status: 'applied', role: 'Dev', interviews: [] };
     render(<ChatModal {...defaultProps} company={company} />);
