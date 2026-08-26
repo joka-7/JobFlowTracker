@@ -6,6 +6,7 @@ import App from '../App';
 
 vi.mock('../firebase', () => ({
   auth: {},
+  hasRestorableSession: vi.fn().mockResolvedValue(false),
   onAuthChange: (cb) => { cb(null); return () => {}; },
   completeRedirectSignIn: vi.fn().mockResolvedValue(null),
   signInWithGoogle: vi.fn(),
@@ -13,7 +14,7 @@ vi.mock('../firebase', () => ({
   loadAllItems: vi.fn().mockResolvedValue(null),
   updateItem: vi.fn(),
   deleteItem: vi.fn(),
-  batchSaveItems: vi.fn(),
+  batchSaveItems: vi.fn().mockResolvedValue(undefined),
   loadUserProfile: vi.fn().mockResolvedValue({}),
   saveUserProfile: vi.fn(),
 }));

@@ -6,13 +6,14 @@ import '../i18n';
 
 vi.mock('../firebase', () => ({
   auth: {},
+  hasRestorableSession: vi.fn().mockResolvedValue(false),
   onAuthChange: (cb) => { cb(null); return () => {}; },
   signInWithGoogle: vi.fn(),
   signOut: vi.fn(),
   loadAllItems: vi.fn().mockResolvedValue(null),
   updateItem: vi.fn(),
   deleteItem: vi.fn(),
-  batchSaveItems: vi.fn(),
+  batchSaveItems: vi.fn().mockResolvedValue(undefined),
   loadUserProfile: vi.fn().mockResolvedValue({}),
   saveUserProfile: vi.fn(),
 }));

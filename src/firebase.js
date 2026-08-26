@@ -69,7 +69,7 @@ function probePersistedAuthUser() {
 // indexedDB.databases() exists (Chromium/WebKit) we use it to skip the probe for
 // fresh visitors; where it doesn't (Firefox) we probe directly, which self-cleans
 // any empty DB it has to create. Either way the Firebase SDK is never loaded here.
-async function hasRestorableSession() {
+export async function hasRestorableSession() {
   if (readFlag(SESSION_FLAG)) return true;
   try {
     if (typeof window.indexedDB === 'undefined') return false;

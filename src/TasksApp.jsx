@@ -39,6 +39,7 @@ import { useBackGestureGuard } from './hooks/useBackGestureGuard';
 import { formatDate } from './utils/date';
 import { appendNote } from './utils/notes';
 import { useCloudSync } from './hooks/useCloudSync';
+import { unionOnSignIn } from './utils/cloudSync';
 import { useToast } from './hooks/useToast';
 import LabelPicker, { LabelChipsReadOnly } from './components/LabelPicker';
 import CardColorPicker from './components/CardColorPicker';
@@ -117,6 +118,8 @@ export default function TasksApp({ onModeChange }) {
     const sanitized = parseTaskStoragePayload(localStorage.getItem(getStorageKey(MODE)));
     return filterItemsForMode(sanitized, MODE);
   });
+  const tasksRef = useRef(tasks);
+  useEffect(() => { tasksRef.current = tasks; }, [tasks]);
   const [labels, setLabels] = useState(
     () => parseTaskLabelsStoragePayload(localStorage.getItem(TASKS_LABELS_KEY)),
   );
@@ -168,10 +171,18 @@ export default function TasksApp({ onModeChange }) {
     initAI(provider, apiKey, model, ollamaUrl);
   }, []);
 
-  const { user, syncing, syncNow } = useCloudSync({
+  const { user, authResolved, syncing, syncNow } = useCloudSync({
     mode: MODE,
     sanitizeAndFilter: (data, m) => filterItemsForMode(sanitizeTaskRecords(data), m),
-    onData: setTasks,
+    // Union-merge, not overwrite: a task typed locally since the last pull —
+    // including during the brief window before a returning session resolves
+    // (see useCloudSync's authResolved) — must survive a cloud pull that
+    // doesn't have it yet, not be silently discarded by it.
+    onData: (cloudTasks, uid) => {
+      const { merged, pushToCloud } = unionOnSignIn(tasksRef.current, cloudTasks);
+      setTasks(merged);
+      if (pushToCloud) batchSaveItems(uid, MODE, merged).catch(() => {});
+    },
     onSignedIn: (hasData) => { if (hasData) showToast(tt('toast.imported', 'Data loaded from cloud!')); },
   });
 
@@ -1472,7 +1483,19 @@ Rules:
               <span className="shrink-0">{tt('header.addTask', 'Add Task')}</span>
             </button>
 
-            {user ? (
+            {!authResolved ? (
+              // A restorable session was detected but Firebase hasn't
+              // confirmed it yet — show a neutral placeholder rather than
+              // "Connect Drive", which would wrongly invite the user to work
+              // as if signed out right before the real session resolves.
+              <span
+                className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-bold bg-white/10 border border-white/20 text-green-100/70 min-h-[44px]"
+                aria-live="polite"
+              >
+                <Cloud size={16} className="shrink-0 animate-pulse" />
+                <span className="hidden sm:inline shrink-0">{t('header.checkingSession', 'Checking…')}</span>
+              </span>
+            ) : user ? (
               <>
                 <button
                   onClick={() => signOut()}
