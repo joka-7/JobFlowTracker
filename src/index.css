@@ -1,6 +1,10 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* The app has no dark theme (see #78) and data-theme="dark" is never set
+ * anywhere in the codebase — this custom variant carries forward the same
+ * "always inert" behavior the v3 config's `darkMode: ['selector',
+ * '[data-theme="dark"]']` gave the handful of existing `dark:` classes. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 .custom-scrollbar::-webkit-scrollbar { width: 6px; }
 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
