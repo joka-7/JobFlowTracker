@@ -55,7 +55,7 @@ JobFlowTracker is a single-page application (SPA) for tracking a job search, a r
          │                    │    │                            │
          │  Firebase Auth     │    │  Google Gemini SSE         │
          │  (Google OIDC)     │    │  Groq (OpenAI-compat SSE)  │
-         │                    │    │  Anthropic (SDK streaming)  │
+         │                    │    │  Anthropic (fetch SSE)      │
          │  Firestore         │    │  OpenAI (SSE)              │
          │  /users/{uid}/     │    │  Ollama (local NDJSON)     │
          │    companies/      │    └────────────────────────────┘
@@ -80,7 +80,7 @@ JobFlowTracker is a single-page application (SPA) for tracking a job search, a r
 | `src/TasksApp.jsx` | Main component | Task manager UI: board, list+step-detail, stats; step status cycling |
 | `src/firebase.js` | Module | Auth, mode-aware `loadAllItems(uid, mode)`, profile `appMode`, legacy migration |
 | `src/components/Onboarding.jsx` | Modal | 5-step wizard (job seeker only, skipped when switching from another mode) |
-| `src/services/aiAssistant.js` | Module | Provider configuration, `initAI`, `isAIReady`, all streaming functions |
+| `src/services/aiAssistant.js` | Module | Thin wrapper over the shared `@joka-7/modeldispatcher-browser-agent` package (also used by KanDOne/HighFive/StepByLearn) — provider configuration, `initAI`, `isAIReady`, rate limiting, and this app's job-search prompts; streaming/parsing itself lives in the shared package |
 | `src/components/AIAssistant.jsx` | Floating panel (job seeker only) | Sparkles button, menu screen, debrief; launches ChatModal and ResumeReview |
 | `src/components/APIKeySettings.jsx` | Modal | Provider selector, API key / Ollama URL input, saves to localStorage |
 | `src/components/ChatModal.jsx` | Modal | Multi-turn AI chat with streaming, company context, save-to-notes |
@@ -166,9 +166,15 @@ Cycle order: `todo → in_progress → done → blocked → todo`
 
 ### Provider Abstraction
 
-All provider-specific configuration lives in the `PROVIDERS` constant in `aiAssistant.js`. The module-level `config` object holds the active selection and is set by `initAI()`. All high-level functions call the internal `runStream(prompt, onChunk)` dispatcher.
+Request/response translation, SSE/NDJSON stream parsing, retry, and timeout for every provider live in [`@joka-7/modeldispatcher-browser-agent`](https://github.com/joka-7/ModelDispatcher/tree/main/clients/browser-agent) — the shared browser-native AI core extracted from this app's own `aiAssistant.js` (and KanDOne/HighFive/StepByLearn, which had each independently built the same thing). `aiAssistant.js` keeps only what's genuinely app-specific: the `PROVIDERS` table's own copy/wording (rendered verbatim in `APIKeySettings`), the module-level `config` object (set by `initAI()`), rate limiting, and this app's own job-search/recruiting system prompts (`getInterviewPrep`, `analyzeRejection`, `analyzePatterns`, `getSchedulingAdvice`, `getResumeAdvice`, `getJobFinderSystemPrompt`, `getCandidateFinderSystemPrompt`, `getGoalsTasksSystemPrompt`, `debriefInterview`). All of them funnel through the internal `runStream(prompt, onChunk)` dispatcher, or `streamChat` for multi-turn chat — both now just call the shared package's `streamComplete`.
+
+`buildApiMessages` (chat-history normalization: user-first ordering, strict alternation, injection-safe role validation) delegates to the shared package's `buildMessages`, keeping this app's own `SIM_TRIGGER`/`appendSimBegin` mapping for the mock-interview simulation trigger.
+
+If a chat turn fails, `ChatModal` offers the shared package's `EXTERNAL_CHAT_PROVIDERS` (ChatGPT/Claude/Gemini/Groq) as direct links pre-filled with the failed message — a free escape hatch that needs no API key.
 
 ### Streaming Approaches
+
+All five providers below are implemented inside the shared package now, not here — this table documents the protocol each one speaks, for reference:
 
 | Provider | Protocol | Parsing |
 |---|---|---|
@@ -176,7 +182,7 @@ All provider-specific configuration lives in the `PROVIDERS` constant in `aiAssi
 | Groq | SSE (OpenAI-compat) | `choices[0].delta.content` |
 | OpenAI | SSE (OpenAI-compat) | `choices[0].delta.content` |
 | Ollama | Newline-delimited JSON | `response` or `message.content` |
-| Anthropic | SDK async iterator | `content_block_delta → delta.text` |
+| Anthropic | SSE, Anthropic's own format, via the shared package's fetch-based client (no vendor SDK) | `content_block_delta → delta.text` |
 
 All functions accumulate a `full` string and call `onChunk(full)` on each token.
 
