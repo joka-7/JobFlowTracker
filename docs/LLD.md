@@ -277,17 +277,19 @@ let config = {
 | `isAIReady` | `() => boolean` | Returns `true` if `config.provider === 'ollama'` OR `config.apiKey` is non-empty. |
 | `getCurrentProvider` | `() => string` | Returns `config.provider`. |
 
-### Internal Streaming Functions
+### Streaming — delegated to `@joka-7/modeldispatcher-browser-agent`
 
-| Function | Provider | Protocol | Notes |
-|---|---|---|---|
-| `streamGemini(apiKey, model, prompt, onChunk)` | Gemini | SSE | Single-turn. URL includes `?alt=sse&key={apiKey}`. Parses `candidates[0].content.parts[0].text`. |
-| `streamOpenAICompat(url, apiKey, body, onChunk)` | OpenAI, Groq | SSE | Generic for both providers. Sends `{ ...body, stream: true }`. Parses `choices[0].delta.content`. Terminates on `[DONE]` line. |
-| `streamOllama(baseUrl, model, prompt, onChunk)` | Ollama | Newline-delimited JSON | Single-turn. POST to `{baseUrl}/api/generate`. Each line: `JSON.parse(line).response`. |
-| `streamAnthropic(apiKey, model, prompt, onChunk)` | Anthropic | SDK async iterator | Uses `new Anthropic({ apiKey, dangerouslyAllowBrowser: true })`. `max_tokens: 600`. Iterates `content_block_delta` events. |
-| `runStream(prompt, onChunk)` | All | — | Internal dispatcher. Reads `config.provider`, calls the correct streaming function. |
+The per-provider streaming functions that used to live here (`streamGemini`, `streamOpenAICompat`, `streamOllama`, `streamAnthropic` — including the `new Anthropic({ apiKey, dangerouslyAllowBrowser: true })` SDK call) are gone. All five providers' request/response translation, SSE/NDJSON parsing, retry, and timeout now live in [`@joka-7/modeldispatcher-browser-agent`](https://github.com/joka-7/ModelDispatcher/tree/main/clients/browser-agent), the shared core extracted from this file (and KanDOne/HighFive/StepByLearn, which had each independently built the same thing).
 
-All streaming functions accumulate a `full` string. `onChunk(full)` is called on every token with the complete text received so far.
+| Function | Signature | Behavior |
+|---|---|---|
+| `runStream(prompt, onChunk, signal)` | internal | Validates `config.provider` is known, then calls the shared package's `streamComplete(config, prompt, { onChunk, signal })`. |
+| `streamChat(messages, systemPrompt, onChunk, { signal })` | exported | Multi-turn chat. Rate-limits, normalizes `messages` via `buildApiMessages` if not already an array, validates provider/key, then calls `streamComplete(config, apiMessages, { systemInstruction: systemPrompt, onChunk, signal })`. |
+| `buildApiMessages(uiMessages, { appendSimBegin })` | exported | Delegates to the shared package's `buildMessages`, mapping this app's own `SIM_TRIGGER`/`appendSimBegin` (mock-interview simulation trigger) onto the shared package's generic `dropContent`/`forceTrailingFiller` options. |
+
+`onChunk` is still called on every token with the complete text accumulated so far — that contract is unchanged, it's just the shared package producing it now.
+
+On a failed `streamChat` call, `ChatModal` renders the shared package's `EXTERNAL_CHAT_PROVIDERS` (ChatGPT/Claude/Gemini/Groq) as direct links pre-filled with the failed message, plus a copy-to-clipboard fallback — a free escape hatch needing no API key.
 
 ### Exported AI Task Functions
 
@@ -540,10 +542,15 @@ npm run build
 
 **Key dependencies bundled:**
 - `react` 19.x, `react-dom`
-- `@anthropic-ai/sdk` (Anthropic SDK, browser-compatible with `dangerouslyAllowBrowser`)
+- `@joka-7/modeldispatcher-browser-agent` (shared multi-provider AI client — see §5)
 - `firebase` 12.x (modular SDK — only `auth` and `firestore` modules imported)
 - `i18next`, `react-i18next`
 - `lucide-react` (icon components, tree-shaken)
+
+`@anthropic-ai/sdk` is still listed in `package.json` but no longer imported
+anywhere (left as a follow-up cleanup after the migration to the shared
+package above) — it doesn't actually end up in the bundle since nothing
+references it.
 
 **Dev dependencies (not in bundle):** `tailwindcss`, `vite`, `eslint`, `vitest`, `@testing-library/*`
 
