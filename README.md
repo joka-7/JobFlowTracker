@@ -233,34 +233,44 @@ Once a provider is configured, open any company and click the **AI Assistant** b
 
 ## Project Structure
 
+<!-- BEGIN GENERATED TREE (depth=1 entries=all) -->
+```text
+jobflowtracker/
+├── .github/
+├── docs/
+├── e2e/             # Playwright end-to-end tests
+├── public/
+├── scripts/         # Bundle-size check + icon generation scripts
+├── src/             # App source — mode gate, per-mode UIs, shared services
+├── .gitignore
+├── .gitleaks.toml
+├── .markdownlint.json
+├── .npmrc
+├── .trivyignore
+├── CHANGELOG.md     # Changelog
+├── CLAUDE.md        # Claude Code Session Info
+├── CONTRIBUTING.md  # Contributing to JobFlowTracker
+├── LICENSE
+├── README.md        # JobFlowTracker
+├── SECURITY.md      # Security Policy
+├── eslint.config.js
+├── firestore.rules
+├── index.html
+├── package-lock.json
+├── package.json
+├── playwright.config.js
+├── postcss.config.js
+├── tailwind.config.js
+├── vercel.json
+└── vite.config.js
 ```
-src/
-├── App.jsx                  # Mode gate → ModeSelection, JobTrackerApp, or TasksApp
-├── JobTrackerApp.jsx        # Job seeker + recruiter UI (~1800 lines)
-├── TasksApp.jsx             # Task manager UI with step management
-├── statuses.js              # Status configs for all 3 modes, storage keys
-├── firebase.js              # Auth + mode-aware Firestore helpers
-├── i18n.js                  # react-i18next setup
-├── components/
-│   ├── ModeSelection.jsx    # First-launch 3-mode picker
-│   ├── ModeDropdown.jsx     # Header mode switcher
-│   ├── AIAssistant.jsx      # Floating AI panel (job seeker only)
-│   ├── Onboarding.jsx       # First-visit wizard (job seeker only)
-│   ├── SearchFilter.jsx     # Search box + multi-status filter pills (list view)
-│   ├── BulkActionsBar.jsx   # Sticky bar for bulk status/export/delete on selection
-│   └── ...
-├── hooks/                   # useCloudSync, useToast, useBackGestureGuard
-├── utils/                   # csv, saveFile, date, avatarColor, notes, labelColors, ...
-├── locales/                 # en.json, he.json, fr.json
-├── __tests__/               # Vitest unit + integration tests
-e2e/                         # Playwright end-to-end tests
-scripts/                     # check-bundle-size.mjs, generate-icons.py
-docs/
-├── HLD.md
-├── LLD.md
-└── screenshots/
-firestore.rules
-playwright.config.js
+<!-- END GENERATED TREE -->
+
+Full annotated tree, every file: [`docs/STRUCTURE.md`](docs/STRUCTURE.md). Generated —
+regenerate after adding/renaming a file with:
+```bash
+python <ogen-ai>/skills/repo_tree/gen_tree.py --project . --output docs/STRUCTURE.md
+python <ogen-ai>/skills/repo_tree/gen_tree.py --project . --output README.md --max-depth 1
 ```
 
 ---

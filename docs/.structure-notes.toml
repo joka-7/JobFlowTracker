@@ -1,0 +1,33 @@
+# Hand-written notes for docs/STRUCTURE.md's generated tree.
+# Carried forward from README.md's former hand-written "Project Structure"
+# section (verified against the real code) rather than lost when that
+# section was replaced by the generated, drift-checked tree below.
+
+[notes]
+"src" = "App source — mode gate, per-mode UIs, shared services"
+"src/App.jsx" = "Mode gate — lazy-loads JobTrackerApp or TasksApp so a user in one mode never ships the other's code"
+"src/JobTrackerApp.jsx" = "Job seeker + recruiter UI"
+"src/TasksApp.jsx" = "Task manager UI with step management"
+"src/statuses.js" = "Status configs for all 3 modes, storage keys"
+"src/firebase.js" = "Auth + mode-aware Firestore helpers"
+"src/i18n.js" = "react-i18next setup"
+"src/components" = "UI components, one file per component"
+"src/components/ModeSelection.jsx" = "First-launch 3-mode picker"
+"src/components/ModeDropdown.jsx" = "Header mode switcher"
+"src/components/AIAssistant.jsx" = "Floating AI panel (job seeker only)"
+"src/components/Onboarding.jsx" = "First-visit wizard (job seeker only)"
+"src/components/SearchFilter.jsx" = "Search box + multi-status filter pills (list view)"
+"src/components/BulkActionsBar.jsx" = "Sticky bar for bulk status/export/delete on selection"
+"src/hooks" = "Custom hooks: cloud sync, toast, back-gesture guard"
+"src/utils" = "Small focused utilities: CSV export, file save, date formatting, avatar colors, notes, label colors"
+"src/locales" = "i18n translation files: English, Hebrew, French"
+"src/__tests__" = "Vitest unit + integration tests"
+"src/services" = "Service-layer integrations"
+"src/data" = "Static/reference data"
+"src/assets" = "Static assets bundled by Vite"
+"e2e" = "Playwright end-to-end tests"
+"scripts" = "Bundle-size check + icon generation scripts"
+"docs/screenshots" = "Screenshots referenced from README.md"
+"docs/.structure-notes.toml" = "This file — notes for files that can't describe themselves"
+".github/ISSUE_TEMPLATE/bug_report.md" = "GitHub issue template: bug report"
+".github/ISSUE_TEMPLATE/feature_request.md" = "GitHub issue template: feature request"
