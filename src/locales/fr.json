@@ -55,6 +55,7 @@
     "uploadTooltip": "Charger un fichier de sauvegarde",
     "driveOn": "Synchronisé",
     "driveSyncing": "Synchronisation...",
+    "checkingSession": "Vérification…",
     "syncNow": "Synchroniser",
     "connectDrive": "Se connecter",
     "driveOnTooltip": "Synchronisation active — cliquer pour déconnecter",

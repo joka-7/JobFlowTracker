@@ -15,6 +15,7 @@ let loadAllItemsMock;
 
 vi.mock('../firebase', () => ({
   auth: {},
+  hasRestorableSession: vi.fn().mockResolvedValue(true),
   onAuthChange: (cb) => { cb(fakeUser); return () => {}; },
   completeRedirectSignIn: vi.fn().mockResolvedValue(null),
   signInWithGoogle: vi.fn(),
@@ -22,7 +23,7 @@ vi.mock('../firebase', () => ({
   loadAllItems: (...args) => loadAllItemsMock(...args),
   updateItem: vi.fn(),
   deleteItem: vi.fn(),
-  batchSaveItems: vi.fn(),
+  batchSaveItems: vi.fn().mockResolvedValue(undefined),
   loadUserProfile: vi.fn().mockResolvedValue({}),
   saveUserProfile: vi.fn(),
 }));
@@ -64,14 +65,29 @@ describe('Offline sync fallback (real JobTrackerApp auth effect)', () => {
     expect(screen.getByText('Offline Co')).toBeInTheDocument();
   });
 
-  it('replaces local data with cloud data when the fetch succeeds', async () => {
+  it('cloud wins for a company id that exists on both sides', async () => {
     seedJobSeekerApp([{ id: '1', name: 'Stale Local Co', role: 'Engineer', status: 'applied' }]);
-    loadAllItemsMock.mockResolvedValue([{ id: '2', name: 'Fresh Cloud Co', role: 'Designer', status: 'applied' }]);
+    loadAllItemsMock.mockResolvedValue([{ id: '1', name: 'Fresh Cloud Co', role: 'Designer', status: 'applied' }]);
 
     render(<App />);
 
     expect(await screen.findByText('Fresh Cloud Co')).toBeInTheDocument();
     expect(screen.queryByText('Stale Local Co')).not.toBeInTheDocument();
+  });
+
+  it('keeps a local-only company instead of discarding it — regression for the reconnect data-loss bug', async () => {
+    // Reported bug: the header can show "disconnected" for a beat before a
+    // returning session actually resolves (see useCloudSync's
+    // authResolved); a user who adds something in that window must not have
+    // it wiped out the instant the real cloud pull lands, just because its
+    // id isn't in that snapshot yet.
+    seedJobSeekerApp([{ id: '1', name: 'Made While Disconnected', role: 'Engineer', status: 'applied' }]);
+    loadAllItemsMock.mockResolvedValue([{ id: '2', name: 'Already Synced', role: 'Designer', status: 'applied' }]);
+
+    render(<App />);
+
+    expect(await screen.findByText('Already Synced')).toBeInTheDocument();
+    expect(screen.getByText('Made While Disconnected')).toBeInTheDocument();
   });
 
   it('does not crash and falls back to empty state on corrupted localStorage JSON', async () => {

@@ -45,6 +45,7 @@
     "uploadTooltip": "Load existing backup file",
     "driveOn": "Synced",
     "driveSyncing": "Syncing...",
+    "checkingSession": "Checking…",
     "syncNow": "Sync Now",
     "connectDrive": "Sign In",
     "driveOnTooltip": "Cloud sync on — click to disconnect",

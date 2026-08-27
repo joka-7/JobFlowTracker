@@ -43,6 +43,7 @@ import { pickAvatarColor, getInitials } from './utils/avatarColor';
 import { formatDate as formatDateShared } from './utils/date';
 import { appendNote } from './utils/notes';
 import { useCloudSync } from './hooks/useCloudSync';
+import { unionOnSignIn } from './utils/cloudSync';
 import { useToast } from './hooks/useToast';
 import { saveJsonFile, saveCsvFile } from './utils/saveFile';
 import { toCSV } from './utils/csv';
@@ -138,6 +139,8 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
       return [];
     } catch { return []; }
   });
+  const companiesRef = useRef(companies);
+  useEffect(() => { companiesRef.current = companies; }, [companies]);
 
   const [selectedId, setSelectedId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -211,10 +214,18 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
     } catch (e) { console.warn('LocalStorage error:', e); }
   }, [companies, mode]);
 
-  const { user, syncing, syncNow } = useCloudSync({
+  const { user, authResolved, syncing, syncNow } = useCloudSync({
     mode,
     sanitizeAndFilter: (data, m) => filterItemsForMode(sanitizeTrackerRecords(data, { mode: m }), m),
-    onData: setCompanies,
+    // Union-merge, not overwrite: a company typed locally since the last
+    // pull — including during the brief window before a returning session
+    // resolves (see useCloudSync's authResolved) — must survive a cloud pull
+    // that doesn't have it yet, not be silently discarded by it.
+    onData: (cloudCompanies, uid) => {
+      const { merged, pushToCloud } = unionOnSignIn(companiesRef.current, cloudCompanies);
+      setCompanies(merged);
+      if (pushToCloud) batchSaveItems(uid, mode, merged).catch(console.error);
+    },
     onSignedIn: (hasData) => showToast(hasData ? tMode('toast.driveConnectedWithData') : tMode('toast.driveConnectedEmpty')),
   });
 
@@ -1027,7 +1038,19 @@ Rules:
               <span className="shrink-0">{tMode('header.addCompany')}</span>
             </button>
 
-            {user ? (
+            {!authResolved ? (
+              // A restorable session was detected but Firebase hasn't
+              // confirmed it yet — show a neutral placeholder rather than
+              // "Connect Drive", which would wrongly invite the user to work
+              // as if signed out right before the real session resolves.
+              <span
+                className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-bold bg-white/10 border border-white/20 text-green-100/70 min-h-[44px]"
+                aria-live="polite"
+              >
+                <Cloud size={16} className="shrink-0 animate-pulse" />
+                <span className="hidden sm:inline shrink-0">{t('header.checkingSession', 'Checking…')}</span>
+              </span>
+            ) : user ? (
               <>
                 <button
                   onClick={handleSignOut}
