@@ -235,24 +235,29 @@ Once a provider is configured, open any company and click the **AI Assistant** b
 
 <!-- BEGIN GENERATED TREE (depth=1 entries=all) -->
 ```text
-jobflowtracker/
+JobFlowTracker/
 ├── .github/
 ├── docs/
 ├── e2e/             # Playwright end-to-end tests
 ├── public/
 ├── scripts/         # Bundle-size check + icon generation scripts
 ├── src/             # App source — mode gate, per-mode UIs, shared services
+├── .ai              # Ogen-ai submodule — the shared source of rules, skills and the ai-sync…
 ├── .gitignore
 ├── .gitleaks.toml
+├── .gitmodules
 ├── .markdownlint.json
 ├── .npmrc
 ├── .trivyignore
+├── AGENTS.md        # The compiled coding rules every AI assistant reads — generated, do not…
 ├── CHANGELOG.md     # Changelog
-├── CLAUDE.md        # Claude Code Session Info
+├── CLAUDE.md        # Claude Code's copy of AGENTS.md (generated)
 ├── CONTRIBUTING.md  # Contributing to JobFlowTracker
+├── GEMINI.md        # Gemini CLI's copy of AGENTS.md (generated)
 ├── LICENSE
 ├── README.md        # JobFlowTracker
 ├── SECURITY.md      # Security Policy
+├── ai-config.toml   # Which rule fragments and target tools ai-sync compiles for this repo
 ├── eslint.config.js
 ├── firestore.rules
 ├── index.html
@@ -269,8 +274,8 @@ jobflowtracker/
 Full annotated tree, every file: [`docs/STRUCTURE.md`](docs/STRUCTURE.md). Generated —
 regenerate after adding/renaming a file with:
 ```bash
-python <ogen-ai>/skills/repo_tree/gen_tree.py --project . --output docs/STRUCTURE.md
-python <ogen-ai>/skills/repo_tree/gen_tree.py --project . --output README.md --max-depth 1
+python .ai/skills/repo_tree/gen_tree.py --project . --output docs/STRUCTURE.md
+python .ai/skills/repo_tree/gen_tree.py --project . --output README.md --max-depth 1
 ```
 
 ---
