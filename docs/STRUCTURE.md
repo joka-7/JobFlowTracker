@@ -6,7 +6,7 @@ to refresh it, and never edit between the markers by hand.
 
 <!-- BEGIN GENERATED TREE (depth=all entries=all) -->
 ```text
-jobflowtracker/
+JobFlowTracker/
 ├── .github/
 │   ├── ISSUE_TEMPLATE/
 │   │   ├── bug_report.md         # GitHub issue template: bug report
@@ -15,6 +15,7 @@ jobflowtracker/
 │   ├── workflows/
 │   │   ├── ci.yml
 │   │   └── security.yml
+│   ├── copilot-instructions.md   # Copilot's copy of AGENTS.md (generated)
 │   ├── dependabot.yml
 │   └── pull_request_template.md  # Summary
 ├── docs/
@@ -162,17 +163,22 @@ jobflowtracker/
 │   ├── statuses.js               # Status configs for all 3 modes, storage keys
 │   ├── storageKeys.js
 │   └── usePwaInstall.js
+├── .ai                           # Ogen-ai submodule — the shared source of rules, skills and the ai-sync…
 ├── .gitignore
 ├── .gitleaks.toml
+├── .gitmodules
 ├── .markdownlint.json
 ├── .npmrc
 ├── .trivyignore
+├── AGENTS.md                     # The compiled coding rules every AI assistant reads — generated, do not…
 ├── CHANGELOG.md                  # Changelog
-├── CLAUDE.md                     # Claude Code Session Info
+├── CLAUDE.md                     # Claude Code's copy of AGENTS.md (generated)
 ├── CONTRIBUTING.md               # Contributing to JobFlowTracker
+├── GEMINI.md                     # Gemini CLI's copy of AGENTS.md (generated)
 ├── LICENSE
 ├── README.md                     # JobFlowTracker
 ├── SECURITY.md                   # Security Policy
+├── ai-config.toml                # Which rule fragments and target tools ai-sync compiles for this repo
 ├── eslint.config.js
 ├── firestore.rules
 ├── index.html
