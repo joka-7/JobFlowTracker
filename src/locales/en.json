@@ -304,7 +304,18 @@
     "tasksShortcutsSubtitle": "Work faster with shortcuts",
     "tasksShortcutN": "Add a new task",
     "tasksShortcutEsc": "Close task detail / cancel edit",
-    "tasksFinalTip": "You're all set! Start by adding your first task and breaking it into steps."
+    "tasksFinalTip": "You're all set! Start by adding your first task and breaking it into steps.",
+    "tasksFeaturePriority": "Priority ranking — what to do next",
+    "tasksFeatureType": "Group by type: fix, buy, call, and more",
+    "tasksFeatureRoutine": "Recurring routine tasks",
+    "tasksFeatureReminder": "Due-date reminders with snooze",
+    "tasksRoutinesTitle": "Routines & Reminders",
+    "tasksRoutinesSubtitle": "Repeat tasks and get notified",
+    "tasksRoutinesDesc": "Set an optional due time, turn tasks into routines, and get browser reminders before they are due. Snooze a reminder if you need a few more minutes.",
+    "tasksRoutinesDueTime": "Add a due time for finer scheduling",
+    "tasksRoutinesRepeat": "Daily, weekly, or monthly routines with an optional end date",
+    "tasksRoutinesNotify": "Reminders from 15 minutes to 1 day before due",
+    "tasksRoutinesSnoozeTip": "When a reminder appears, snooze it from the task detail or the prompt banner. Mark a routine done to schedule the next occurrence — or stop it with an end date."
   },
   "ai": {
     "title": "AI Assistant",

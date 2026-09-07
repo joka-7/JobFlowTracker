@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { X, Layout, List, Activity, BarChart2, Lightbulb, ChevronRight, ChevronLeft, Upload, Plus, CheckCircle2, Clock, Calendar, Cloud, Timer, Tag, Palette } from 'lucide-react';
+import { X, Layout, List, Activity, BarChart2, Lightbulb, ChevronRight, ChevronLeft, Upload, Plus, CheckCircle2, Clock, Cloud, Timer, Tag, Palette, Zap, Repeat, Bell } from 'lucide-react';
 import AppBrandMark from './AppBrandMark';
 import { STORAGE_KEYS } from '../storageKeys.js';
 import { useModalA11y } from '../hooks/useModalA11y';
@@ -31,6 +31,11 @@ const TASKS_STEPS = [
     defaults: { title: 'Steps & Due Dates', subtitle: 'Break tasks into steps and set deadlines' },
   },
   {
+    icon: '🔁',
+    titleKey: 'tasksRoutines',
+    defaults: { title: 'Routines & Reminders', subtitle: 'Repeat tasks and get notified' },
+  },
+  {
     icon: '🤖',
     titleKey: 'tasksAI',
     defaults: { title: 'AI Coach', subtitle: 'Get help planning and breaking down tasks' },
@@ -52,10 +57,12 @@ const tasksStepContent = {
         {[
           { icon: <Layout size={20} className="text-emerald-500" />, text: t('onboarding.tasksFeatureBoard', 'Kanban board with drag & drop') },
           { icon: <CheckCircle2 size={20} className="text-blue-500" />, text: t('onboarding.tasksFeatureSteps', 'Steps with status tracking') },
-          { icon: <Calendar size={20} className="text-orange-500" />, text: t('onboarding.tasksFeatureTimeline', 'Timeline & due dates') },
+          { icon: <Zap size={20} className="text-amber-500" />, text: t('onboarding.tasksFeaturePriority', 'Priority ranking — what to do next') },
+          { icon: <Tag size={20} className="text-orange-500" />, text: t('onboarding.tasksFeatureType', 'Group by type: fix, buy, call, and more') },
+          { icon: <Repeat size={20} className="text-violet-500" />, text: t('onboarding.tasksFeatureRoutine', 'Recurring routine tasks') },
+          { icon: <Bell size={20} className="text-amber-600" />, text: t('onboarding.tasksFeatureReminder', 'Due-date reminders with snooze') },
           { icon: <BarChart2 size={20} className="text-purple-500" />, text: t('onboarding.tasksFeatureStats', 'Progress statistics') },
-          { icon: <Tag size={20} className="text-pink-500" />, text: t('onboarding.tasksFeatureLabels', 'Custom labels with your own colors') },
-          { icon: <Timer size={20} className="text-cyan-500" />, text: t('onboarding.tasksFeatureDuration', 'Track estimated duration') },
+          { icon: <Palette size={20} className="text-pink-500" />, text: t('onboarding.tasksFeatureLabels', 'Custom labels with your own colors') },
         ].map(({ icon, text }, i) => (
           <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
             {icon}
@@ -125,6 +132,29 @@ const tasksStepContent = {
       <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg border border-blue-100">
         <Lightbulb size={16} className="text-blue-500 shrink-0 mt-0.5" />
         <p className="text-sm text-blue-700">{t('onboarding.tasksStepsTip', 'If a step\'s due date is later than the task due date, you\'ll get a warning on the Timeline.')}</p>
+      </div>
+    </div>
+  ),
+  tasksRoutines: (t) => (
+    <div className="space-y-4">
+      <p className="text-gray-600 leading-relaxed">
+        {t('onboarding.tasksRoutinesDesc', 'Set an optional due time, turn tasks into routines, and get browser reminders before they are due. Snooze a reminder if you need a few more minutes.')}
+      </p>
+      <div className="space-y-2">
+        {[
+          { icon: <Clock size={16} className="text-blue-500" />, text: t('onboarding.tasksRoutinesDueTime', 'Add a due time for finer scheduling'), bg: 'bg-blue-50 border-blue-100' },
+          { icon: <Repeat size={16} className="text-violet-500" />, text: t('onboarding.tasksRoutinesRepeat', 'Daily, weekly, or monthly routines with an optional end date'), bg: 'bg-violet-50 border-violet-100' },
+          { icon: <Bell size={16} className="text-amber-500" />, text: t('onboarding.tasksRoutinesNotify', 'Reminders from 15 minutes to 1 day before due'), bg: 'bg-amber-50 border-amber-100' },
+        ].map(({ icon, text, bg }, i) => (
+          <div key={i} className={`flex items-center gap-3 p-2.5 rounded-lg border ${bg}`}>
+            {icon}
+            <span className="text-sm text-gray-700">{text}</span>
+          </div>
+        ))}
+      </div>
+      <div className="flex items-start gap-2 p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+        <Lightbulb size={16} className="text-emerald-500 shrink-0 mt-0.5" />
+        <p className="text-sm text-emerald-700">{t('onboarding.tasksRoutinesSnoozeTip', 'When a reminder appears, snooze it from the task detail or the prompt banner. Mark a routine done to schedule the next occurrence — or stop it with an end date.')}</p>
       </div>
     </div>
   ),
@@ -401,8 +431,13 @@ export default function Onboarding({ t, i18n, isRTL, onClose, openNewForm, trigg
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div ref={dialogRef} role="dialog" aria-modal="true" className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden">
-        <div className={`bg-gradient-to-r ${isTasks ? 'from-green-600 to-emerald-700' : 'from-blue-600 to-indigo-700'} p-6 text-white`}>
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden"
+      >
+        <div className={`bg-gradient-to-r ${isTasks ? 'from-green-600 to-emerald-700' : 'from-blue-600 to-indigo-700'} p-6 text-white shrink-0`}>
           <div className="flex justify-between items-start mb-4">
             <div className="flex gap-1.5">
               {steps.map((_, i) => (
@@ -443,11 +478,11 @@ export default function Onboarding({ t, i18n, isRTL, onClose, openNewForm, trigg
           <p className="text-blue-200 text-sm mt-1">{t(`onboarding.${current.titleKey}Subtitle`, current.defaults.subtitle)}</p>
         </div>
 
-        <div className="p-6">
+        <div className="p-6 overflow-y-auto flex-1 min-h-0">
           {content}
         </div>
 
-        <div className={`px-6 pb-6 gap-2 items-center ${isFirst ? 'grid grid-cols-3' : 'flex justify-between'}`}>
+        <div className={`px-6 pb-6 pt-4 gap-2 items-center shrink-0 border-t border-gray-100 ${isFirst ? 'grid grid-cols-3' : 'flex justify-between'}`}>
           <button
             onClick={() => setStep(s => s - 1)}
             disabled={isFirst}

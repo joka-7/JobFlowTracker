@@ -113,6 +113,24 @@ that had been silently missed rather than deliberately deferred.
   --omit=dev` since it only affected a devDependency's build toolchain,
   is now caught and closed via a version override rather than a breaking
   `vite-plugin-pwa` upgrade.
+- The onboarding modal (both job seeker and Task Manager) had no scroll
+  container: on a short viewport, taller step content pushed the
+  Next/Skip/Get Started buttons below the visible area with no way to
+  reach them. The header and footer are now fixed and only the middle
+  content scrolls, matching the pattern already used by
+  `APIKeySettings`/`TemplateLibrary`.
+- The task form showed both a legacy free-typed "Duration" field and the
+  new quantized "Effort" picker for the same "how much work" concept,
+  and a separately-positioned "Due Time" field disconnected from "Due
+  Date" — all three confusingly overlapping. "Duration" is removed from
+  the main task form (Effort is now the only estimate shown on
+  cards/list/detail, falling back to any pre-existing `duration` value
+  for older tasks) and "Due Time" now sits directly next to "Due Date".
+  The CSV export's Duration column is replaced with Type, Due Time, and
+  an Effort column with the same fallback.
+- The Task Manager onboarding tutorial predated Priority, Type, Effort,
+  Routines, and Reminders and never mentioned them; the welcome screen's
+  feature grid and a new "Routines & Reminders" step now do.
 
 ## [1.0.0] - 2026-07-26
 

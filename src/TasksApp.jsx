@@ -479,8 +479,14 @@ export default function TasksApp({ onModeChange }) {
       { key: 'name', label: tt('form.taskName', 'Task Name') },
       { key: 'status', label: tt('form.status', 'Status'), get: task => tt(`status.${task.status}`, task.status) },
       { key: 'priority', label: tt('form.priority', 'Priority') },
+      { key: 'type', label: tt('form.type', 'Type'), get: task => task.type ? tt(`type.${task.type}`, task.type) : '' },
       { key: 'dueDate', label: tt('form.dueDate', 'Due Date') },
-      { key: 'duration', label: tt('form.duration', 'Duration'), get: task => formatDuration(task.duration, tt) || '' },
+      { key: 'dueTime', label: tt('form.dueTime', 'Due Time') },
+      {
+        key: 'effort',
+        label: tt('form.effort', 'Effort'),
+        get: task => formatDuration(task.effort?.value ? task.effort : task.duration, tt) || '',
+      },
       { key: 'notes', label: tt('form.notes', 'Notes') },
     ];
     const saved = await saveCsvFile(`tasks-export-${Date.now()}.csv`, toCSV(tasks, columns));
@@ -711,12 +717,6 @@ Rules:
             {task.reminder?.enabled && (
               <Bell size={10} className="text-amber-500" aria-label={tt('reminder.badge', 'Reminder')} />
             )}
-          </div>
-        )}
-        {formatDuration(task.duration, tt) && (
-          <div className="flex items-center gap-1 text-xs text-gray-400 mt-1">
-            <Timer size={10} />
-            {formatDuration(task.duration, tt)}
           </div>
         )}
         {(task.labelIds || []).length > 0 && (
@@ -1112,33 +1112,16 @@ Rules:
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                  {tt('form.duration', 'Duration')}
+                <label htmlFor="task-form-due-time" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                  {tt('form.dueTime', 'Due Time')}
                 </label>
-                <div className="flex gap-1.5">
-                  <input
-                    type="number"
-                    min="0"
-                    value={safeStr(formData.duration?.value)}
-                    onChange={e => setFormData(prev => ({
-                      ...prev, duration: { value: e.target.value, unit: prev.duration?.unit || 'hour' },
-                    }))}
-                    placeholder={tt('form.durationValuePlaceholder', 'Duration')}
-                    className="w-1/2 border border-gray-200 rounded-xl px-3 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-400 text-sm"
-                  />
-                  <select
-                    aria-label={tt('form.durationUnit', 'Duration unit')}
-                    value={formData.duration?.unit || 'hour'}
-                    onChange={e => setFormData(prev => ({
-                      ...prev, duration: { value: prev.duration?.value || '', unit: e.target.value },
-                    }))}
-                    className="w-1/2 border border-gray-200 rounded-xl px-2 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-400 text-sm"
-                  >
-                    {DURATION_UNITS.map(u => (
-                      <option key={u} value={u}>{tt(`duration.${u}`, u)}</option>
-                    ))}
-                  </select>
-                </div>
+                <input
+                  id="task-form-due-time"
+                  type="time"
+                  value={formData.dueTime || ''}
+                  onChange={e => setFormData(prev => ({ ...prev, dueTime: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-400 text-sm"
+                />
               </div>
             </div>
 
@@ -1331,12 +1314,6 @@ Rules:
                 <span className="flex items-center gap-1 text-xs text-violet-500">
                   <Repeat size={11} />
                   {tt('routine.until', 'Until')} {formatDate(task.routine.endDate, lang)}
-                </span>
-              )}
-              {formatDuration(task.duration, tt) && (
-                <span className="flex items-center gap-1 text-xs text-gray-500">
-                  <Timer size={11} />
-                  {formatDuration(task.duration, tt)}
                 </span>
               )}
             </div>
