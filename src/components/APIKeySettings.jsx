@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { X, Eye, EyeOff, ExternalLink, CheckCircle, Trash2, Settings, Briefcase, Users, ClipboardList } from 'lucide-react';
 import { loadAIConfigFromStorage, isAIReady, PROVIDERS } from '../services/aiAssistant';
 import { STORAGE_KEYS, APP_MODES, getEnabledModes } from '../storageKeys';
+import { useModalA11y } from '../hooks/useModalA11y';
 
 const PROVIDER_ORDER = ['gemini', 'groq', 'ollama', 'anthropic', 'openai'];
 
@@ -41,6 +42,10 @@ export default function APIKeySettings({ t, onClose, currentMode, onModeChange }
   const pInfo = PROVIDERS[provider];
   const isOllama = provider === 'ollama';
   const aiReady = isOllama || !!apiKey.trim();
+
+  const dialogRef = useRef(null);
+  const handleClose = useCallback(() => onClose(), [onClose]);
+  useModalA11y(dialogRef, handleClose);
 
   const handleProviderChange = (p) => {
     setProvider(p);
@@ -82,7 +87,12 @@ export default function APIKeySettings({ t, onClose, currentMode, onModeChange }
 
   return (
     <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col overflow-hidden">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col overflow-hidden"
+      >
         <div className="bg-gradient-to-r from-purple-600 to-indigo-700 p-5 text-white flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-lg">
             <Settings size={20} /> {t('settings.title', 'Settings')}

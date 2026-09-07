@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { X, Layout, List, Activity, BarChart2, Lightbulb, ChevronRight, ChevronLeft, Upload, Plus, CheckCircle2, Clock, Calendar, Cloud, Timer, Tag, Palette } from 'lucide-react';
 import AppBrandMark from './AppBrandMark';
 import { STORAGE_KEYS } from '../storageKeys.js';
+import { useModalA11y } from '../hooks/useModalA11y';
 
 const CloudSyncNote = (t) => (
   <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100 mt-4 text-left">
@@ -381,10 +382,10 @@ export default function Onboarding({ t, i18n, isRTL, onClose, openNewForm, trigg
 
   const storageKey = isTasks ? STORAGE_KEYS.tasksWelcome : isRecruiter ? STORAGE_KEYS.recruiterOnboarding : STORAGE_KEYS.jobSeekerOnboarding;
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     localStorage.setItem(storageKey, '1');
     onClose();
-  };
+  }, [storageKey, onClose]);
 
   const handleLangChange = (lang) => {
     i18n.changeLanguage(lang);
@@ -395,9 +396,12 @@ export default function Onboarding({ t, i18n, isRTL, onClose, openNewForm, trigg
   const contentFn = content_map[current.titleKey];
   const content = contentFn ? contentFn(t, openNewForm, triggerFileInput, openAISettings, isRecruiter) : null;
 
+  const dialogRef = useRef(null);
+  useModalA11y(dialogRef, handleClose);
+
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden">
+      <div ref={dialogRef} role="dialog" aria-modal="true" className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden">
         <div className={`bg-gradient-to-r ${isTasks ? 'from-green-600 to-emerald-700' : 'from-blue-600 to-indigo-700'} p-6 text-white`}>
           <div className="flex justify-between items-start mb-4">
             <div className="flex gap-1.5">

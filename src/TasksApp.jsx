@@ -5,7 +5,7 @@ import {
   Trash2, Edit2, ArrowLeft, ArrowRight, CheckCircle2, CheckCircle, Circle,
   Clock, AlertCircle, Calendar, Cloud, CloudOff, RefreshCw,
   ClipboardList, X, GripVertical, MoreVertical, Settings, Smartphone, Sparkles,
-  Timer,
+  Timer, Repeat, Bell, Zap, Tag,
 } from 'lucide-react';
 import { initAI, getGoalsTasksSystemPrompt } from './services/aiAssistant';
 import { TASK_TEMPLATES } from './data/taskTemplates';
@@ -28,7 +28,7 @@ import { usePwaInstall } from './usePwaInstall';
 import AppBrandMark from './components/AppBrandMark';
 import Onboarding from './components/Onboarding';
 import UpdateBanner from './components/UpdateBanner';
-import { STORAGE_KEYS } from './storageKeys.js';
+import { STORAGE_KEYS, TASKS_LABELS_KEY, TASKS_EFFORT_TIERS_KEY } from './storageKeys.js';
 import {
   sanitizeTaskRecords, parseTaskStoragePayload, generateId,
   parseTaskLabelsStoragePayload, safeStr,
@@ -46,9 +46,27 @@ import CardColorPicker from './components/CardColorPicker';
 import KanbanDndBoard, { SortableKanbanCard } from './components/KanbanDndBoard';
 import { itemsInColumn } from './utils/boardOrder';
 import { LABEL_COLOR_PALETTE, readableTextColor } from './utils/labelColors';
-
-const TASKS_LABELS_KEY = 'tasksLabelsV1';
-const DURATION_UNITS = ['minute', 'hour', 'day', 'month'];
+import RoutineReminderFields from './components/RoutineReminderFields';
+import EffortPicker, { EffortChip } from './components/EffortPicker';
+import PriorityBadge from './components/PriorityBadge';
+import TypeBadge from './components/TypeBadge';
+import TypePicker from './components/TypePicker';
+import PriorityView from './components/PriorityView';
+import TypeView from './components/TypeView';
+import {
+  scoreTask, getBandStyle, IMPACT_LEVELS, URGENCY_CHOICES, urgencyToDueDate,
+} from './utils/taskPriority';
+import { parseEffortTiersPayload, sanitizeEffortTiers } from './utils/effortScale';
+import { TASK_TYPES } from './utils/taskTypes';
+import { applyTaskStatusChange } from './utils/recurrence';
+import {
+  buildReminderKey, formatDueDateTime, requestReminderPermission, shouldNotifyTask,
+  snoozeTaskReminder, isReminderSnoozed, SNOOZE_MINUTES,
+} from './utils/reminders';
+import {
+  makeInitialDuration, makeInitialTask, getProgress, getNextPendingStep,
+  isTaskOverdue, mergeTaskIntoList, formatDuration, cycleStepStatus, DURATION_UNITS,
+} from './utils/taskHelpers';
 
 const MODE = 'tasks';
 
@@ -63,47 +81,6 @@ const STEP_STATUS_CONFIG = {
   in_progress: { icon: Clock, color: 'text-blue-500', bg: 'bg-blue-50', label: 'in_progress' },
   done: { icon: CheckCircle2, color: 'text-green-500', bg: 'bg-green-50', label: 'done' },
   blocked: { icon: AlertCircle, color: 'text-red-500', bg: 'bg-red-50', label: 'blocked' },
-};
-
-const STEP_STATUS_CYCLE = ['todo', 'in_progress', 'done', 'blocked'];
-
-const cycleStepStatus = (current) => {
-  const idx = STEP_STATUS_CYCLE.indexOf(current);
-  return STEP_STATUS_CYCLE[(idx + 1) % STEP_STATUS_CYCLE.length];
-};
-
-const makeInitialDuration = () => ({ value: '', unit: 'hour' });
-
-const makeInitialTask = () => ({
-  name: '',
-  description: '',
-  status: 'active',
-  priority: 'medium',
-  dueDate: '',
-  duration: makeInitialDuration(),
-  labelIds: [],
-  cardColor: '',
-  steps: [],
-  notes: '',
-});
-
-const getProgress = (task) => {
-  const steps = Array.isArray(task.steps) ? task.steps : [];
-  if (steps.length === 0) return null;
-  const done = steps.filter(s => s.status === 'done').length;
-  return { done, total: steps.length };
-};
-
-const getNextPendingStep = (task) => {
-  const steps = Array.isArray(task.steps) ? task.steps : [];
-  return steps.find(s => s.status !== 'done' && s.status !== 'blocked') || null;
-};
-
-const formatDuration = (duration, tt) => {
-  const value = safeStr(duration?.value).trim();
-  if (!value) return null;
-  const unit = DURATION_UNITS.includes(duration?.unit) ? duration.unit : 'hour';
-  return `${value} ${tt(`duration.${unit}`, unit)}`;
 };
 
 export default function TasksApp({ onModeChange }) {
@@ -123,6 +100,11 @@ export default function TasksApp({ onModeChange }) {
   const [labels, setLabels] = useState(
     () => parseTaskLabelsStoragePayload(localStorage.getItem(TASKS_LABELS_KEY)),
   );
+  // Where small/medium/large fall on the effort ladder — a local preference,
+  // so it is not synced to Firestore alongside the tasks themselves.
+  const [effortTiers, setEffortTiers] = useState(
+    () => parseEffortTiersPayload(localStorage.getItem(TASKS_EFFORT_TIERS_KEY)),
+  );
 
   const [selectedId, setSelectedId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -131,6 +113,8 @@ export default function TasksApp({ onModeChange }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [labelFilter, setLabelFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [reminderPrompt, setReminderPrompt] = useState(null);
   const { toastMessage, showToast } = useToast();
   const [isSaved, setIsSaved] = useState(true);
   const [newStepTitle, setNewStepTitle] = useState('');
@@ -162,6 +146,14 @@ export default function TasksApp({ onModeChange }) {
   useEffect(() => {
     try { localStorage.setItem(TASKS_LABELS_KEY, JSON.stringify(labels)); } catch { /* ignore */ }
   }, [labels]);
+
+  useEffect(() => {
+    try { localStorage.setItem(TASKS_EFFORT_TIERS_KEY, JSON.stringify(effortTiers)); } catch { /* ignore */ }
+  }, [effortTiers]);
+
+  const handleEffortTiersChange = useCallback((next) => {
+    setEffortTiers(sanitizeEffortTiers(next));
+  }, []);
 
   useEffect(() => {
     const provider = localStorage.getItem('aiProvider') || 'gemini';
@@ -196,10 +188,7 @@ export default function TasksApp({ onModeChange }) {
   }, [user]);
 
   const saveTask = useCallback(async (task) => {
-    setTasks(prev => {
-      const exists = prev.find(t => t.id === task.id);
-      return exists ? prev.map(t => t.id === task.id ? task : t) : [task, ...prev];
-    });
+    setTasks(prev => mergeTaskIntoList(prev, task));
     if (user) {
       try { await updateItem(user.uid, MODE, task); } catch { /* ignore */ }
     }
@@ -211,6 +200,68 @@ export default function TasksApp({ onModeChange }) {
       try { await deleteItem(user.uid, MODE, id); } catch { /* ignore */ }
     }
   }, [user]);
+
+  const handleReminderEnable = useCallback(async () => {
+    const result = await requestReminderPermission();
+    if (result === 'denied') {
+      alert(tt('reminder.permissionDenied', 'Enable notifications in your browser settings to use reminders.'));
+    }
+  }, [tt]);
+
+  const applyTaskUpdate = useCallback(async (updated) => {
+    setTasks(prev => prev.map(t => (t.id === updated.id ? updated : t)));
+    if (user) {
+      try { await updateItem(user.uid, MODE, updated); } catch { /* ignore */ }
+    }
+  }, [user]);
+
+  const handleSnoozeReminder = useCallback(async (taskId, minutes) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    const updated = snoozeTaskReminder(task, minutes);
+    await applyTaskUpdate(updated);
+    setReminderPrompt(null);
+    showToast(tt('reminder.snoozed', 'Reminder snoozed.'));
+  }, [tasks, applyTaskUpdate, showToast, tt]);
+
+  // Side effects (notifications, prompt, Firestore writes) run here, outside
+  // any setState updater — updaters must stay pure since React may invoke
+  // them more than once per commit.
+  useEffect(() => {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return undefined;
+    const runReminders = () => {
+      const pending = tasksRef.current.filter(shouldNotifyTask);
+      if (pending.length === 0) return;
+      const pendingIds = new Set(pending.map(p => p.id));
+
+      const first = pending[0];
+      setReminderPrompt({ taskId: first.id, name: first.name || tt('reminder.defaultTitle', 'Task reminder') });
+      pending.forEach(task => {
+        try {
+          new Notification(task.name || tt('reminder.defaultTitle', 'Task reminder'), {
+            body: formatDueDateTime(task.dueDate, task.dueTime, lang, formatDate)
+              || tt('reminder.body', 'Your task is coming up.'),
+            tag: `tasks-reminder-${task.id}-${buildReminderKey(task)}`,
+          });
+        } catch { /* ignore */ }
+      });
+
+      setTasks(prev => prev.map(task => (
+        pendingIds.has(task.id)
+          ? { ...task, lastReminderKey: buildReminderKey(task) }
+          : task
+      )));
+
+      if (user) {
+        pending.forEach(task => {
+          updateItem(user.uid, MODE, { ...task, lastReminderKey: buildReminderKey(task) }).catch(() => {});
+        });
+      }
+    };
+    runReminders();
+    const timer = setInterval(runReminders, 30_000);
+    return () => clearInterval(timer);
+  }, [lang, tt, user]);
 
   const openNewForm = useCallback(() => {
     setFormData(makeInitialTask());
@@ -283,11 +334,14 @@ export default function TasksApp({ onModeChange }) {
     }
     isSavingRef.current = true;
     try {
-      const task = {
+      const rawTask = {
         ...formData,
         id: formData.id || generateId(),
         name: safeStr(formData.name).trim(),
       };
+      const task = rawTask.status === 'completed'
+        ? applyTaskStatusChange(rawTask, 'completed')
+        : rawTask;
       await saveTask(task);
       setSelectedId(task.id);
       setIsEditing(false);
@@ -399,10 +453,19 @@ export default function TasksApp({ onModeChange }) {
   }, []);
 
   const handleBoardReorder = useCallback(({ items: nextItems, changed }) => {
-    setTasks(nextItems);
+    // A drag into the completed column advances a routine task to its next
+    // due date instead of just marking it done, same as completing it from
+    // the edit form.
+    const advanced = changed.map(t => (
+      t.status === 'completed' ? applyTaskStatusChange(t, 'completed') : t
+    ));
+    const finalItems = advanced.length
+      ? nextItems.map(t => advanced.find(a => a.id === t.id) || t)
+      : nextItems;
+    setTasks(finalItems);
     showToast(tt('toast.saved', 'Saved!'));
-    if (user && changed.length) {
-      batchSaveItems(user.uid, MODE, changed).catch(() => {});
+    if (user && advanced.length) {
+      batchSaveItems(user.uid, MODE, advanced).catch(() => {});
     }
   }, [user, showToast, tt]);
 
@@ -491,6 +554,9 @@ Rules:
         return taskLabels.includes(labelFilter) || stepLabels.includes(labelFilter);
       });
     }
+    if (typeFilter !== 'all') {
+      result = result.filter(t => (typeFilter === 'untyped' ? !t.type : t.type === typeFilter));
+    }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(t =>
@@ -499,7 +565,7 @@ Rules:
       );
     }
     return result;
-  }, [tasks, statusFilter, labelFilter, searchQuery]);
+  }, [tasks, statusFilter, labelFilter, typeFilter, searchQuery]);
 
   const stats = useMemo(() => {
     const total = tasks.length;
@@ -612,21 +678,39 @@ Rules:
 
   const renderTaskCard = (task, { overlay } = {}) => {
     const next = getNextPendingStep(task);
+    const overdue = isTaskOverdue(task);
+    const priority = scoreTask(task, { tiers: effortTiers });
     const body = (
       <>
         <div className="flex items-start justify-between gap-2 mb-1">
           <p className="font-semibold text-gray-800 text-xs sm:text-sm leading-snug flex-1">{safeStr(task.name)}</p>
           <GripVertical size={14} className="text-gray-300 shrink-0 mt-0.5 group-hover:text-gray-400 hidden sm:block" />
         </div>
-        {task.priority && (
-          <span className={`inline-block text-xs px-1.5 py-0.5 rounded border font-medium ${PRIORITY_COLORS[task.priority]}`}>
-            {t(`priority.${task.priority}`, task.priority)}
-          </span>
-        )}
+        <div className="flex flex-wrap items-center gap-1">
+          <PriorityBadge priority={priority} tt={tt} />
+          <EffortChip effort={task.effort?.value ? task.effort : task.duration} tt={tt} tiers={effortTiers} />
+          <TypeBadge type={task.type} tt={tt} />
+          {task.priority && (
+            <span className={`inline-block text-xs px-1.5 py-0.5 rounded border font-medium ${PRIORITY_COLORS[task.priority]}`}>
+              {t(`priority.${task.priority}`, task.priority)}
+            </span>
+          )}
+        </div>
         {task.dueDate && (
-          <div className="flex items-center gap-1 text-xs text-gray-400 mt-1">
-            <Calendar size={10} />
-            {formatDate(task.dueDate, lang)}
+          <div className={`flex items-center gap-1 text-xs mt-1 ${overdue ? 'text-red-600 font-semibold' : 'text-gray-400'}`}>
+            {overdue ? <AlertCircle size={10} /> : <Calendar size={10} />}
+            {formatDueDateTime(task.dueDate, task.dueTime, lang, formatDate)}
+            {overdue && <span>· {tt('overdue', 'Overdue')}</span>}
+          </div>
+        )}
+        {(task.routine?.enabled || task.reminder?.enabled) && (
+          <div className="flex items-center gap-2 mt-1">
+            {task.routine?.enabled && (
+              <Repeat size={10} className="text-violet-500" aria-label={tt('routine.badge', 'Routine')} />
+            )}
+            {task.reminder?.enabled && (
+              <Bell size={10} className="text-amber-500" aria-label={tt('reminder.badge', 'Reminder')} />
+            )}
           </div>
         )}
         {formatDuration(task.duration, tt) && (
@@ -649,7 +733,9 @@ Rules:
         )}
       </>
     );
-    const cardClass = `${task.cardColor ? '' : 'bg-white'} border border-gray-200 rounded-xl p-2.5 sm:p-3 cursor-grab active:cursor-grabbing hover:shadow-md hover:border-emerald-300 active:bg-emerald-50/50 transition-all group touch-manipulation`;
+    const cardClass = `${task.cardColor ? '' : 'bg-white'} border rounded-xl p-2.5 sm:p-3 cursor-grab active:cursor-grabbing hover:shadow-md hover:border-emerald-300 active:bg-emerald-50/50 transition-all group touch-manipulation ${
+      isRTL ? 'border-r-4' : 'border-l-4'
+    } ${getBandStyle(priority.band).stripe} ${overdue ? 'border-red-300' : 'border-gray-200'}`;
     const cardStyle = task.cardColor ? { backgroundColor: task.cardColor } : undefined;
     if (overlay) {
       return (
@@ -936,6 +1022,82 @@ Rules:
               </div>
             </div>
 
+            <TypePicker
+              label={tt('form.type', 'Type')}
+              value={formData.type}
+              onChange={next => setFormData(prev => ({ ...prev, type: next }))}
+              tt={tt}
+            />
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="task-form-impact" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                  {tt('form.impact', 'Impact')}
+                </label>
+                <select
+                  id="task-form-impact"
+                  value={formData.impact || 'medium'}
+                  onChange={e => setFormData(prev => ({ ...prev, impact: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-400 text-sm"
+                >
+                  {IMPACT_LEVELS.map(level => (
+                    <option key={level} value={level}>{tt(`impact.${level}`, level)}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-end">
+                <p className="text-xs text-gray-400 pb-2.5">
+                  {tt('form.impactHint', 'How much does finishing this actually move things?')}
+                </p>
+              </div>
+            </div>
+
+            <EffortPicker
+              label={tt('form.effort', 'Effort')}
+              value={formData.effort}
+              onChange={next => setFormData(prev => ({ ...prev, effort: next }))}
+              tiers={effortTiers}
+              tt={tt}
+              noneLabel={tt('effort.none', 'No estimate')}
+            />
+
+            <div>
+              <span className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                {tt('form.when', 'When')}
+              </span>
+              <div className="flex flex-wrap gap-1.5" role="group" aria-label={tt('form.when', 'When')}>
+                {URGENCY_CHOICES.map(choice => {
+                  const selected = formData.urgency === choice;
+                  return (
+                    <button
+                      key={choice}
+                      type="button"
+                      aria-pressed={selected}
+                      onClick={() => setFormData(prev => {
+                        // Toggling off clears only the urgency; the date the
+                        // user can see stays put rather than vanishing on them.
+                        if (prev.urgency === choice) return { ...prev, urgency: '' };
+                        const due = urgencyToDueDate(choice);
+                        return due
+                          ? { ...prev, urgency: choice, dueDate: due.dueDate, dueTime: due.dueTime || prev.dueTime }
+                          : { ...prev, urgency: choice };
+                      })}
+                      className={`text-xs px-2.5 py-1.5 rounded-full border font-medium transition-colors min-h-[34px] ${
+                        selected
+                          ? 'bg-emerald-600 text-white border-emerald-600'
+                          : 'bg-white text-gray-600 border-gray-200 hover:border-emerald-400'
+                      }`}
+                    >
+                      {tt(`urgency.${choice}`, choice)}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-gray-400 mt-1">
+                {tt('form.whenHint', 'Sets the due date below. You can still edit it by hand.')}
+              </p>
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label htmlFor="task-form-due-date" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
@@ -979,6 +1141,13 @@ Rules:
                 </div>
               </div>
             </div>
+
+            <RoutineReminderFields
+              formData={formData}
+              setFormData={setFormData}
+              tt={tt}
+              onReminderEnable={handleReminderEnable}
+            />
 
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
@@ -1097,6 +1266,7 @@ Rules:
     const steps = Array.isArray(task.steps) ? task.steps : [];
     const prog = getProgress(task);
     const statusDef = STATUSES_TASKS.find(s => s.id === task.status);
+    const overdue = isTaskOverdue(task);
 
     return (
       <div className="flex-1 overflow-y-auto p-3 sm:p-5 custom-scrollbar">
@@ -1114,10 +1284,53 @@ Rules:
                   {t(`priority.${task.priority}`, task.priority)}
                 </span>
               )}
+              <TypeBadge type={task.type} tt={tt} />
+              {(() => {
+                const priority = scoreTask(task, { tiers: effortTiers });
+                return (
+                  <>
+                    <PriorityBadge priority={priority} tt={tt} />
+                    <span className="text-xs px-2 py-0.5 rounded-full border border-gray-200 text-gray-500">
+                      {tt('form.impact', 'Impact')}: {tt(`impact.${priority.impact}`, priority.impact)}
+                    </span>
+                    <EffortChip
+                      effort={task.effort?.value ? task.effort : task.duration}
+                      tt={tt}
+                      tiers={effortTiers}
+                    />
+                    {priority.urgency && (
+                      <span className="text-xs px-2 py-0.5 rounded-full border border-gray-200 text-gray-500">
+                        {tt(`urgency.${priority.urgency}`, priority.urgency)}
+                      </span>
+                    )}
+                  </>
+                );
+              })()}
               {task.dueDate && (
-                <span className="flex items-center gap-1 text-xs text-gray-500">
-                  <Calendar size={11} />
-                  {formatDate(task.dueDate, lang)}
+                <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${overdue ? 'text-red-700 bg-red-50 font-bold' : 'text-gray-500'}`}>
+                  {overdue ? <AlertCircle size={11} /> : <Calendar size={11} />}
+                  {formatDueDateTime(task.dueDate, task.dueTime, lang, formatDate)}
+                  {overdue && ` · ${tt('overdue', 'Overdue')}`}
+                </span>
+              )}
+              {task.routine?.enabled && (
+                <span className="flex items-center gap-1 text-xs text-violet-600">
+                  <Repeat size={11} />
+                  {tt('routine.badge', 'Routine')}
+                </span>
+              )}
+              {task.reminder?.enabled && (
+                <span className="flex items-center gap-1 text-xs text-amber-600">
+                  <Bell size={11} />
+                  {isReminderSnoozed(task.reminder)
+                    ? tt('reminder.snoozedBadge', 'Snoozed')
+                    : tt('reminder.badge', 'Reminder')}
+                </span>
+              )}
+              {task.routine?.enabled && task.routine?.endDate && (
+                <span className="flex items-center gap-1 text-xs text-violet-500">
+                  <Repeat size={11} />
+                  {tt('routine.until', 'Until')} {formatDate(task.routine.endDate, lang)}
                 </span>
               )}
               {formatDuration(task.duration, tt) && (
@@ -1152,6 +1365,26 @@ Rules:
 
         {task.description && (
           <p className="text-sm text-gray-600 mb-4 whitespace-pre-wrap">{safeStr(task.description)}</p>
+        )}
+
+        {task.reminder?.enabled && (
+          <div className="mb-4 p-3 rounded-xl border border-amber-100 bg-amber-50/60">
+            <p className="text-xs font-semibold text-amber-800 uppercase tracking-wide mb-2">
+              {tt('reminder.snoozeTitle', 'Reminder')}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {SNOOZE_MINUTES.map(minutes => (
+                <button
+                  key={minutes}
+                  type="button"
+                  onClick={() => handleSnoozeReminder(task.id, minutes)}
+                  className="px-3 py-1.5 text-xs font-bold rounded-lg bg-white border border-amber-200 text-amber-800 hover:bg-amber-100 transition-colors"
+                >
+                  {tt(`reminder.snooze${minutes}`, `${minutes} min`)}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
 
         {prog && (
@@ -1223,6 +1456,17 @@ Rules:
                 ))}
               </select>
             )}
+            <select
+              value={typeFilter}
+              onChange={e => setTypeFilter(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+            >
+              <option value="all">{tt('list.allTypes', 'All Types')}</option>
+              <option value="untyped">{tt('type.untyped', 'No type')}</option>
+              {TASK_TYPES.map(type => (
+                <option key={type} value={type}>{tt(`type.${type}`, type)}</option>
+              ))}
+            </select>
           </div>
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             {visible.length === 0 ? (
@@ -1235,18 +1479,30 @@ Rules:
                   const prog = getProgress(task);
                   const statusDef = STATUSES_TASKS.find(s => s.id === task.status);
                   const isSelected = selectedId === task.id;
+                  const overdue = isTaskOverdue(task);
+                  const priority = scoreTask(task, { tiers: effortTiers });
                   return (
                     <button
                       key={task.id}
                       onClick={() => { setSelectedId(task.id); setIsEditing(false); }}
                       style={task.cardColor ? { backgroundColor: task.cardColor } : undefined}
-                      className={`w-full text-left px-3 sm:px-4 py-3 min-h-[52px] border-b border-gray-50 transition-colors ${task.cardColor ? '' : 'hover:bg-emerald-50 active:bg-emerald-100'} ${isSelected ? 'ring-2 ring-inset ring-emerald-500' : ''} ${isSelected && !task.cardColor ? 'bg-emerald-50' : ''}`}
+                      className={`w-full text-left px-3 sm:px-4 py-3 min-h-[52px] border-b border-gray-50 transition-colors ${isRTL ? 'border-r-4' : 'border-l-4'} ${getBandStyle(priority.band).stripe} ${task.cardColor ? '' : 'hover:bg-emerald-50 active:bg-emerald-100'} ${isSelected ? 'ring-2 ring-inset ring-emerald-500' : ''} ${isSelected && !task.cardColor ? 'bg-emerald-50' : ''}`}
                     >
-                      <p className="font-semibold text-gray-800 text-xs sm:text-sm truncate">{safeStr(task.name)}</p>
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-semibold text-gray-800 text-xs sm:text-sm truncate flex-1">{safeStr(task.name)}</p>
+                        <PriorityBadge priority={priority} tt={tt} />
+                      </div>
                       <div className="flex items-center gap-2 mt-1">
                         {statusDef && (
                           <span className={`text-xs px-1.5 py-0.5 rounded border font-medium ${statusDef.color}`}>
                             {tt(`status.${task.status}`, task.status)}
+                          </span>
+                        )}
+                        <TypeBadge type={task.type} tt={tt} />
+                        {overdue && (
+                          <span className="flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded border font-medium text-red-700 bg-red-50 border-red-200">
+                            <AlertCircle size={10} />
+                            {tt('overdue', 'Overdue')}
                           </span>
                         )}
                         {prog && (
@@ -1447,6 +1703,8 @@ Rules:
   const TABS = [
     { id: 'board', icon: Layout, label: t('tabs.board', 'Board') },
     { id: 'list', icon: List, label: t('tabs.list', 'List & Edit') },
+    { id: 'priority', icon: Zap, label: t('tabs.priority', 'Priority') },
+    { id: 'type', icon: Tag, label: t('tabs.type', 'By Type') },
     { id: 'timeline', icon: Activity, label: t('tabs.timeline', 'Timeline') },
     { id: 'calendar', icon: Calendar, label: t('tabs.calendar', 'Calendar') },
     { id: 'stats', icon: BarChart2, label: t('tabs.stats', 'Statistics') },
@@ -1676,6 +1934,25 @@ Rules:
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {activeTab === 'board' && renderBoard()}
         {activeTab === 'list' && renderList()}
+        {activeTab === 'priority' && (
+          <PriorityView
+            tasks={tasks}
+            labels={labels}
+            tiers={effortTiers}
+            onTiersChange={handleEffortTiersChange}
+            onOpenTask={(id) => navigateTo('list', id)}
+            isRTL={isRTL}
+          />
+        )}
+        {activeTab === 'type' && (
+          <TypeView
+            tasks={tasks}
+            labels={labels}
+            tiers={effortTiers}
+            onOpenTask={(id) => navigateTo('list', id)}
+            isRTL={isRTL}
+          />
+        )}
         {activeTab === 'timeline' && renderTimeline()}
         {activeTab === 'stats' && renderStats()}
         {activeTab === 'calendar' && (
@@ -1694,6 +1971,32 @@ Rules:
       {toastMessage && (
         <div role="status" aria-live="polite" className="fixed bottom-5 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-5 py-2.5 rounded-xl shadow-xl text-sm font-medium z-50 animate-fade-in">
           {toastMessage}
+        </div>
+      )}
+
+      {reminderPrompt && (
+        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 w-[min(100%,24rem)] bg-amber-50 border border-amber-200 text-amber-950 px-4 py-3 rounded-xl shadow-xl z-50">
+          <p className="text-sm font-semibold mb-1">{reminderPrompt.name}</p>
+          <p className="text-xs text-amber-800 mb-3">{tt('reminder.prompt', 'Snooze this reminder?')}</p>
+          <div className="flex flex-wrap gap-2">
+            {SNOOZE_MINUTES.map(minutes => (
+              <button
+                key={minutes}
+                type="button"
+                onClick={() => handleSnoozeReminder(reminderPrompt.taskId, minutes)}
+                className="px-2.5 py-1 text-xs font-bold rounded-lg bg-white border border-amber-300 hover:bg-amber-100"
+              >
+                {tt(`reminder.snooze${minutes}`, `${minutes} min`)}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setReminderPrompt(null)}
+              className="px-2.5 py-1 text-xs font-bold rounded-lg text-amber-700 hover:bg-amber-100"
+            >
+              {tt('reminder.dismiss', 'Dismiss')}
+            </button>
+          </div>
         </div>
       )}
 

@@ -75,7 +75,9 @@
     "list": "רשימה ועריכה",
     "timeline": "ציר זמן",
     "calendar": "לוח שנה",
-    "stats": "סטטיסטיקות"
+    "stats": "סטטיסטיקות",
+    "priority": "עדיפות",
+    "type": "לפי סוג"
   },
   "calendar": {
     "today": "היום",
@@ -479,7 +481,8 @@
       "remaining": "נותרו",
       "selectTask": "בחר משימה מהרשימה",
       "noTasks": "אין משימות עדיין.",
-      "allLabels": "כל התוויות"
+      "allLabels": "כל התוויות",
+      "allTypes": "כל הסוגים"
     },
     "form": {
       "editTitle": "עריכת משימה",
@@ -513,13 +516,38 @@
       "requiredName": "שם המשימה נדרש",
       "cardColor": "צבע כרטיס",
       "cardColorNone": "ללא",
-      "changeLabelColor": "שנה צבע"
+      "changeLabelColor": "שנה צבע",
+      "dueTime": "שעת יעד",
+      "dueTimeHint": "שעה אופציונלית לתאריכי יעד ותזכורות",
+      "routine": "משימת שגרה",
+      "routineFrequency": "חוזר",
+      "routineInterval": "כל",
+      "routineWeekdays": "בימים",
+      "routineHint": "כשמסומן כבוצע, המשימה מתאפסת ומתוזמנת ליעד הבא.",
+      "routineEndDate": "תאריך סיום (אופציונלי)",
+      "reminder": "תזכורת",
+      "reminderWhen": "הודע",
+      "reminderHint": "התראות דפדפן כש-Task Manager פתוח (או מותקן כ-PWA).",
+      "impact": "השפעה",
+      "impactHint": "כמה סיום המשימה הזו באמת מקדם אותך?",
+      "type": "סוג",
+      "effort": "מאמץ",
+      "when": "מתי",
+      "whenHint": "קובע את תאריך היעד למטה. תמיד אפשר לערוך אותו ידנית."
     },
     "duration": {
       "minute": "דקות",
       "hour": "שעות",
       "day": "ימים",
-      "month": "חודשים"
+      "month": "חודשים",
+      "year": "שנים",
+      "short": {
+        "minute": "ד",
+        "hour": "ש",
+        "day": "י",
+        "month": "ח",
+        "year": "שנ"
+      }
     },
     "detail": {
       "editDetails": "ערוך פרטים",
@@ -551,6 +579,104 @@
       "deleteConfirm": "האם אתה בטוח שברצונך למחוק משימה זו?",
       "noData": "לא נמצאו נתוני משימות בקובץ.",
       "importError": "שגיאה בייבוא הקובץ. ודא שזה קובץ JSON תקין."
+    },
+    "routine": {
+      "daily": "יומי",
+      "weekly": "שבועי",
+      "monthly": "חודשי",
+      "badge": "שגרה",
+      "until": "עד",
+      "weekday": {
+        "sun": "א'",
+        "mon": "ב'",
+        "tue": "ג'",
+        "wed": "ד'",
+        "thu": "ה'",
+        "fri": "ו'",
+        "sat": "ש'"
+      }
+    },
+    "reminder": {
+      "0": "במועד",
+      "15": "15 דקות לפני",
+      "30": "30 דקות לפני",
+      "60": "שעה לפני",
+      "120": "שעתיים לפני",
+      "1440": "יום לפני",
+      "badge": "תזכורת",
+      "snoozeTitle": "תזכורת",
+      "snooze15": "15 דק'",
+      "snooze60": "שעה",
+      "snooze240": "4 שעות",
+      "snoozed": "התזכורת נדחתה.",
+      "snoozedBadge": "נדחה",
+      "prompt": "לדחות את התזכורת?",
+      "dismiss": "סגור",
+      "body": "המשימה שלך מתקרבת.",
+      "defaultTitle": "תזכורת משימה",
+      "permissionDenied": "הפעל התראות בהגדרות הדפדפן כדי להשתמש בתזכורות."
+    },
+    "overdue": "באיחור",
+    "impact": {
+      "high": "גבוהה",
+      "medium": "בינונית",
+      "low": "נמוכה"
+    },
+    "urgency": {
+      "now": "עכשיו",
+      "today": "היום",
+      "week": "השבוע",
+      "month": "החודש",
+      "someday": "מתישהו",
+      "overdue": "באיחור"
+    },
+    "type": {
+      "fix": "תיקון",
+      "buy": "קנייה",
+      "order": "הזמנה",
+      "arrange": "סידור",
+      "throw": "השלכה",
+      "call": "שיחה",
+      "email": "אימייל",
+      "clean": "ניקיון",
+      "research": "מחקר",
+      "other": "אחר",
+      "untyped": "ללא סוג",
+      "none": "ללא סוג"
+    },
+    "effort": {
+      "none": "ללא הערכה",
+      "unitGroup": "יחידת מאמץ",
+      "tiersButton": "גדלי מאמץ",
+      "tiersHint": "בחר היכן נגמר מאמץ קטן ובינוני. כל מה שמעל נחשב משימה גדולה.",
+      "smallUpTo": "מאמץ קטן — עד",
+      "mediumUpTo": "מאמץ בינוני — עד",
+      "tier": {
+        "small": "מאמץ קטן",
+        "medium": "מאמץ בינוני",
+        "large": "מאמץ גדול"
+      }
+    },
+    "priorityView": {
+      "title": "מה לעשות עכשיו",
+      "subtitle": "מדורג לפי דחיפות, השפעה ומאמץ.",
+      "empty": "אין עדיין משימות לדירוג.",
+      "untitled": "ללא שם",
+      "bise": "השג\"ק",
+      "scoreTitle": "ציון עדיפות",
+      "biseTitle": "השפעה גדולה, מאמץ קטן — התחל מאלה",
+      "group": {
+        "doNow": "לעשות עכשיו",
+        "bise": "הישגים מהירים",
+        "bigProject": "פרויקטים גדולים",
+        "fillIn": "משימות מילוי",
+        "later": "אחר כך"
+      }
+    },
+    "typeView": {
+      "title": "לפי סוג",
+      "subtitle": "כל המשימות מקובצות לפי סוג הפעולה.",
+      "empty": "אין עדיין משימות."
     }
   },
   "recruiter": {

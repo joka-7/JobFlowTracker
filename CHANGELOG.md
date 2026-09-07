@@ -17,6 +17,19 @@ issues) against everything that had actually shipped and closed the items
 that had been silently missed rather than deliberately deferred.
 
 ### Added
+- Task Manager: **Priority** (computed urgency × impact × effort score with a
+  ranked Priority view — Do Now / Quick Wins / Big Projects / Fill-ins /
+  Later), **Type** (a fixed action-verb taxonomy with its own By Type view
+  and filter), a quantized **Effort** ladder replacing free-typed duration
+  for scoring, **Routines** (daily/weekly/monthly recurring tasks that
+  advance to their next due date on completion, from the form or a
+  board drag), and due-time **Reminders** with browser notifications and
+  snooze — ported from KanDOne, the standalone fork of this app's original
+  Tasks mode.
+- An error boundary around Task Manager (`AppErrorBoundary`) that offers a
+  JSON backup download before a reload, and a focus-trap/Escape-to-close
+  hook (`useModalA11y`) wired into the AI settings, onboarding, and
+  template-library modals.
 - CSV export alongside the existing JSON backup, in both apps (desktop
   toolbar and mobile menu) — `src/utils/csv.js` (RFC 4180 escaping) and
   `saveCsvFile()`.
