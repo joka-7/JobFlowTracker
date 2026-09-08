@@ -65,7 +65,9 @@
     "list": "List & Edit",
     "timeline": "Timeline",
     "calendar": "Calendar",
-    "stats": "Statistics"
+    "stats": "Statistics",
+    "priority": "Priority",
+    "type": "By Type"
   },
   "calendar": {
     "today": "Today",
@@ -302,7 +304,18 @@
     "tasksShortcutsSubtitle": "Work faster with shortcuts",
     "tasksShortcutN": "Add a new task",
     "tasksShortcutEsc": "Close task detail / cancel edit",
-    "tasksFinalTip": "You're all set! Start by adding your first task and breaking it into steps."
+    "tasksFinalTip": "You're all set! Start by adding your first task and breaking it into steps.",
+    "tasksFeaturePriority": "Priority ranking — what to do next",
+    "tasksFeatureType": "Group by type: fix, buy, call, and more",
+    "tasksFeatureRoutine": "Recurring routine tasks",
+    "tasksFeatureReminder": "Due-date reminders with snooze",
+    "tasksRoutinesTitle": "Routines & Reminders",
+    "tasksRoutinesSubtitle": "Repeat tasks and get notified",
+    "tasksRoutinesDesc": "Set an optional due time, turn tasks into routines, and get browser reminders before they are due. Snooze a reminder if you need a few more minutes.",
+    "tasksRoutinesDueTime": "Add a due time for finer scheduling",
+    "tasksRoutinesRepeat": "Daily, weekly, or monthly routines with an optional end date",
+    "tasksRoutinesNotify": "Reminders from 15 minutes to 1 day before due",
+    "tasksRoutinesSnoozeTip": "When a reminder appears, snooze it from the task detail or the prompt banner. Mark a routine done to schedule the next occurrence — or stop it with an end date."
   },
   "ai": {
     "title": "AI Assistant",
@@ -479,7 +492,8 @@
       "remaining": "remaining",
       "selectTask": "Select a task from the list",
       "noTasks": "No tasks yet.",
-      "allLabels": "All Labels"
+      "allLabels": "All Labels",
+      "allTypes": "All Types"
     },
     "form": {
       "editTitle": "Edit Task",
@@ -513,13 +527,38 @@
       "requiredName": "Task name is required",
       "cardColor": "Card Color",
       "cardColorNone": "None",
-      "changeLabelColor": "Change color"
+      "changeLabelColor": "Change color",
+      "dueTime": "Due Time",
+      "dueTimeHint": "Optional time for due dates and reminders",
+      "routine": "Routine task",
+      "routineFrequency": "Repeats",
+      "routineInterval": "Every",
+      "routineWeekdays": "On days",
+      "routineHint": "When marked done, the task resets and schedules the next due date.",
+      "routineEndDate": "End date (optional)",
+      "reminder": "Reminder",
+      "reminderWhen": "Notify",
+      "reminderHint": "Browser notifications while Task Manager is open (or installed as a PWA).",
+      "impact": "Impact",
+      "impactHint": "How much does finishing this actually move things?",
+      "type": "Type",
+      "effort": "Effort",
+      "when": "When",
+      "whenHint": "Sets the due date below. You can still edit it by hand."
     },
     "duration": {
       "minute": "Minutes",
       "hour": "Hours",
       "day": "Days",
-      "month": "Months"
+      "month": "Months",
+      "year": "Years",
+      "short": {
+        "minute": "m",
+        "hour": "h",
+        "day": "d",
+        "month": "mo",
+        "year": "y"
+      }
     },
     "detail": {
       "editDetails": "Edit Details",
@@ -551,6 +590,104 @@
       "deleteConfirm": "Are you sure you want to delete this task?",
       "noData": "No task data found in the uploaded file.",
       "importError": "Error importing file. Make sure this is a valid JSON file."
+    },
+    "routine": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "badge": "Routine",
+      "until": "Until",
+      "weekday": {
+        "sun": "Sun",
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat"
+      }
+    },
+    "reminder": {
+      "0": "At due time",
+      "15": "15 minutes before",
+      "30": "30 minutes before",
+      "60": "1 hour before",
+      "120": "2 hours before",
+      "1440": "1 day before",
+      "badge": "Reminder",
+      "snoozeTitle": "Reminder",
+      "snooze15": "15 min",
+      "snooze60": "1 hour",
+      "snooze240": "4 hours",
+      "snoozed": "Reminder snoozed.",
+      "snoozedBadge": "Snoozed",
+      "prompt": "Snooze this reminder?",
+      "dismiss": "Dismiss",
+      "body": "Your task is coming up.",
+      "defaultTitle": "Task reminder",
+      "permissionDenied": "Enable notifications in your browser settings to use reminders."
+    },
+    "overdue": "Overdue",
+    "impact": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "urgency": {
+      "now": "Now",
+      "today": "Today",
+      "week": "This week",
+      "month": "This month",
+      "someday": "Someday",
+      "overdue": "Overdue"
+    },
+    "type": {
+      "fix": "Fix",
+      "buy": "Buy",
+      "order": "Order",
+      "arrange": "Arrange",
+      "throw": "Throw Away",
+      "call": "Call",
+      "email": "Email",
+      "clean": "Clean",
+      "research": "Research",
+      "other": "Other",
+      "untyped": "No type",
+      "none": "No type"
+    },
+    "effort": {
+      "none": "No estimate",
+      "unitGroup": "Effort unit",
+      "tiersButton": "Effort sizes",
+      "tiersHint": "Choose where small and medium effort end. Everything above is a big task.",
+      "smallUpTo": "Small effort — up to",
+      "mediumUpTo": "Medium effort — up to",
+      "tier": {
+        "small": "small effort",
+        "medium": "medium effort",
+        "large": "big effort"
+      }
+    },
+    "priorityView": {
+      "title": "What to do next",
+      "subtitle": "Ranked by urgency, impact and effort.",
+      "empty": "No tasks to rank yet.",
+      "untitled": "Untitled",
+      "bise": "BISE",
+      "scoreTitle": "Priority score",
+      "biseTitle": "Big impact, small effort — do these first",
+      "group": {
+        "doNow": "Do Now",
+        "bise": "Quick Wins",
+        "bigProject": "Big Projects",
+        "fillIn": "Fill-ins",
+        "later": "Later"
+      }
+    },
+    "typeView": {
+      "title": "By Type",
+      "subtitle": "Every task grouped by what kind of action it is.",
+      "empty": "No tasks yet."
     }
   },
   "recruiter": {

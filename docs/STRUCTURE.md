@@ -75,6 +75,7 @@ JobFlowTracker/
 │   ├── __tests__/                # Vitest unit + integration tests
 │   │   ├── APIKeySettings.test.jsx
 │   │   ├── App.integration.test.jsx
+│   │   ├── AppErrorBoundary.test.jsx
 │   │   ├── ChatModal.aiConfig.test.jsx
 │   │   ├── ChatModal.test.jsx
 │   │   ├── JobTrackerApp.simulation.test.jsx
@@ -86,14 +87,21 @@ JobFlowTracker/
 │   │   ├── boardOrder.test.js
 │   │   ├── cloudSync.test.js
 │   │   ├── csv.test.js
+│   │   ├── effortScale.test.js
 │   │   ├── journey.test.js
 │   │   ├── logic.test.js
 │   │   ├── normalizeInterviewType.test.js
 │   │   ├── offlineSync.test.jsx
 │   │   ├── promptSafety.test.js
+│   │   ├── recurrence.test.js
+│   │   ├── reminders.test.js
+│   │   ├── sanitize.test.js
 │   │   ├── security.test.js
 │   │   ├── statuses.test.js
 │   │   ├── storageKeys.e2eParity.test.js
+│   │   ├── taskHelpers.test.js
+│   │   ├── taskPriority.test.js
+│   │   ├── taskTypes.test.js
 │   │   ├── templateQuestions.test.js
 │   │   ├── useBackGestureGuard.test.js
 │   │   └── utils.test.js
@@ -105,10 +113,12 @@ JobFlowTracker/
 │   │   ├── AIAssistant.jsx       # Floating AI panel (job seeker only)
 │   │   ├── APIKeySettings.jsx
 │   │   ├── AppBrandMark.jsx
+│   │   ├── AppErrorBoundary.jsx
 │   │   ├── BulkActionsBar.jsx    # Sticky bar for bulk status/export/delete on selection
 │   │   ├── CalendarView.jsx
 │   │   ├── CardColorPicker.jsx
 │   │   ├── ChatModal.jsx
+│   │   ├── EffortPicker.jsx
 │   │   ├── KanbanDndBoard.jsx
 │   │   ├── LabelPicker.jsx
 │   │   ├── LanguageSwitcher.jsx
@@ -117,11 +127,17 @@ JobFlowTracker/
 │   │   ├── ModeDropdown.jsx      # Header mode switcher
 │   │   ├── ModeSelection.jsx     # First-launch 3-mode picker
 │   │   ├── Onboarding.jsx        # First-visit wizard (job seeker only)
+│   │   ├── PriorityBadge.jsx
+│   │   ├── PriorityView.jsx
 │   │   ├── RejectionAnalysis.jsx
 │   │   ├── ResumeReview.jsx
+│   │   ├── RoutineReminderFields.jsx
 │   │   ├── SearchFilter.jsx      # Search box + multi-status filter pills (list view)
 │   │   ├── TemplateLibrary.jsx
 │   │   ├── Tooltip.jsx
+│   │   ├── TypeBadge.jsx
+│   │   ├── TypePicker.jsx
+│   │   ├── TypeView.jsx
 │   │   └── UpdateBanner.jsx
 │   ├── data/                     # Static/reference data
 │   │   ├── interviewTemplates.js
@@ -129,6 +145,7 @@ JobFlowTracker/
 │   ├── hooks/                    # Custom hooks: cloud sync, toast, back-gesture guard
 │   │   ├── useBackGestureGuard.js
 │   │   ├── useCloudSync.js
+│   │   ├── useModalA11y.js
 │   │   └── useToast.js
 │   ├── locales/                  # I18n translation files: English, Hebrew, French
 │   │   ├── templateQuestions/
@@ -146,10 +163,16 @@ JobFlowTracker/
 │   │   ├── cloudSync.js
 │   │   ├── csv.js
 │   │   ├── date.js
+│   │   ├── effortScale.js
 │   │   ├── labelColors.js
 │   │   ├── notes.js
 │   │   ├── promptSafety.js
+│   │   ├── recurrence.js
+│   │   ├── reminders.js
 │   │   ├── saveFile.js
+│   │   ├── taskHelpers.js
+│   │   ├── taskPriority.js
+│   │   ├── taskTypes.js
 │   │   └── templateQuestions.js
 │   ├── App.jsx                   # Mode gate — lazy-loads JobTrackerApp or TasksApp so a user in one mode never…
 │   ├── JobTrackerApp.jsx         # Job seeker + recruiter UI

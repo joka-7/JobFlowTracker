@@ -77,7 +77,8 @@ JobFlowTracker is a single-page application (SPA) for tracking a job search, a r
 | `src/components/ModeSelection.jsx` | Full-screen | First-launch 3-mode picker (job seeker / recruiter / task manager) |
 | `src/components/ModeDropdown.jsx` | Header widget | Dropdown button (icon buttons collapse to a single control when only one mode is enabled); updates `localStorage.appMode` and calls `onModeChange` |
 | `src/JobTrackerApp.jsx` | Main component | Mode-aware UI for job seeker and recruiter; all tabs, Firestore integration |
-| `src/TasksApp.jsx` | Main component | Task manager UI: board, list+step-detail, stats; step status cycling |
+| `src/TasksApp.jsx` | Main component | Task manager UI: board, list+step-detail, Priority (ranked by a computed urgency×impact×effort score), By Type, timeline, calendar, stats; step status cycling; routine advancement and due-time reminder polling |
+| `src/components/AppErrorBoundary.jsx` | Error boundary | Wraps `TasksApp` only (job seeker/recruiter data isn't touched by a Tasks-mode crash); offers a localStorage JSON backup before reload |
 | `src/firebase.js` | Module | Auth, mode-aware `loadAllItems(uid, mode)`, profile `appMode`, legacy migration |
 | `src/components/Onboarding.jsx` | Modal | 5-step wizard (job seeker only, skipped when switching from another mode) |
 | `src/services/aiAssistant.js` | Module | Thin wrapper over the shared `@joka-7/modeldispatcher-browser-agent` package (also used by KanDOne/HighFive/StepByLearn) — provider configuration, `initAI`, `isAIReady`, rate limiting, and this app's job-search prompts; streaming/parsing itself lives in the shared package |

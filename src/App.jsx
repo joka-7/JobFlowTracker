@@ -2,6 +2,7 @@ import { useState, useEffect, Suspense, lazy } from 'react';
 import { Loader2 } from 'lucide-react';
 import ModeSelection from './components/ModeSelection';
 import UpdateBanner from './components/UpdateBanner';
+import AppErrorBoundary from './components/AppErrorBoundary';
 import { resolveInitialAppMode } from './statuses';
 import { completeRedirectSignIn } from './firebase';
 
@@ -38,7 +39,7 @@ export default function App() {
   return (
     <Suspense fallback={<AppLoadingFallback />}>
       {mode === 'tasks'
-        ? <TasksApp key="tasks" onModeChange={setMode} />
+        ? <AppErrorBoundary><TasksApp key="tasks" onModeChange={setMode} /></AppErrorBoundary>
         : <JobTrackerApp mode={mode} onModeChange={setMode} />}
     </Suspense>
   );

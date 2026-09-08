@@ -17,6 +17,19 @@ issues) against everything that had actually shipped and closed the items
 that had been silently missed rather than deliberately deferred.
 
 ### Added
+- Task Manager: **Priority** (computed urgency × impact × effort score with a
+  ranked Priority view — Do Now / Quick Wins / Big Projects / Fill-ins /
+  Later), **Type** (a fixed action-verb taxonomy with its own By Type view
+  and filter), a quantized **Effort** ladder replacing free-typed duration
+  for scoring, **Routines** (daily/weekly/monthly recurring tasks that
+  advance to their next due date on completion, from the form or a
+  board drag), and due-time **Reminders** with browser notifications and
+  snooze — ported from KanDOne, the standalone fork of this app's original
+  Tasks mode.
+- An error boundary around Task Manager (`AppErrorBoundary`) that offers a
+  JSON backup download before a reload, and a focus-trap/Escape-to-close
+  hook (`useModalA11y`) wired into the AI settings, onboarding, and
+  template-library modals.
 - CSV export alongside the existing JSON backup, in both apps (desktop
   toolbar and mobile menu) — `src/utils/csv.js` (RFC 4180 escaping) and
   `saveCsvFile()`.
@@ -100,6 +113,24 @@ that had been silently missed rather than deliberately deferred.
   --omit=dev` since it only affected a devDependency's build toolchain,
   is now caught and closed via a version override rather than a breaking
   `vite-plugin-pwa` upgrade.
+- The onboarding modal (both job seeker and Task Manager) had no scroll
+  container: on a short viewport, taller step content pushed the
+  Next/Skip/Get Started buttons below the visible area with no way to
+  reach them. The header and footer are now fixed and only the middle
+  content scrolls, matching the pattern already used by
+  `APIKeySettings`/`TemplateLibrary`.
+- The task form showed both a legacy free-typed "Duration" field and the
+  new quantized "Effort" picker for the same "how much work" concept,
+  and a separately-positioned "Due Time" field disconnected from "Due
+  Date" — all three confusingly overlapping. "Duration" is removed from
+  the main task form (Effort is now the only estimate shown on
+  cards/list/detail, falling back to any pre-existing `duration` value
+  for older tasks) and "Due Time" now sits directly next to "Due Date".
+  The CSV export's Duration column is replaced with Type, Due Time, and
+  an Effort column with the same fallback.
+- The Task Manager onboarding tutorial predated Priority, Type, Effort,
+  Routines, and Reminders and never mentioned them; the welcome screen's
+  feature grid and a new "Routines & Reminders" step now do.
 
 ## [1.0.0] - 2026-07-26
 

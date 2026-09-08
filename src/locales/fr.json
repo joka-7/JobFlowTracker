@@ -75,7 +75,9 @@
     "list": "Liste & Édition",
     "timeline": "Chronologie",
     "calendar": "Calendrier",
-    "stats": "Statistiques"
+    "stats": "Statistiques",
+    "priority": "Priorité",
+    "type": "Par type"
   },
   "calendar": {
     "today": "Aujourd'hui",
@@ -295,7 +297,18 @@
     "tasksShortcutsSubtitle": "Travaillez plus vite avec des raccourcis",
     "tasksShortcutN": "Ajouter une nouvelle tâche",
     "tasksShortcutEsc": "Fermer les détails de la tâche / annuler l'édition",
-    "tasksFinalTip": "Vous êtes prêt ! Commencez par ajouter votre première tâche et décomposez-la en étapes."
+    "tasksFinalTip": "Vous êtes prêt ! Commencez par ajouter votre première tâche et décomposez-la en étapes.",
+    "tasksFeaturePriority": "Classement par priorité — que faire ensuite",
+    "tasksFeatureType": "Regrouper par type : réparer, acheter, appeler, etc.",
+    "tasksFeatureRoutine": "Tâches récurrentes",
+    "tasksFeatureReminder": "Rappels d'échéance avec report",
+    "tasksRoutinesTitle": "Routines et rappels",
+    "tasksRoutinesSubtitle": "Répétez les tâches et recevez des notifications",
+    "tasksRoutinesDesc": "Définissez une heure d'échéance optionnelle, transformez les tâches en routines et recevez des rappels dans le navigateur avant l'échéance. Reportez un rappel si vous avez besoin de quelques minutes de plus.",
+    "tasksRoutinesDueTime": "Ajoutez une heure d'échéance pour un planning plus précis",
+    "tasksRoutinesRepeat": "Routines quotidiennes, hebdomadaires ou mensuelles avec date de fin optionnelle",
+    "tasksRoutinesNotify": "Rappels de 15 minutes à 1 jour avant l'échéance",
+    "tasksRoutinesSnoozeTip": "Quand un rappel apparaît, reportez-le depuis le détail de la tâche ou la bannière. Marquez une routine comme terminée pour planifier la prochaine occurrence — ou arrêtez-la avec une date de fin."
   },
   "ai": {
     "title": "Assistant IA",
@@ -479,7 +492,8 @@
       "remaining": "restants",
       "selectTask": "Sélectionnez une tâche dans la liste",
       "noTasks": "Aucune tâche pour l'instant.",
-      "allLabels": "Toutes les étiquettes"
+      "allLabels": "Toutes les étiquettes",
+      "allTypes": "Tous les types"
     },
     "form": {
       "editTitle": "Modifier la tâche",
@@ -513,13 +527,38 @@
       "requiredName": "Le nom de la tâche est obligatoire",
       "cardColor": "Couleur de la carte",
       "cardColorNone": "Aucune",
-      "changeLabelColor": "Changer la couleur"
+      "changeLabelColor": "Changer la couleur",
+      "dueTime": "Heure d'échéance",
+      "dueTimeHint": "Heure optionnelle pour les échéances et rappels",
+      "routine": "Tâche récurrente",
+      "routineFrequency": "Répétition",
+      "routineInterval": "Tous les",
+      "routineWeekdays": "Les jours",
+      "routineHint": "Une fois terminée, la tâche se réinitialise et planifie la prochaine échéance.",
+      "routineEndDate": "Date de fin (optionnelle)",
+      "reminder": "Rappel",
+      "reminderWhen": "Notifier",
+      "reminderHint": "Notifications navigateur lorsque Task Manager est ouvert (ou installé en PWA).",
+      "impact": "Impact",
+      "impactHint": "Dans quelle mesure terminer ceci fait-il vraiment avancer les choses ?",
+      "type": "Type",
+      "effort": "Effort",
+      "when": "Quand",
+      "whenHint": "Définit la date d'échéance ci-dessous. Vous pouvez toujours la modifier."
     },
     "duration": {
       "minute": "Minutes",
       "hour": "Heures",
       "day": "Jours",
-      "month": "Mois"
+      "month": "Mois",
+      "year": "Années",
+      "short": {
+        "minute": "m",
+        "hour": "h",
+        "day": "j",
+        "month": "mo",
+        "year": "a"
+      }
     },
     "detail": {
       "editDetails": "Modifier les détails",
@@ -551,6 +590,104 @@
       "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cette tâche ?",
       "noData": "Aucune donnée de tâche trouvée dans le fichier.",
       "importError": "Erreur lors de l'importation. Assurez-vous que c'est un fichier JSON valide."
+    },
+    "routine": {
+      "daily": "Quotidien",
+      "weekly": "Hebdomadaire",
+      "monthly": "Mensuel",
+      "badge": "Routine",
+      "until": "Jusqu'au",
+      "weekday": {
+        "sun": "Dim",
+        "mon": "Lun",
+        "tue": "Mar",
+        "wed": "Mer",
+        "thu": "Jeu",
+        "fri": "Ven",
+        "sat": "Sam"
+      }
+    },
+    "reminder": {
+      "0": "À l'heure prévue",
+      "15": "15 minutes avant",
+      "30": "30 minutes avant",
+      "60": "1 heure avant",
+      "120": "2 heures avant",
+      "1440": "1 jour avant",
+      "badge": "Rappel",
+      "snoozeTitle": "Rappel",
+      "snooze15": "15 min",
+      "snooze60": "1 h",
+      "snooze240": "4 h",
+      "snoozed": "Rappel reporté.",
+      "snoozedBadge": "Reporté",
+      "prompt": "Reporter ce rappel ?",
+      "dismiss": "Ignorer",
+      "body": "Votre tâche approche.",
+      "defaultTitle": "Rappel de tâche",
+      "permissionDenied": "Activez les notifications dans votre navigateur pour utiliser les rappels."
+    },
+    "overdue": "En retard",
+    "impact": {
+      "high": "Fort",
+      "medium": "Moyen",
+      "low": "Faible"
+    },
+    "urgency": {
+      "now": "Maintenant",
+      "today": "Aujourd'hui",
+      "week": "Cette semaine",
+      "month": "Ce mois-ci",
+      "someday": "Un jour",
+      "overdue": "En retard"
+    },
+    "type": {
+      "fix": "Réparer",
+      "buy": "Acheter",
+      "order": "Commander",
+      "arrange": "Organiser",
+      "throw": "Jeter",
+      "call": "Appeler",
+      "email": "Envoyer un e-mail",
+      "clean": "Nettoyer",
+      "research": "Rechercher",
+      "other": "Autre",
+      "untyped": "Aucun type",
+      "none": "Aucun type"
+    },
+    "effort": {
+      "none": "Sans estimation",
+      "unitGroup": "Unité d'effort",
+      "tiersButton": "Tailles d'effort",
+      "tiersHint": "Choisissez où s'arrêtent le petit et le moyen effort. Au-delà, c'est une grosse tâche.",
+      "smallUpTo": "Petit effort — jusqu'à",
+      "mediumUpTo": "Effort moyen — jusqu'à",
+      "tier": {
+        "small": "petit effort",
+        "medium": "effort moyen",
+        "large": "gros effort"
+      }
+    },
+    "priorityView": {
+      "title": "Que faire ensuite",
+      "subtitle": "Classé par urgence, impact et effort.",
+      "empty": "Aucune tâche à classer pour le moment.",
+      "untitled": "Sans titre",
+      "bise": "GIPE",
+      "scoreTitle": "Score de priorité",
+      "biseTitle": "Fort impact, petit effort — à faire en premier",
+      "group": {
+        "doNow": "À faire maintenant",
+        "bise": "Gains rapides",
+        "bigProject": "Gros projets",
+        "fillIn": "Petits riens",
+        "later": "Plus tard"
+      }
+    },
+    "typeView": {
+      "title": "Par type",
+      "subtitle": "Toutes les tâches regroupées par type d'action.",
+      "empty": "Aucune tâche pour l'instant."
     }
   },
   "recruiter": {
