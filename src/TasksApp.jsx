@@ -40,6 +40,9 @@ import { formatDate } from './utils/date';
 import { appendNote } from './utils/notes';
 import { useCloudSync } from './hooks/useCloudSync';
 import { unionOnSignIn } from './utils/cloudSync';
+import {
+  fingerprintItems, diffFingerprints, readPending, recordLocalChanges,
+} from './utils/pendingSync';
 import { useToast } from './hooks/useToast';
 import LabelPicker, { LabelChipsReadOnly } from './components/LabelPicker';
 import CardColorPicker from './components/CardColorPicker';
@@ -143,6 +146,23 @@ export default function TasksApp({ onModeChange }) {
     } catch { /* ignore */ }
   }, [tasks]);
 
+  // One place that notices every local task change, whatever mutated it, and
+  // records the touched ids as not-yet-in-the-cloud. Hooking the state instead
+  // of the ~10 individual mutation call sites is what makes it impossible to
+  // add a new one that silently forgets to protect its own writes.
+  const syncedSnapshotRef = useRef(null);
+  useEffect(() => {
+    const next = fingerprintItems(tasks);
+    const previous = syncedSnapshotRef.current;
+    syncedSnapshotRef.current = next;
+    // First run establishes the baseline. What is already in localStorage was
+    // either pulled from the cloud or is already recorded as pending from an
+    // earlier session; re-flagging it here would push stale copies over newer
+    // cloud ones on the next sign-in.
+    if (previous === null) return;
+    recordLocalChanges(MODE, diffFingerprints(previous, next));
+  }, [tasks]);
+
   useEffect(() => {
     try { localStorage.setItem(TASKS_LABELS_KEY, JSON.stringify(labels)); } catch { /* ignore */ }
   }, [labels]);
@@ -171,9 +191,17 @@ export default function TasksApp({ onModeChange }) {
     // (see useCloudSync's authResolved) — must survive a cloud pull that
     // doesn't have it yet, not be silently discarded by it.
     onData: (cloudTasks, uid) => {
-      const { merged, pushToCloud } = unionOnSignIn(tasksRef.current, cloudTasks);
+      const { merged, pushToCloud, deleteFromCloud } = unionOnSignIn(tasksRef.current, cloudTasks, {
+        pending: readPending(MODE),
+      });
+      // The pull is the new baseline: without reseating the snapshot the effect
+      // above would read every record the pull changed as a fresh local edit
+      // and pin it against all future pulls.
+      syncedSnapshotRef.current = fingerprintItems(merged);
       setTasks(merged);
       if (pushToCloud) batchSaveItems(uid, MODE, merged).catch(() => {});
+      // Replay deletes made while unsynced, or the next pull resurrects them.
+      deleteFromCloud.forEach((id) => deleteItem(uid, MODE, id).catch(() => {}));
     },
     onSignedIn: (hasData) => { if (hasData) showToast(tt('toast.imported', 'Data loaded from cloud!')); },
   });

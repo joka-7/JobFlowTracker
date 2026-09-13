@@ -92,6 +92,7 @@ JobFlowTracker/
 │   │   ├── logic.test.js
 │   │   ├── normalizeInterviewType.test.js
 │   │   ├── offlineSync.test.jsx
+│   │   ├── pendingSync.test.js
 │   │   ├── promptSafety.test.js
 │   │   ├── recurrence.test.js
 │   │   ├── reminders.test.js
@@ -166,6 +167,7 @@ JobFlowTracker/
 │   │   ├── effortScale.js
 │   │   ├── labelColors.js
 │   │   ├── notes.js
+│   │   ├── pendingSync.js
 │   │   ├── promptSafety.js
 │   │   ├── recurrence.js
 │   │   ├── reminders.js
