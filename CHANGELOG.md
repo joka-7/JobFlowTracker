@@ -87,6 +87,16 @@ that had been silently missed rather than deliberately deferred.
   same-origin` response headers.
 
 ### Fixed
+- Cloud sync no longer discards edits made while the app looked disconnected.
+  A pull treated cloud as authoritative for every id it shared with local
+  state, so a record edited before a returning session finished resolving —
+  or while a Firestore write was failing — reverted the moment the pull
+  landed. `src/utils/pendingSync.js` now tracks which record ids changed
+  locally without a confirmed cloud write, and `unionOnSignIn` keeps (and
+  pushes) the local copy for those, while a shared id with no pending change
+  still takes cloud so other devices' edits are not resurrected over. Deletes
+  made while unsynced are replayed upstream instead of being undone by the
+  next pull.
 - Several tests that could never fail regardless of the code under test —
   dummy `expect(true).toBe(true)` assertions, and tests asserting against
   their own mocks instead of real app behavior — were rewritten to

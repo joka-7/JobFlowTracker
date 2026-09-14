@@ -44,6 +44,9 @@ import { formatDate as formatDateShared } from './utils/date';
 import { appendNote } from './utils/notes';
 import { useCloudSync } from './hooks/useCloudSync';
 import { unionOnSignIn } from './utils/cloudSync';
+import {
+  fingerprintItems, diffFingerprints, readPending, recordLocalChanges,
+} from './utils/pendingSync';
 import { useToast } from './hooks/useToast';
 import { saveJsonFile, saveCsvFile } from './utils/saveFile';
 import { toCSV } from './utils/csv';
@@ -173,24 +176,48 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
     initAI(provider, apiKey, model, ollamaUrl);
   }, [isRecruiter]);
 
+  // One place that notices every local company change, whatever mutated it, and
+  // records the touched ids as not-yet-in-the-cloud. Hooking the state instead
+  // of the individual mutation call sites is what makes it impossible to add a
+  // new one that silently forgets to protect its own writes.
+  //
+  // Declared above the mode-reload effect on purpose: a mode switch re-runs
+  // both while `companies` still holds the outgoing mode's records, and this
+  // one must get that stale pass (where it only reseats the baseline) before
+  // the reload effect below replaces the baseline with the incoming list.
+  const syncedSnapshotRef = useRef(null);
+  useEffect(() => {
+    const next = fingerprintItems(companies);
+    const previous = syncedSnapshotRef.current;
+    syncedSnapshotRef.current = { mode, fingerprint: next };
+    if (previous === null || previous.mode !== mode) return;
+    recordLocalChanges(mode, diffFingerprints(previous.fingerprint, next));
+  }, [companies, mode]);
+
   const prevModeRef = useRef(mode);
   useEffect(() => {
     if (prevModeRef.current === mode) return;
     prevModeRef.current = mode;
+    // Whatever this installs is the incoming collection's baseline, not a local
+    // edit to it — reseat the snapshot alongside every setCompanies below.
+    const loadForMode = (records) => {
+      syncedSnapshotRef.current = { mode, fingerprint: fingerprintItems(records) };
+      setCompanies(records);
+    };
     try {
       const saved = window.localStorage.getItem(getStorageKey(mode));
       if (!saved) {
-        setCompanies([]);
+        loadForMode([]);
       } else {
         try {
           const parsed = JSON.parse(saved);
           const sanitized = Array.isArray(parsed) ? sanitizeTrackerRecords(parsed, { mode }) : [];
-          setCompanies(filterItemsForMode(sanitized, mode));
+          loadForMode(filterItemsForMode(sanitized, mode));
         } catch {
-          setCompanies([]);
+          loadForMode([]);
         }
       }
-    } catch { setCompanies([]); }
+    } catch { loadForMode([]); }
     setSelectedId(null);
     setIsEditing(false);
     setFormData(makeInitialFormState(mode === 'recruiter'));
@@ -222,9 +249,17 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
     // resolves (see useCloudSync's authResolved) — must survive a cloud pull
     // that doesn't have it yet, not be silently discarded by it.
     onData: (cloudCompanies, uid) => {
-      const { merged, pushToCloud } = unionOnSignIn(companiesRef.current, cloudCompanies);
+      const { merged, pushToCloud, deleteFromCloud } = unionOnSignIn(companiesRef.current, cloudCompanies, {
+        pending: readPending(mode),
+      });
+      // The pull is the new baseline: without reseating the snapshot the effect
+      // above would read every record the pull changed as a fresh local edit
+      // and pin it against all future pulls.
+      syncedSnapshotRef.current = { mode, fingerprint: fingerprintItems(merged) };
       setCompanies(merged);
       if (pushToCloud) batchSaveItems(uid, mode, merged).catch(console.error);
+      // Replay deletes made while unsynced, or the next pull resurrects them.
+      deleteFromCloud.forEach((id) => deleteItem(uid, mode, id).catch(console.error));
     },
     onSignedIn: (hasData) => showToast(hasData ? tMode('toast.driveConnectedWithData') : tMode('toast.driveConnectedEmpty')),
   });

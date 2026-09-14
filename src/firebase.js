@@ -1,4 +1,5 @@
 import { getCollectionName } from './statuses';
+import { clearPendingIds } from './utils/pendingSync';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBeEQR4lW_j0M53kAZMSagma1zo9mRonFw",
@@ -257,6 +258,9 @@ export async function updateItem(uid, mode, item) {
   const { doc, setDoc } = await import('firebase/firestore');
   const ref = doc(db, 'users', uid, getCollectionName(mode), String(item.id));
   await setDoc(ref, item);
+  // Only once the write has actually landed does this record stop needing to
+  // win over a cloud pull (see ./utils/pendingSync).
+  clearPendingIds(mode, [item.id]);
 }
 
 export async function deleteItem(uid, mode, id) {
@@ -264,6 +268,7 @@ export async function deleteItem(uid, mode, id) {
   const { doc, deleteDoc } = await import('firebase/firestore');
   const ref = doc(db, 'users', uid, getCollectionName(mode), String(id));
   await deleteDoc(ref);
+  clearPendingIds(mode, [id]);
 }
 
 export async function batchSaveItems(uid, mode, items) {
@@ -273,10 +278,12 @@ export async function batchSaveItems(uid, mode, items) {
   const CHUNK = 490;
   for (let i = 0; i < items.length; i += CHUNK) {
     const batch = writeBatch(db);
-    items.slice(i, i + CHUNK).forEach(item => {
+    const chunk = items.slice(i, i + CHUNK);
+    chunk.forEach(item => {
       const ref = doc(db, 'users', uid, getCollectionName(mode), String(item.id));
       batch.set(ref, item);
     });
     await batch.commit();
+    clearPendingIds(mode, chunk.map(item => item.id));
   }
 }
