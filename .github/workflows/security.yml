@@ -69,6 +69,10 @@ jobs:
           format: sarif
           output: trivy-results.sarif
           severity: HIGH,CRITICAL
+          # Without this, the action builds the SARIF with every severity
+          # regardless of the `severity` filter above, so exit-code fires on a
+          # LOW/MEDIUM finding the gate is supposed to ignore.
+          limit-severities-for-sarif: true
           exit-code: 1
           scanners: vuln
           trivyignores: .trivyignore
