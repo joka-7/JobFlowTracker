@@ -2,6 +2,8 @@ import { delimUserField } from '../utils/promptSafety';
 import {
   streamComplete as agentStreamComplete,
   buildMessages as agentBuildMessages,
+  loadConfig as loadPackageConfig,
+  isConfigReady,
 } from '@joka-7/modeldispatcher-browser-agent';
 
 export const PROVIDERS = {
@@ -53,7 +55,12 @@ export const PROVIDERS = {
   },
 };
 
-let config = { provider: 'gemini', apiKey: '', model: '', ollamaUrl: 'http://localhost:11434' };
+// `providers` is a fallback list ({ provider, model, apiKeys[] }[]) — see
+// @joka-7/modeldispatcher-browser-agent's AgentConfig. Still populated by
+// the single-provider initAI() below for the legacy settings UI and every
+// existing test; the new <ModelPicker> UI (see APIKeySettings.jsx) writes
+// this same shape directly via the package's own saveConfig()/loadConfig().
+let config = { providers: [], ollamaUrl: 'http://localhost:11434' };
 
 // Rate limiting: track last call time per action
 const rateLimitMap = new Map();
@@ -90,26 +97,39 @@ export function _resetRateLimitForTests() {
   rateLimitingEnabled = false;
 }
 
+/** Single-provider entry point — still the legacy settings UI's shape.
+ * Always produces exactly one provider entry (with or without a key, same
+ * as the old `{ provider, apiKey }` did), so `getCurrentProvider()`/
+ * `isAIReady()` behave exactly as before for every existing caller. */
 export function initAI(provider, apiKey, model, ollamaUrl) {
   const p = provider || 'gemini';
+  const key = String(apiKey ?? '').trim();
+  const resolvedModel = (model && String(model).trim()) || PROVIDERS[p]?.defaultModel || '';
   config = {
-    provider: p,
-    apiKey: String(apiKey ?? '').trim(),
-    model: (model && String(model).trim()) || PROVIDERS[p]?.defaultModel || '',
+    providers: [{ provider: p, model: resolvedModel, apiKeys: p === 'ollama' || !key ? [] : [key] }],
     ollamaUrl: ollamaUrl || 'http://localhost:11434',
   };
 }
 
 export const AI_CONFIG_UPDATED = 'ai-config-updated';
 
-/** Reload provider/key/model from localStorage (call when opening chat). */
+/** Reload the active config (call when opening chat, and after any AI
+ * settings change). Prefers the new multi-provider blob the shared
+ * <ModelPicker> writes; falls back to the legacy per-field keys for
+ * existing users who saved a key before this app adopted it, or when the
+ * legacy settings UI is still in use (see modeldispatcher.config.js). */
 export function loadAIConfigFromStorage() {
-  const provider = localStorage.getItem('aiProvider') || 'gemini';
-  const apiKey = (localStorage.getItem('aiApiKey')
-    || localStorage.getItem('anthropicApiKey') || '').trim();
-  const model = (localStorage.getItem('aiModel') || '').trim();
-  const ollamaUrl = (localStorage.getItem('ollamaUrl') || 'http://localhost:11434').trim();
-  initAI(provider, apiKey, model, ollamaUrl);
+  const packageConfig = loadPackageConfig();
+  if (packageConfig.providers.length > 0) {
+    config = packageConfig;
+  } else {
+    const provider = localStorage.getItem('aiProvider') || 'gemini';
+    const apiKey = (localStorage.getItem('aiApiKey')
+      || localStorage.getItem('anthropicApiKey') || '').trim();
+    const model = (localStorage.getItem('aiModel') || '').trim();
+    const ollamaUrl = (localStorage.getItem('ollamaUrl') || 'http://localhost:11434').trim();
+    initAI(provider, apiKey, model, ollamaUrl);
+  }
   const ready = isAIReady();
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent(AI_CONFIG_UPDATED, { detail: { ready } }));
@@ -118,12 +138,14 @@ export function loadAIConfigFromStorage() {
 }
 
 export function isAIReady() {
-  if (config.provider === 'ollama') return true;
-  return Boolean(config.apiKey?.trim());
+  return isConfigReady(config);
 }
 
+/** The first configured provider, for display only (e.g. "Gemini is
+ * answering") — with more than one configured, which one actually answers
+ * a given request depends on runtime fallback, not this. */
 export function getCurrentProvider() {
-  return config.provider;
+  return config.providers[0]?.provider;
 }
 
 // Request/response translation, SSE/NDJSON parsing, retry, and timeout for
@@ -153,7 +175,6 @@ export async function streamChat(messages, systemPrompt, onChunk, { signal } = {
   // Rate limit check
   checkRateLimit('chat-stream');
 
-  const { provider, apiKey } = config;
   const apiMessages = Array.isArray(messages) && messages.length > 0
     ? messages
     : buildApiMessages(messages);
@@ -163,11 +184,8 @@ export async function streamChat(messages, systemPrompt, onChunk, { signal } = {
     } catch { /* ignore UI callback errors */ }
   };
 
-  if (!provider || !PROVIDERS[provider]) {
-    throw new Error(`Unknown AI provider: ${provider || '(not set)'}`);
-  }
-  if (!apiKey && provider !== 'ollama') {
-    throw new Error('API key is not configured');
+  if (!isConfigReady(config)) {
+    throw new Error('AI is not configured — add a provider and key (or Ollama) in AI settings.');
   }
 
   return agentStreamComplete(config, apiMessages, {
@@ -178,9 +196,8 @@ export async function streamChat(messages, systemPrompt, onChunk, { signal } = {
 }
 
 async function runStream(prompt, onChunk, signal) {
-  const { provider } = config;
-  if (!provider || !PROVIDERS[provider]) {
-    throw new Error(`Unknown provider: ${provider}`);
+  if (!isConfigReady(config)) {
+    throw new Error('AI is not configured — add a provider and key (or Ollama) in AI settings.');
   }
   return agentStreamComplete(config, prompt, { onChunk, signal });
 }
