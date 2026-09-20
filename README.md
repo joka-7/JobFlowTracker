@@ -80,7 +80,12 @@ See [docs/LLD.md](docs/LLD.md#2-data-schema) for the full recruiter status list 
 - Click any step status icon to cycle it without entering full edit mode
 - Progress bar on every card: `done / total steps` and percentage
 - "Next step" preview on board cards
-- Board, List+Detail, and Stats views
+- **Priority** — a computed 0–100 score from urgency × impact × effort, with a **Priority** view that ranks tasks into Do Now, Quick Wins (BISE — big impact, small effort), Big Projects, Fill-ins, and Later
+- **Type** — a fixed action-verb taxonomy (fix/buy/order/arrange/throw/call/email/clean/research/other) with its own **By Type** view and board/list filter
+- **Effort** — a quantized minutes-to-years ladder (instead of free-typed duration) that feeds the priority score and is user-tunable (small/medium/large cut-points)
+- **Routines** — daily/weekly/monthly recurring tasks that reset to their next due date (instead of staying completed) when marked done, from the form or by dragging to the Completed column
+- **Reminders** — browser-notification due-time alerts with snooze (15 min / 1 hour / 4 hours)
+- Board, List+Detail, Priority, By Type, Timeline, Calendar, and Stats views
 
 ### AI Assistant (5 providers, all modes)
 Supports Google Gemini, Groq (free tier), Ollama (free/local), Anthropic Claude, and OpenAI.
@@ -412,7 +417,15 @@ The repo includes `.gitleaks.toml` which allowlists `src/firebase.js` (public pr
   "description": "Goal or context",
   "status": "active",
   "priority": "high",
+  "impact": "high",
+  "urgency": "week",
+  "type": "other",
+  "effort": { "value": 2, "unit": "day" },
   "dueDate": "2026-06-20",
+  "dueTime": "09:00",
+  "routine": { "enabled": false, "frequency": "weekly", "interval": 1, "weekdays": [1, 2, 3, 4, 5], "endDate": "" },
+  "reminder": { "enabled": false, "minutesBefore": 60, "snoozedUntil": "" },
+  "lastReminderKey": "",
   "notes": "Free-form notes",
   "steps": [
     { "id": "s1", "title": "Design mockups", "status": "done", "notes": "", "dueDate": "" },
@@ -423,7 +436,9 @@ The repo includes `.gitleaks.toml` which allowlists `src/firebase.js` (public pr
 ```
 
 **Task status values:** `active`, `on_hold`, `completed`, `cancelled`  
-**Step status values:** `todo`, `in_progress`, `done`, `blocked`
+**Step status values:** `todo`, `in_progress`, `done`, `blocked`  
+**Task type values:** `fix`, `buy`, `order`, `arrange`, `throw`, `call`, `email`, `clean`, `research`, `other`, or `''` (untyped)  
+**Impact values:** `high`, `medium`, `low` — **Urgency values:** `now`, `today`, `week`, `month`, `someday`, or `''` (`overdue` is derived, never stored)
 
 **Company / candidate document** — see [docs/LLD.md](docs/LLD.md#2-data-schema) for the full field list.
 

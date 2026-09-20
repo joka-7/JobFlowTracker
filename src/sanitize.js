@@ -1,5 +1,10 @@
 import { STATUSES_TASKS, normalizeInterviewType } from './statuses';
 import { sanitizeBoardOrder } from './utils/boardOrder';
+import { sanitizeRoutine } from './utils/recurrence.js';
+import { sanitizeDueTime, sanitizeReminder } from './utils/reminders.js';
+import { snapToTick } from './utils/effortScale.js';
+import { IMPACT_LEVELS, URGENCY_CHOICES } from './utils/taskPriority.js';
+import { TASK_TYPES } from './utils/taskTypes.js';
 
 /** Generate a cryptographically random ID (fallback to timestamp if crypto unavailable) */
 export function generateId() {
@@ -37,6 +42,9 @@ export function safeUrl(val) {
 
 const TASK_STATUS_IDS = new Set(STATUSES_TASKS.map(s => s.id));
 const TASK_PRIORITIES = new Set(['high', 'medium', 'low']);
+const TASK_IMPACTS = new Set(IMPACT_LEVELS);
+const TASK_URGENCIES = new Set(URGENCY_CHOICES);
+const TASK_TYPE_IDS = new Set(TASK_TYPES);
 const STEP_STATUSES = new Set(['todo', 'in_progress', 'done', 'blocked']);
 const DURATION_UNITS = new Set(['minute', 'hour', 'day', 'month']);
 const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/;
@@ -46,6 +54,17 @@ function sanitizeDuration(duration) {
   const value = safeStr(duration.value).slice(0, 10);
   const unit = DURATION_UNITS.has(duration.unit) ? duration.unit : 'hour';
   return { value, unit };
+}
+
+/**
+ * Effort is stored only as a point on the ladder. Anything else — a legacy
+ * free-form duration, a hand-edited JSON import — is snapped to the nearest
+ * tick so every stored effort is directly comparable.
+ */
+function sanitizeEffort(effort) {
+  if (!effort || typeof effort !== 'object') return { value: '', unit: 'hour' };
+  const tick = snapToTick(effort);
+  return tick ? { value: tick.value, unit: tick.unit } : { value: '', unit: 'hour' };
 }
 
 function sanitizeLabelIds(labelIds) {
@@ -182,6 +201,7 @@ function sanitizeTaskSteps(steps) {
     notes: safeStr(s.notes),
     dueDate: safeStr(s.dueDate),
     duration: sanitizeDuration(s.duration),
+    effort: sanitizeEffort(s.effort),
     labelIds: sanitizeLabelIds(s.labelIds),
   }));
 }
@@ -195,10 +215,18 @@ export function sanitizeTaskRecords(rows) {
     description: safeStr(t.description || ''),
     status: TASK_STATUS_IDS.has(t.status) ? t.status : 'active',
     priority: TASK_PRIORITIES.has(t.priority) ? t.priority : 'medium',
+    impact: TASK_IMPACTS.has(t.impact) ? t.impact : 'medium',
+    urgency: TASK_URGENCIES.has(t.urgency) ? t.urgency : '',
+    type: TASK_TYPE_IDS.has(t.type) ? t.type : '',
     dueDate: safeStr(t.dueDate || ''),
+    dueTime: sanitizeDueTime(t.dueTime),
     duration: sanitizeDuration(t.duration),
+    effort: sanitizeEffort(t.effort),
     labelIds: sanitizeLabelIds(t.labelIds),
     cardColor: sanitizeCardColor(t.cardColor),
+    routine: sanitizeRoutine(t.routine),
+    reminder: sanitizeReminder(t.reminder),
+    lastReminderKey: safeStr(t.lastReminderKey || '').slice(0, 64),
     ...(sanitizeBoardOrder(t.boardOrder) !== undefined
       ? { boardOrder: sanitizeBoardOrder(t.boardOrder) }
       : {}),

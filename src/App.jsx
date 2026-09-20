@@ -3,6 +3,7 @@ import { Loader2 } from 'lucide-react';
 import ModeSelection from './components/ModeSelection';
 import UpdateBanner from './components/UpdateBanner';
 import FooterLinks from './components/FooterLinks';
+import AppErrorBoundary from './components/AppErrorBoundary';
 import { resolveInitialAppMode } from './statuses';
 import { completeRedirectSignIn } from './firebase';
 
@@ -41,7 +42,7 @@ export default function App() {
     <>
       <Suspense fallback={<AppLoadingFallback />}>
         {mode === 'tasks'
-          ? <TasksApp key="tasks" onModeChange={setMode} />
+          ? <AppErrorBoundary><TasksApp key="tasks" onModeChange={setMode} /></AppErrorBoundary>
           : <JobTrackerApp mode={mode} onModeChange={setMode} />}
       </Suspense>
       <FooterLinks />

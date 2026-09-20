@@ -1,35 +1,10 @@
 import { describe, it, expect } from 'vitest';
+import {
+  cycleStepStatus, makeInitialTask, getProgress, mergeTaskIntoList,
+} from '../utils/taskHelpers';
 
-// ── helpers mirrored from TasksApp ──────────────────────────────────────────
-
-const STEP_STATUSES = ['todo', 'in_progress', 'done', 'blocked'];
-const cycleStepStatus = (s) => {
-  const i = STEP_STATUSES.indexOf(s);
-  return STEP_STATUSES[(i + 1) % STEP_STATUSES.length];
-};
-
-const makeInitialTask = () => ({
-  name: '',
-  description: '',
-  status: 'active',
-  priority: 'medium',
-  dueDate: '',
-  steps: [],
-  notes: '',
-});
-
-const getProgress = (task) => {
-  const steps = Array.isArray(task.steps) ? task.steps : [];
-  if (steps.length === 0) return null;
-  const done = steps.filter(s => s.status === 'done').length;
-  return { done, total: steps.length };
-};
-
-// Simulate saveTask logic (new vs update)
-const applyTaskSave = (tasks, task) => {
-  const exists = tasks.find(t => t.id === task.id);
-  return exists ? tasks.map(t => t.id === task.id ? task : t) : [task, ...tasks];
-};
+// applyTaskSave is now the real saveTask logic (mergeTaskIntoList).
+const applyTaskSave = mergeTaskIntoList;
 
 // ── tests ────────────────────────────────────────────────────────────────────
 

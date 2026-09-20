@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Search, Copy, Check } from 'lucide-react';
 import { TEMPLATES } from '../data/interviewTemplates';
 import { TASK_TEMPLATES } from '../data/taskTemplates';
 import { getLocalizedQuestions, getLocalizedCategoryLabel } from '../utils/templateQuestions';
+import { useModalA11y } from '../hooks/useModalA11y';
 
 const COLOR_MAP = {
   blue:   { pill: 'bg-blue-100 text-blue-800 border-blue-200',   active: 'bg-blue-600 text-white border-blue-600'   },
@@ -90,9 +91,18 @@ export default function TemplateLibrary({ t: tProp, onClose, onStartSimulation, 
   const copyLabel = t('templates.copy', 'Copy');
   const copiedLabel = t('templates.copied', 'Copied!');
 
+  const dialogRef = useRef(null);
+  const handleClose = useCallback(() => onClose(), [onClose]);
+  useModalA11y(dialogRef, handleClose);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden max-h-[90vh]">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden max-h-[90vh]"
+      >
 
         {/* Header */}
         <div className={`flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r text-white flex-shrink-0 ${

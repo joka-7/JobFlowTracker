@@ -77,8 +77,12 @@ JobFlowTracker is a single-page application (SPA) for tracking a job search, a r
 | `src/components/ModeSelection.jsx` | Full-screen | First-launch 3-mode picker (job seeker / recruiter / task manager) |
 | `src/components/ModeDropdown.jsx` | Header widget | Dropdown button (icon buttons collapse to a single control when only one mode is enabled); updates `localStorage.appMode` and calls `onModeChange` |
 | `src/JobTrackerApp.jsx` | Main component | Mode-aware UI for job seeker and recruiter; all tabs, Firestore integration |
-| `src/TasksApp.jsx` | Main component | Task manager UI: board, list+step-detail, stats; step status cycling |
-| `src/firebase.js` | Module | Auth, mode-aware `loadAllItems(uid, mode)`, profile `appMode`, legacy migration |
+| `src/TasksApp.jsx` | Main component | Task manager UI: board, list+step-detail, Priority (ranked by a computed urgency×impact×effort score), By Type, timeline, calendar, stats; step status cycling; routine advancement and due-time reminder polling |
+| `src/components/AppErrorBoundary.jsx` | Error boundary | Wraps `TasksApp` only (job seeker/recruiter data isn't touched by a Tasks-mode crash); offers a localStorage JSON backup before reload |
+| `src/firebase.js` | Module | Auth, mode-aware `loadAllItems(uid, mode)`, profile `appMode`, legacy migration; clears a record from the pending set once its write lands |
+| `src/hooks/useCloudSync.js` | Hook | Owns one collection's auth/pull lifecycle: `hasRestorableSession()` fast path, `authResolved`, sign-in and refocus pulls, manual `syncNow` |
+| `src/utils/cloudSync.js` | Module | `unionOnSignIn` — reconciles a cloud pull against local state using the pending set |
+| `src/utils/pendingSync.js` | Module | Which record ids changed locally without a confirmed cloud write, per collection |
 | `src/components/Onboarding.jsx` | Modal | 5-step wizard (job seeker only, skipped when switching from another mode) |
 | `src/services/aiAssistant.js` | Module | Thin wrapper over the shared `@joka-7/modeldispatcher-browser-agent` package (also used by KanDOne/HighFive/StepByLearn) — provider configuration, `initAI`, `isAIReady`, rate limiting, and this app's job-search prompts; streaming/parsing itself lives in the shared package |
 | `src/components/AIAssistant.jsx` | Floating panel (job seeker only) | Sparkles button, menu screen, debrief; launches ChatModal and ResumeReview |
@@ -113,8 +117,29 @@ User clicks "Sign In" / Cloud icon
   → loadAllItems(uid, mode)
       → getDocs(/users/{uid}/companies OR /candidates OR /tasks)
       → jobseeker only: legacy root-doc migration if subcollection empty
-  → setCompanies / setTasks(data)
+  → unionOnSignIn(localState, cloudData, { pending: readPending(mode) })
+  → setCompanies / setTasks(merged)
+  → batchSaveItems for records local won; deleteItem for pending local deletes
 ```
+
+#### Reconciling a pull against local state
+
+Cloud is not authoritative for every id, because a local write can fail — or
+never be attempted, because the session had not resolved yet. `utils/pendingSync.js`
+records which record ids changed locally without a confirmed cloud write
+(`firebase.js` clears an id once its write lands), and `utils/cloudSync.js`
+consults that set:
+
+| Case | Winner |
+| --- | --- |
+| Id only in local state | Local, pushed to cloud |
+| Shared id, pending local edit | Local, pushed to cloud |
+| Shared id, no pending local change | Cloud |
+| Id only in cloud, pending local delete | Dropped, delete replayed to cloud |
+
+The third row is what keeps a stale device from resurrecting old data; the
+second is what stops a pull from discarding work typed before a returning
+session resolved (`useCloudSync`'s `authResolved`).
 
 ### 4.2 Mode Selection / Switching Flow
 
@@ -143,7 +168,8 @@ User action (add / edit / drag-drop / step status toggle)
   → setState(newState)
   → useEffect [state] fires
       → localStorage.setItem('jobTrackerAppV2Data_{mode}', JSON.stringify(data))
-  → if (user) updateItem(uid, mode, item)
+      → recordLocalChanges(mode, diff vs previous snapshot)  [pendingSync]
+  → if (user) updateItem(uid, mode, item)   → clears the id from pending on success
 
 Delete
   → setState(prev.filter(...))

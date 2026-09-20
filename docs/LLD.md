@@ -150,7 +150,10 @@ Terminal (inactive pipeline): `rejected`, `withdrawn`, `offer_accepted`.
 | `newStepTitle` | `string` | Live value of the "add step" input field. |
 | `searchQuery` | `string` | Filters `filteredTasks`. |
 | `statusFilter` | `string` | Status dropdown filter (`'all'` or a status ID). |
-| `activeTab` | `'board' \| 'list' \| 'stats'` | Which view is rendered. |
+| `typeFilter` | `string` | Type dropdown filter (`'all'`, `'untyped'`, or a type ID). |
+| `effortTiers` | `{ smallMaxIndex, mediumMaxIndex }` | User-chosen cut-points on the effort ladder (`utils/effortScale.js`); persisted to `tasksEffortTiersV1`, not synced to Firestore. |
+| `reminderPrompt` | `{ taskId, name } \| null` | Snooze banner shown when a due-time reminder fires. |
+| `activeTab` | `'board' \| 'list' \| 'priority' \| 'type' \| 'timeline' \| 'calendar' \| 'stats'` | Which view is rendered. |
 | `user`, `syncing`, `isSaved`, `toastMessage` | — | Same pattern as `JobTrackerApp`. |
 
 ### Task Object
@@ -161,9 +164,17 @@ Terminal (inactive pipeline): `rejected`, `withdrawn`, `offer_accepted`.
 | `name` | `string` | Yes | Task title. |
 | `description` | `string` | No | Goal or background info. |
 | `status` | `'active' \| 'on_hold' \| 'completed' \| 'cancelled'` | Yes | Default: `'active'`. |
-| `priority` | `'high' \| 'medium' \| 'low'` | No | Default: `'medium'`. |
+| `priority` | `'high' \| 'medium' \| 'low'` | No | Manually-set legacy priority tag. Default: `'medium'`. |
+| `impact` | `'high' \| 'medium' \| 'low'` | No | Default: `'medium'`. Feeds the computed priority score (`utils/taskPriority.js`). |
+| `urgency` | `'now' \| 'today' \| 'week' \| 'month' \| 'someday' \| ''` | No | Manual override; `'overdue'` is derived from `dueDate`/`dueTime`, never stored. |
+| `type` | `'fix' \| 'buy' \| 'order' \| 'arrange' \| 'throw' \| 'call' \| 'email' \| 'clean' \| 'research' \| 'other' \| ''` | No | `''` = untyped. `utils/taskTypes.js`. |
+| `effort` | `{ value: number \| '', unit: 'minute' \| 'hour' \| 'day' \| 'month' \| 'year' }` | No | Snapped to the nearest ladder tick on save (`utils/effortScale.js`); falls back to `duration` for scoring on legacy tasks. |
 | `dueDate` | `string` | No | ISO date string (`YYYY-MM-DD`). |
+| `dueTime` | `string` | No | `HH:MM`, 24h. Defaults to `09:00` for overdue/reminder calculations when unset. |
 | `steps` | `Step[]` | No | Ordered array of step objects. Default: `[]`. |
+| `routine` | `{ enabled, frequency: 'daily'\|'weekly'\|'monthly', interval, weekdays: number[], endDate }` | No | `utils/recurrence.js`. When `enabled` and the task is marked `completed`, `applyTaskStatusChange` advances it to its next due date instead of leaving it completed. |
+| `reminder` | `{ enabled, minutesBefore, snoozedUntil }` | No | `utils/reminders.js`. `minutesBefore` ∈ `{0,15,30,60,120,1440}`. |
+| `lastReminderKey` | `string` | No | De-dupes a fired reminder; cleared on snooze or routine advance. |
 | `notes` | `string` | No | Free-text notes. |
 
 ### Step Object
@@ -175,6 +186,7 @@ Terminal (inactive pipeline): `rejected`, `withdrawn`, `offer_accepted`.
 | `status` | `'todo' \| 'in_progress' \| 'done' \| 'blocked'` | Default: `'todo'`. Cycled by clicking the status icon. |
 | `notes` | `string` | Optional details. |
 | `dueDate` | `string` | Optional ISO date. |
+| `effort` | `{ value, unit }` | Same shape and snapping as the task's `effort`. |
 
 ### Task Status Values
 
@@ -190,6 +202,30 @@ Terminal (inactive pipeline): `rejected`, `withdrawn`, `offer_accepted`.
 `todo → in_progress → done → blocked → todo`
 
 Each status maps to a Lucide icon and background color (defined in `STEP_STATUS_CONFIG` in `TasksApp.jsx`).
+
+### Priority Score, Routines, and Reminders
+
+Pseudocode lives as doc comments in the utility modules themselves (`utils/taskPriority.js`,
+`utils/recurrence.js`, `utils/reminders.js`) rather than being re-derived here, so there is one
+place to keep in sync as the weights or windows change:
+
+- **Priority score** (`scoreTask`) — `100 × (0.45·urgencyWeight + 0.35·impactWeight + 0.2·effortWeight)`.
+  Urgency is the more urgent of a derived-from-due-date value and a manual pick; effort is
+  bucketed into small/medium/large by the user's `effortTiers` cut-points. A task is a "BISE"
+  (Big Impact, Small Effort) when `impact === 'high' && effortTier === 'small'`; `isDoNow` when
+  urgency is `overdue`, `now`, or `today`. `groupTasksByPriority` buckets every task into exactly
+  one of `doNow | bise | bigProject | fillIn | later` for the Priority view.
+- **Routine advance** (`applyTaskStatusChange`) — completing a routine-enabled task doesn't leave
+  it `completed`; `advanceRoutineTask` computes the next occurrence (`computeNextDueDate`,
+  respecting `interval`/`weekdays`/`endDate`), resets every step to `todo`, clears
+  `lastReminderKey` and any snooze, and only actually completes the task once the routine has
+  passed its `endDate`. Wired into both `handleSave` (form) and `handleBoardReorder` (drag to the
+  Completed column).
+- **Reminder polling** — a 30-second interval (only started when `Notification.permission ===
+  'granted'`) checks every task with `shouldNotifyTask`: due within `[minutesBefore, +5min]` of
+  `dueDate`+`dueTime`, not already fired (`lastReminderKey`), and not snoozed. A fired reminder
+  writes `lastReminderKey` (de-dupe) and shows the in-app snooze banner alongside the native
+  `Notification`.
 
 ---
 
