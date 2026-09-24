@@ -6,7 +6,7 @@ to refresh it, and never edit between the markers by hand.
 
 <!-- BEGIN GENERATED TREE (depth=all entries=all) -->
 ```text
-JobFlowTracker/
+jobflowtracker/
 ├── .github/
 │   ├── ISSUE_TEMPLATE/
 │   │   ├── bug_report.md         # GitHub issue template: bug report
@@ -74,6 +74,7 @@ JobFlowTracker/
 │   └── icon-master.png
 ├── src/                          # App source — mode gate, per-mode UIs, shared services
 │   ├── __tests__/                # Vitest unit + integration tests
+│   │   ├── APIKeySettings.modelPicker.test.jsx
 │   │   ├── APIKeySettings.test.jsx
 │   │   ├── App.integration.test.jsx
 │   │   ├── AppErrorBoundary.test.jsx
@@ -185,6 +186,7 @@ JobFlowTracker/
 │   ├── i18n.js                   # React-i18next setup
 │   ├── index.css
 │   ├── main.jsx
+│   ├── modeldispatcher.config.js
 │   ├── pwaUpdate.js
 │   ├── sanitize.js
 │   ├── statuses.js               # Status configs for all 3 modes, storage keys
@@ -195,7 +197,6 @@ JobFlowTracker/
 ├── .gitleaks.toml
 ├── .gitmodules
 ├── .markdownlint.json
-├── .npmrc
 ├── .trivyignore
 ├── AGENTS.md                     # The compiled coding rules every AI assistant reads — generated, do not…
 ├── CHANGELOG.md                  # Changelog

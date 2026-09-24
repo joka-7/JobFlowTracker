@@ -240,7 +240,7 @@ Once a provider is configured, open any company and click the **AI Assistant** b
 
 <!-- BEGIN GENERATED TREE (depth=1 entries=all) -->
 ```text
-JobFlowTracker/
+jobflowtracker/
 ├── .github/
 ├── docs/
 ├── e2e/             # Playwright end-to-end tests
@@ -252,7 +252,6 @@ JobFlowTracker/
 ├── .gitleaks.toml
 ├── .gitmodules
 ├── .markdownlint.json
-├── .npmrc
 ├── .trivyignore
 ├── AGENTS.md        # The compiled coding rules every AI assistant reads — generated, do not…
 ├── CHANGELOG.md     # Changelog
