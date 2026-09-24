@@ -1,7 +1,16 @@
 import { useState, useRef, useCallback } from 'react';
 import { X, Eye, EyeOff, ExternalLink, CheckCircle, Trash2, Settings, Briefcase, Users, ClipboardList, Globe } from 'lucide-react';
 import GithubIcon from './GithubIcon';
+import { ModelPicker } from 'modeldispatcher-react-ui';
+import 'modeldispatcher-react-ui/styles.css';
+import {
+  loadConfig,
+  saveConfig,
+  loadExternalChatFavorite,
+  saveExternalChatFavorite,
+} from 'modeldispatcher-browser-agent';
 import { loadAIConfigFromStorage, isAIReady, PROVIDERS } from '../services/aiAssistant';
+import { dispatcherFeatures } from '../modeldispatcher.config';
 import { STORAGE_KEYS, APP_MODES, getEnabledModes } from '../storageKeys';
 import { useModalA11y } from '../hooks/useModalA11y';
 
@@ -13,7 +22,145 @@ const MODE_DEFS = [
   { id: APP_MODES.tasks, Icon: ClipboardList, labelKey: 'tasks.modeSelection.title', fallback: 'Tasks' },
 ];
 
-export default function APIKeySettings({ t, onClose, currentMode, onModeChange }) {
+/** Shared by both settings variants below — app-specific, has nothing to
+ * do with AI provider/key selection. */
+function EnabledModesSection({ t, enabledModes, toggleEnabledMode }) {
+  return (
+    <div>
+      <label className="block text-sm font-bold text-gray-700 mb-1">
+        {t('settings.modesTitle', 'Enabled Modes')}
+      </label>
+      <p className="text-xs text-gray-500 mb-2">
+        {t('settings.modesNote', 'Only selected modes appear in the mode switcher.')}
+      </p>
+      <div className="flex gap-2 flex-wrap">
+        {MODE_DEFS.map(({ id, Icon, labelKey, fallback }) => {
+          const active = enabledModes.includes(id);
+          const isLast = enabledModes.length === 1 && active;
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => toggleEnabledMode(id)}
+              disabled={isLast}
+              title={isLast ? t('settings.modesAtLeastOne', 'At least one mode must remain enabled') : undefined}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
+                active
+                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                  : 'border-gray-200 bg-white text-gray-400 hover:border-gray-300'
+              } ${isLast ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+            >
+              <Icon size={14} />
+              {t(labelKey, fallback)}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function useEnabledModes() {
+  const savedEnabled = getEnabledModes();
+  const [enabledModes, setEnabledModes] = useState(
+    savedEnabled ?? [APP_MODES.jobseeker, APP_MODES.recruiter, APP_MODES.tasks]
+  );
+  const toggleEnabledMode = (modeId) => {
+    if (enabledModes.length === 1 && enabledModes.includes(modeId)) return;
+    setEnabledModes((prev) =>
+      prev.includes(modeId) ? prev.filter((m) => m !== modeId) : [...prev, modeId]
+    );
+  };
+  function persistAndMaybeSwitchMode(currentMode, onModeChange) {
+    localStorage.setItem(STORAGE_KEYS.enabledModes, JSON.stringify(enabledModes));
+    if (currentMode && !enabledModes.includes(currentMode) && onModeChange) {
+      const nextMode = [APP_MODES.jobseeker, APP_MODES.recruiter, APP_MODES.tasks]
+        .find((m) => enabledModes.includes(m));
+      if (nextMode) {
+        localStorage.setItem(STORAGE_KEYS.appMode, nextMode);
+        onModeChange(nextMode);
+      }
+    }
+  }
+  return { enabledModes, toggleEnabledMode, persistAndMaybeSwitchMode };
+}
+
+/** The shared <ModelPicker>/<AskExternallyButton> settings screen — add
+ * one or more providers with pooled keys, pick a favorite free AI app.
+ * Live-saves on every change (ModelPicker's own convention), so there's
+ * no separate "Save AI settings" step here; only Enabled Modes needs an
+ * explicit Done. */
+function NewApiKeySettings({ t, onClose, currentMode, onModeChange }) {
+  const [pickerConfig, setPickerConfig] = useState(loadConfig);
+  const [favorite, setFavorite] = useState(loadExternalChatFavorite);
+  const { enabledModes, toggleEnabledMode, persistAndMaybeSwitchMode } = useEnabledModes();
+
+  const dialogRef = useRef(null);
+  const handleClose = useCallback(() => onClose(), [onClose]);
+  useModalA11y(dialogRef, handleClose);
+
+  function handleConfigChange(next) {
+    setPickerConfig(next);
+    saveConfig(next);
+    loadAIConfigFromStorage(); // re-sync aiAssistant's in-memory config + fire AI_CONFIG_UPDATED
+  }
+
+  function handleFavoriteChange(next) {
+    setFavorite(next);
+    saveExternalChatFavorite(next);
+  }
+
+  function handleDone() {
+    persistAndMaybeSwitchMode(currentMode, onModeChange);
+    onClose();
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col overflow-hidden"
+      >
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-700 p-5 text-white flex items-center justify-between">
+          <div className="flex items-center gap-2 font-bold text-lg">
+            <Settings size={20} /> {t('settings.title', 'Settings')}
+          </div>
+          <button onClick={onClose} className="text-white/70 hover:text-white"><X size={20} /></button>
+        </div>
+
+        <div className="p-6 space-y-5 overflow-y-auto flex-1 min-h-0">
+          <div className="flex gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 text-sm">
+            <span className="flex-shrink-0" aria-hidden>⚠️</span>
+            <p>{t('settings.securityNotice', 'API keys are stored in this browser only. Anyone with access to this device, or a malicious extension, could read them. Job and chat data you send is transmitted to your chosen AI provider under your account.')}</p>
+          </div>
+
+          <ModelPicker
+            config={pickerConfig}
+            onConfigChange={handleConfigChange}
+            externalChatFavorite={favorite}
+            onExternalChatFavoriteChange={handleFavoriteChange}
+          />
+
+          <EnabledModesSection t={t} enabledModes={enabledModes} toggleEnabledMode={toggleEnabledMode} />
+
+          <button
+            onClick={handleDone}
+            className="w-full py-2.5 rounded-lg font-bold text-white bg-purple-600 hover:bg-purple-700 transition-colors"
+          >
+            {t('settings.done', 'Done')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** The app's original hand-built AI settings — single provider/key/model.
+ * Kept byte-for-byte in behavior as the fallback when
+ * `dispatcherFeatures.ui` is off (see modeldispatcher.config.js). */
+function LegacyApiKeySettings({ t, onClose, currentMode, onModeChange }) {
   const saved = {
     provider: localStorage.getItem('aiProvider') || 'gemini',
     apiKey: localStorage.getItem('aiApiKey') || '',
@@ -28,17 +175,7 @@ export default function APIKeySettings({ t, onClose, currentMode, onModeChange }
   const [visible, setVisible] = useState(false);
   const [done, setDone] = useState(false);
 
-  const savedEnabled = getEnabledModes();
-  const [enabledModes, setEnabledModes] = useState(
-    savedEnabled ?? [APP_MODES.jobseeker, APP_MODES.recruiter, APP_MODES.tasks]
-  );
-
-  const toggleEnabledMode = (modeId) => {
-    if (enabledModes.length === 1 && enabledModes.includes(modeId)) return;
-    setEnabledModes((prev) =>
-      prev.includes(modeId) ? prev.filter((m) => m !== modeId) : [...prev, modeId]
-    );
-  };
+  const { enabledModes, toggleEnabledMode, persistAndMaybeSwitchMode } = useEnabledModes();
 
   const pInfo = PROVIDERS[provider];
   const isOllama = provider === 'ollama';
@@ -64,16 +201,7 @@ export default function APIKeySettings({ t, onClose, currentMode, onModeChange }
     if (isOllama) localStorage.setItem('ollamaUrl', ollamaUrl.trim());
     loadAIConfigFromStorage();
 
-    localStorage.setItem(STORAGE_KEYS.enabledModes, JSON.stringify(enabledModes));
-
-    if (currentMode && !enabledModes.includes(currentMode) && onModeChange) {
-      const nextMode = [APP_MODES.jobseeker, APP_MODES.recruiter, APP_MODES.tasks]
-        .find((m) => enabledModes.includes(m));
-      if (nextMode) {
-        localStorage.setItem(STORAGE_KEYS.appMode, nextMode);
-        onModeChange(nextMode);
-      }
-    }
+    persistAndMaybeSwitchMode(currentMode, onModeChange);
 
     setDone(true);
     setTimeout(() => { setDone(false); onClose(); }, 900);
@@ -206,38 +334,7 @@ export default function APIKeySettings({ t, onClose, currentMode, onModeChange }
             </a>
           )}
 
-          {/* Enabled Modes */}
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">
-              {t('settings.modesTitle', 'Enabled Modes')}
-            </label>
-            <p className="text-xs text-gray-500 mb-2">
-              {t('settings.modesNote', 'Only selected modes appear in the mode switcher.')}
-            </p>
-            <div className="flex gap-2 flex-wrap">
-              {MODE_DEFS.map(({ id, Icon, labelKey, fallback }) => {
-                const active = enabledModes.includes(id);
-                const isLast = enabledModes.length === 1 && active;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => toggleEnabledMode(id)}
-                    disabled={isLast}
-                    title={isLast ? t('settings.modesAtLeastOne', 'At least one mode must remain enabled') : undefined}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
-                      active
-                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                        : 'border-gray-200 bg-white text-gray-400 hover:border-gray-300'
-                    } ${isLast ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
-                  >
-                    <Icon size={14} />
-                    {t(labelKey, fallback)}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          <EnabledModesSection t={t} enabledModes={enabledModes} toggleEnabledMode={toggleEnabledMode} />
 
           <div className="flex gap-3 pt-1">
             <button
@@ -267,4 +364,8 @@ export default function APIKeySettings({ t, onClose, currentMode, onModeChange }
       </div>
     </div>
   );
+}
+
+export default function APIKeySettings(props) {
+  return dispatcherFeatures.ui ? <NewApiKeySettings {...props} /> : <LegacyApiKeySettings {...props} />;
 }

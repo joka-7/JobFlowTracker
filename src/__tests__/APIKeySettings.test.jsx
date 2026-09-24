@@ -4,6 +4,13 @@ import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
 import APIKeySettings from '../components/APIKeySettings';
 
+// This file covers the legacy hand-built settings UI specifically — see
+// APIKeySettings.modelPicker.test.jsx for the shared <ModelPicker> path,
+// which is what actually renders by default (dispatcherFeatures.ui: true).
+vi.mock('../modeldispatcher.config', () => ({
+  dispatcherFeatures: { ui: false },
+}));
+
 vi.mock('../services/aiAssistant', () => ({
   loadAIConfigFromStorage: vi.fn(),
   isAIReady: vi.fn(() => false),

@@ -252,7 +252,6 @@ JobFlowTracker/
 ├── .gitleaks.toml
 ├── .gitmodules
 ├── .markdownlint.json
-├── .npmrc
 ├── .trivyignore
 ├── AGENTS.md        # The compiled coding rules every AI assistant reads — generated, do not…
 ├── CHANGELOG.md     # Changelog
