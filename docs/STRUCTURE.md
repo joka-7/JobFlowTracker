@@ -14,6 +14,7 @@ JobFlowTracker/
 │   │   └── feature_request.md    # GitHub issue template: feature request
 │   ├── workflows/
 │   │   ├── ci.yml
+│   │   ├── docs.yml
 │   │   └── security.yml
 │   ├── copilot-instructions.md   # Copilot's copy of AGENTS.md (generated)
 │   ├── dependabot.yml
@@ -120,6 +121,7 @@ JobFlowTracker/
 │   │   ├── CardColorPicker.jsx
 │   │   ├── ChatModal.jsx
 │   │   ├── EffortPicker.jsx
+│   │   ├── GithubIcon.jsx
 │   │   ├── KanbanDndBoard.jsx
 │   │   ├── LabelPicker.jsx
 │   │   ├── LanguageSwitcher.jsx
