@@ -104,21 +104,37 @@ describe('ChatModal', () => {
     expect(sendIconBtn).not.toBeDisabled();
   });
 
-  it('shows "Set API key" button when AI is not ready', () => {
+  it('shows the no-provider prompt (settings + conversation intro) when AI is not ready', () => {
     mockIsAIReady.mockReturnValue(false);
     mockLoadAIConfig.mockReturnValue(false);
     render(<ChatModal {...defaultProps} />);
-    expect(screen.getByText(/Set API key to enable AI/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /open ai settings/i })).toBeInTheDocument();
+    expect(screen.getByRole('note')).toHaveTextContent(/chatting with AI/i);
   });
 
-  it('"Set API key" button calls onOpenSettings', async () => {
+  it('the no-provider prompt\'s settings button calls onOpenSettings', async () => {
     mockIsAIReady.mockReturnValue(false);
     mockLoadAIConfig.mockReturnValue(false);
     const user = userEvent.setup();
     const onOpenSettings = vi.fn();
     render(<ChatModal {...defaultProps} onOpenSettings={onOpenSettings} />);
-    await user.click(screen.getByText(/Set API key to enable AI/i));
+    await user.click(screen.getByRole('button', { name: /open ai settings/i }));
     expect(onOpenSettings).toHaveBeenCalledTimes(1);
+  });
+
+  it('also offers to ask the saved favorite for free when no provider is configured', () => {
+    mockIsAIReady.mockReturnValue(false);
+    mockLoadAIConfig.mockReturnValue(false);
+    localStorage.setItem('aiExternalChatFavorite', 'claude');
+    render(<ChatModal {...defaultProps} />);
+    expect(screen.getByRole('button', { name: 'Ask Claude' })).toBeInTheDocument();
+  });
+
+  it('renders the no-provider prompt in Hebrew, dir=rtl, when the app language is he', () => {
+    mockIsAIReady.mockReturnValue(false);
+    mockLoadAIConfig.mockReturnValue(false);
+    render(<ChatModal {...defaultProps} language="he" />);
+    expect(screen.getByRole('note')).toHaveTextContent('אתם משוחחים עם AI');
   });
 
   it('shows empty state message when no messages', () => {

@@ -44,12 +44,12 @@ describe('ChatModal AI config (integration)', () => {
     render(<ChatModal {...defaultProps} />);
 
     expect(screen.getByRole('textbox')).toBeInTheDocument();
-    expect(screen.queryByText(/Set API key to enable AI/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /open ai settings/i })).not.toBeInTheDocument();
   });
 
   it('enables chat after loadAIConfigFromStorage when user saves a key (simulates settings close)', async () => {
     render(<ChatModal {...defaultProps} />);
-    expect(screen.getByText(/Set API key to enable AI/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /open ai settings/i })).toBeInTheDocument();
 
     localStorage.setItem('aiProvider', 'gemini');
     localStorage.setItem('aiApiKey', 'AIza-saved-later');
@@ -58,6 +58,6 @@ describe('ChatModal AI config (integration)', () => {
     await waitFor(() => {
       expect(screen.getByRole('textbox')).toBeInTheDocument();
     });
-    expect(screen.queryByText(/Set API key to enable AI/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /open ai settings/i })).not.toBeInTheDocument();
   });
 });

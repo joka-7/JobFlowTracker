@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Send, Loader2, Save, MessageSquare, ExternalLink } from 'lucide-react';
-import { EXTERNAL_CHAT_PROVIDERS } from 'modeldispatcher-browser-agent';
+import { EXTERNAL_CHAT_PROVIDERS, loadExternalChatFavorite } from 'modeldispatcher-browser-agent';
+import { NoProviderPrompt, ConversationIntro } from 'modeldispatcher-react-ui';
 import {
   streamChat, buildApiMessages, loadAIConfigFromStorage, isAIReady, getCurrentProvider,
   PROVIDERS, AI_CONFIG_UPDATED,
@@ -13,6 +14,13 @@ const SIM_TRIGGER = '__sim_start__';
 function safeTranslate(t, key, fallback) {
   if (typeof t === 'function') return t(key, fallback);
   return fallback ?? key;
+}
+
+/** JobFlowTracker only supports these three locales — anything else (or
+ * i18next not yet initialized) falls back to English, matching every other
+ * `modeldispatcher-react-ui` consumer's convention. */
+function toPickerLocale(language) {
+  return language === 'he' || language === 'fr' ? language : 'en';
 }
 
 /** Best-effort clipboard copy — never throws (permissions/non-secure context). */
@@ -144,7 +152,7 @@ Be concise and practical. Suggest concrete next actions.`;
 };
 
 function ChatModalInner({
-  company, task, t, onClose, onOpenSettings, onSaveToCompany, onSaveToTask,
+  company, task, t, language, onClose, onOpenSettings, onSaveToCompany, onSaveToTask,
   systemPromptOverride,
   simulationTitle,
   autoStart,
@@ -163,7 +171,9 @@ function ChatModalInner({
   const autoStartGen = useRef(0);
   const abortRef = useRef(null);
 
+  const pickerLocale = toPickerLocale(language);
   const [aiReady, setAiReady] = useState(() => loadAIConfigFromStorage());
+  const [externalChatFavorite, setExternalChatFavorite] = useState(() => loadExternalChatFavorite());
 
   const isTaskMode = variant === 'tasks';
   const systemPrompt = systemPromptOverride || (isTaskMode
@@ -206,7 +216,10 @@ function ChatModalInner({
   }, [sessionKey]);
 
   useEffect(() => {
-    const onConfigUpdated = () => setAiReady(isAIReady());
+    const onConfigUpdated = () => {
+      setAiReady(isAIReady());
+      setExternalChatFavorite(loadExternalChatFavorite());
+    };
     window.addEventListener(AI_CONFIG_UPDATED, onConfigUpdated);
     return () => window.removeEventListener(AI_CONFIG_UPDATED, onConfigUpdated);
   }, []);
@@ -329,6 +342,11 @@ function ChatModalInner({
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-4">
+          {messages.length === 0 && (
+            <div className="mb-3">
+              <ConversationIntro locale={pickerLocale} />
+            </div>
+          )}
           {messages.length === 0 && !loading && (
             <div className="text-center text-gray-400 mt-8">
               {simulationTitle
@@ -376,12 +394,12 @@ function ChatModalInner({
 
         <div className="border-t border-gray-100 px-3 py-3 flex-shrink-0">
           {!aiReady ? (
-            <button
-              onClick={onOpenSettings}
-              className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold rounded-xl transition-colors"
-            >
-              ⚙️ {safeTranslate(t, 'ai.noKey', 'Set API key to enable AI →')}
-            </button>
+            <NoProviderPrompt
+              favorite={externalChatFavorite}
+              question={input.trim() || undefined}
+              onOpenSettings={onOpenSettings}
+              locale={pickerLocale}
+            />
           ) : (
             <div className="flex gap-2 items-end">
               <textarea
