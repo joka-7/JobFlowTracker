@@ -1,13 +1,13 @@
 import { useState, useRef, useCallback } from 'react';
 import { X, Eye, EyeOff, ExternalLink, CheckCircle, Trash2, Settings, Briefcase, Users, ClipboardList } from 'lucide-react';
-import { ModelPicker } from '@joka-7/modeldispatcher-react-ui';
-import '@joka-7/modeldispatcher-react-ui/styles.css';
+import { ModelPicker } from 'modeldispatcher-react-ui';
+import 'modeldispatcher-react-ui/styles.css';
 import {
   loadConfig,
   saveConfig,
   loadExternalChatFavorite,
   saveExternalChatFavorite,
-} from '@joka-7/modeldispatcher-browser-agent';
+} from 'modeldispatcher-browser-agent';
 import { loadAIConfigFromStorage, isAIReady, PROVIDERS } from '../services/aiAssistant';
 import { dispatcherFeatures } from '../modeldispatcher.config';
 import { STORAGE_KEYS, APP_MODES, getEnabledModes } from '../storageKeys';
