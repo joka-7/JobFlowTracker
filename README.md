@@ -240,7 +240,7 @@ Once a provider is configured, open any company and click the **AI Assistant** b
 
 <!-- BEGIN GENERATED TREE (depth=1 entries=all) -->
 ```text
-jobflowtracker/
+JobFlowTracker/
 ├── .github/
 ├── docs/
 ├── e2e/             # Playwright end-to-end tests
