@@ -81,7 +81,7 @@ describe('JobTrackerApp mock interview', () => {
     await user.click(screen.getAllByTestId('template-start-simulation')[0]);
 
     expect(screen.getByText('Mock Interview', { exact: true })).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /Set API key to enable AI/i }));
+    await user.click(screen.getByRole('button', { name: /open ai settings/i }));
     expect(screen.getByText('Settings')).toBeInTheDocument();
     expect(screen.getByText('Mock Interview', { exact: true })).toBeInTheDocument();
   });

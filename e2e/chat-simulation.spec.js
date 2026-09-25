@@ -92,9 +92,9 @@ test.describe('Chat and mock interview (browser e2e)', () => {
 
     await openTemplateLibrary(page);
     await page.getByRole('button', { name: /Mock interview/i }).first().click();
-    await expect(page.getByText(/Set API key to enable AI/i)).toBeVisible();
+    await expect(page.getByRole('button', { name: /open ai settings/i })).toBeVisible();
 
-    await page.getByRole('button', { name: /Set API key to enable AI/i }).click();
+    await page.getByRole('button', { name: /open ai settings/i }).click();
     const settingsDialog = page.getByRole('dialog');
     await settingsDialog.locator('select').selectOption({ label: 'Google Gemini' });
     await settingsDialog.getByRole('button', { name: /Add provider/i }).click();
@@ -106,7 +106,7 @@ test.describe('Chat and mock interview (browser e2e)', () => {
     await expect(page.locator('input[type="password"]')).toHaveCount(0, { timeout: 5_000 });
 
     await expect(page.getByRole('textbox')).toBeVisible({ timeout: 5_000 });
-    await expect(page.getByText(/Set API key to enable AI/i)).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /open ai settings/i })).toHaveCount(0);
 
     await expect(page.getByText(MOCK_REPLY)).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText('Something went wrong')).toHaveCount(0);
