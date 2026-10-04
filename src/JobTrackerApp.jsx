@@ -18,6 +18,7 @@ import {
 import Onboarding from './components/Onboarding';
 import UpdateBanner from './components/UpdateBanner';
 import AppBrandMark from './components/AppBrandMark';
+import AppFooter from './components/AppFooter';
 import CardColorPicker from './components/CardColorPicker';
 import { STORAGE_KEYS } from './storageKeys.js';
 import AIAssistant from './components/AIAssistant';
@@ -825,6 +826,8 @@ Rules:
             ))}
           </div>
         )}
+
+        <AppFooter t={t} />
       </div>
     </div>
   );
@@ -1028,6 +1031,8 @@ Rules:
               </div>
             </div>
           )}
+
+          <AppFooter t={t} />
         </div>
       </div>
     );
@@ -1907,20 +1912,6 @@ Rules:
           onOpenSettings={() => { setShowAIFinder(false); setShowAISettings(true); }}
         />
       )}
-
-      <div className="flex items-center justify-center gap-1.5 py-6">
-        <span className="text-[11px] text-gray-600">{t('settings.credit', 'Built by joka-7')}</span>
-        <a
-          href="https://jk-dev-7.vercel.app"
-          target="_blank"
-          rel="noreferrer"
-          aria-label="jk.dev portfolio"
-          title="jk.dev portfolio"
-          className="tap-fx text-gray-400 hover:text-gray-600"
-        >
-          <Globe size={14} aria-hidden />
-        </a>
-      </div>
     </div>
   );
 }
