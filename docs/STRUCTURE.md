@@ -117,6 +117,7 @@ JobFlowTracker/
 │   │   ├── APIKeySettings.jsx
 │   │   ├── AppBrandMark.jsx
 │   │   ├── AppErrorBoundary.jsx
+│   │   ├── AppFooter.jsx
 │   │   ├── BulkActionsBar.jsx    # Sticky bar for bulk status/export/delete on selection
 │   │   ├── CalendarView.jsx
 │   │   ├── CardColorPicker.jsx
