@@ -66,4 +66,13 @@ describe('APIKeySettings — ModelPicker path (dispatcherFeatures.ui: true)', ()
     await user.click(header.querySelector('button'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it('shows a "Links" section heading for the GitHub/Site/Code/Email/Feedback row', () => {
+    render(<APIKeySettings {...defaultProps} />);
+    expect(screen.getByRole('heading', { name: 'Links' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'GitHub' })).toHaveAttribute(
+      'href',
+      'https://github.com/joka-7',
+    );
+  });
 });
