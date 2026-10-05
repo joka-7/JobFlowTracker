@@ -1845,6 +1845,7 @@ Rules:
       {showAISettings && (
         <APIKeySettings
           t={t}
+          language={i18n.language}
           onClose={() => setShowAISettings(false)}
           currentMode={mode}
           onModeChange={onModeChange}

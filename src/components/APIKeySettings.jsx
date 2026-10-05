@@ -16,6 +16,14 @@ import { useModalA11y } from '../hooks/useModalA11y';
 
 const PROVIDER_ORDER = ['gemini', 'groq', 'ollama', 'anthropic', 'openai'];
 
+const MODEL_PICKER_LOCALES = ['en', 'fr', 'he'];
+
+/** Maps the app's i18n language to ModelPicker's Locale type, defaulting
+ * to English for any language ModelPicker doesn't itself support. */
+function toModelPickerLocale(language) {
+  return MODEL_PICKER_LOCALES.includes(language) ? language : 'en';
+}
+
 const MODE_DEFS = [
   { id: APP_MODES.jobseeker, Icon: Briefcase, labelKey: 'recruiter.modeSelection.jobSeekerTitle', fallback: 'Job Search' },
   { id: APP_MODES.recruiter, Icon: Users, labelKey: 'recruiter.modeSelection.recruiterTitle', fallback: 'Recruiting' },
@@ -90,7 +98,7 @@ function useEnabledModes() {
  * Live-saves on every change (ModelPicker's own convention), so there's
  * no separate "Save AI settings" step here; only Enabled Modes needs an
  * explicit Done. */
-function NewApiKeySettings({ t, onClose, currentMode, onModeChange }) {
+function NewApiKeySettings({ t, language, onClose, currentMode, onModeChange }) {
   const [pickerConfig, setPickerConfig] = useState(loadConfig);
   const [favorite, setFavorite] = useState(loadExternalChatFavorite);
   const { enabledModes, toggleEnabledMode, persistAndMaybeSwitchMode } = useEnabledModes();
@@ -141,6 +149,7 @@ function NewApiKeySettings({ t, onClose, currentMode, onModeChange }) {
             onConfigChange={handleConfigChange}
             externalChatFavorite={favorite}
             onExternalChatFavoriteChange={handleFavoriteChange}
+            locale={toModelPickerLocale(language)}
           />
 
           <EnabledModesSection t={t} enabledModes={enabledModes} toggleEnabledMode={toggleEnabledMode} />
