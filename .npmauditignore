@@ -1,0 +1,12 @@
+# Advisories allowlisted for `npm run audit:check` because no non-breaking
+# fix exists yet. Mirrors the .trivyignore convention: `exp:` sets a
+# review-by date, past which the advisory stops being ignored and CI goes
+# red again — the forcing function to re-check for a fix.
+#
+# GHSA-vfj7-8cjw-p6xm — braces: stack-exhaustion DoS via deeply nested
+# patterns. braces hasn't shipped a release past 3.0.3 (the version this
+# repo already has) to fix it. The only route npm offers is tailwindcss@4,
+# a breaking major-version migration (new engine, new config format)
+# tracked as its own separate task, not folded into a dependency-audit fix.
+# https://github.com/advisories/GHSA-vfj7-8cjw-p6xm
+GHSA-vfj7-8cjw-p6xm exp:2027-01-26
