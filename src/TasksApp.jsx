@@ -1973,6 +1973,7 @@ Rules:
               isRTL={isRTL}
               onEventClick={ev => { navigateTo('list', ev.parentId); }}
             />
+            <AppFooter t={t} />
           </div>
         )}
       </div>

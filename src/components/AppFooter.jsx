@@ -1,8 +1,8 @@
 import { Globe } from 'lucide-react';
 
-/** Credit line for views with a genuine scrollable bottom (stats, timeline) —
- * board/list/calendar views are split-pane with independent scroll regions
- * and have no single bottom, so they don't render this. */
+/** Credit line for views with one genuine scrollable bottom (stats, timeline,
+ * calendar, priority, type) — board/list are split-pane with independent
+ * scroll regions and have no single bottom, so they don't render this. */
 export default function AppFooter({ t }) {
   return (
     <div className="flex items-center justify-center gap-1.5 py-6">

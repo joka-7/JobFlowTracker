@@ -7,6 +7,7 @@ import EffortPicker, { EffortChip } from './EffortPicker';
 import PriorityBadge from './PriorityBadge';
 import { LabelChipsReadOnly } from './LabelPicker';
 import { safeStr, formatDate } from '../utils/taskHelpers';
+import AppFooter from './AppFooter';
 
 /**
  * Ranked "what do I do next" view.
@@ -197,6 +198,8 @@ export default function PriorityView({
             );
           })
         )}
+
+        <AppFooter t={t} />
       </div>
     </div>
   );

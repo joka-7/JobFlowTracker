@@ -1277,6 +1277,7 @@ Rules:
             isRTL={isRTL}
             onEventClick={ev => { selectCompany({ id: ev.parentId }); navigateTo('list', ev.parentId); }}
           />
+          <AppFooter t={t} />
         </div>
       )}
 

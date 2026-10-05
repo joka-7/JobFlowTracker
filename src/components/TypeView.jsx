@@ -8,6 +8,7 @@ import { EffortChip } from './EffortPicker';
 import PriorityBadge from './PriorityBadge';
 import { LabelChipsReadOnly } from './LabelPicker';
 import { safeStr, formatDate } from '../utils/taskHelpers';
+import AppFooter from './AppFooter';
 
 function TaskRow({ task, tiers, labels, onOpen, tt, lang, isRTL }) {
   const priority = scoreTask(task, { tiers });
@@ -113,6 +114,8 @@ export default function TypeView({
             );
           })
         )}
+
+        <AppFooter t={t} />
       </div>
     </div>
   );
