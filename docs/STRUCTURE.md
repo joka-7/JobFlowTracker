@@ -70,6 +70,7 @@ JobFlowTracker/
 │   └── pwa-64x64.png
 ├── scripts/                      # Bundle-size check + icon generation scripts
 │   ├── check-bundle-size.mjs
+│   ├── check-npm-audit.mjs
 │   ├── generate-icons.py         # Generate favicon and PWA PNG sizes from the JF monogram master image.
 │   └── icon-master.png
 ├── src/                          # App source — mode gate, per-mode UIs, shared services
@@ -198,6 +199,7 @@ JobFlowTracker/
 ├── .gitleaks.toml
 ├── .gitmodules
 ├── .markdownlint.json
+├── .npmauditignore
 ├── .trivyignore
 ├── AGENTS.md                     # The compiled coding rules every AI assistant reads — generated, do not…
 ├── CHANGELOG.md                  # Changelog

@@ -1,16 +1,12 @@
-# undici is pulled in transitively by jsdom (test-only devDependency, not
-# shipped in the production bundle). jsdom pins undici@^7.25.0 and has not
-# yet released a version using a patched undici, so these advisories cannot
-# be fixed without breaking the test environment. Tracked upstream:
-# https://github.com/jsdom/jsdom
+# GHSA-vfj7-8cjw-p6xm — braces: stack-exhaustion DoS via deeply nested
+# patterns, pulled in transitively by tailwindcss@3's chokidar. braces
+# hasn't shipped a release past 3.0.3 (the version this repo already has)
+# to fix it. The only route npm offers is tailwindcss@4, a breaking
+# major-version migration (new engine, new config format) tracked as its
+# own separate task, not folded into a dependency-audit fix.
+# https://github.com/advisories/GHSA-vfj7-8cjw-p6xm
 #
 # `exp:` sets a review-by date, past which Trivy stops ignoring the
 # finding and CI goes red again — that's the forcing function to re-check
-# whether jsdom has shipped a fix. Bump the date if it still hasn't.
-GHSA-vmh5-mc38-953g exp:2027-01-26
-GHSA-pr7r-676h-xcf6 exp:2027-01-26
-GHSA-p88m-4jfj-68fv exp:2027-01-26
-GHSA-vxpw-j846-p89q exp:2027-01-26
-GHSA-hm92-r4w5-c3mj exp:2027-01-26
-GHSA-35p6-xmwp-9g52 exp:2027-01-26
-GHSA-g8m3-5g58-fq7m exp:2027-01-26
+# whether a fix exists yet. Bump the date if it still doesn't.
+GHSA-vfj7-8cjw-p6xm exp:2027-01-26
