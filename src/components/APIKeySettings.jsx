@@ -152,8 +152,10 @@ function NewApiKeySettings({ t, onClose, currentMode, onModeChange }) {
             {t('settings.done', 'Done')}
           </button>
 
-          <div className="flex flex-col items-center gap-1.5 pt-2 border-t border-gray-100">
-            <span className="text-[11px] text-gray-400">{t('settings.credit', 'Built by joka-7')}</span>
+          <div className="pt-2 border-t border-gray-100">
+            <h3 className="text-xs font-bold text-gray-700 text-center mb-1.5">
+              {t('settings.linksHeading', 'Links')}
+            </h3>
             <div className="flex items-center justify-center gap-1">
               <a href="https://github.com/joka-7" target="_blank" rel="noreferrer" aria-label="GitHub" title="GitHub" className="tap-fx text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 active:scale-90 transition-all inline-flex flex-col items-center justify-center gap-0.5">
                 <GithubIcon size={16} />
@@ -378,8 +380,10 @@ function LegacyApiKeySettings({ t, onClose, currentMode, onModeChange }) {
             )}
           </div>
 
-          <div className="flex flex-col items-center gap-1.5 pt-2 border-t border-gray-100">
-            <span className="text-[11px] text-gray-400">{t('settings.credit', 'Built by joka-7')}</span>
+          <div className="pt-2 border-t border-gray-100">
+            <h3 className="text-xs font-bold text-gray-700 text-center mb-1.5">
+              {t('settings.linksHeading', 'Links')}
+            </h3>
             <div className="flex items-center justify-center gap-1">
               <a href="https://github.com/joka-7" target="_blank" rel="noreferrer" aria-label="GitHub" title="GitHub" className="tap-fx text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 active:scale-90 transition-all inline-flex flex-col items-center justify-center gap-0.5">
                 <GithubIcon size={16} />
