@@ -1277,6 +1277,7 @@ Rules:
             isRTL={isRTL}
             onEventClick={ev => { selectCompany({ id: ev.parentId }); navigateTo('list', ev.parentId); }}
           />
+          <AppFooter t={t} />
         </div>
       )}
 
@@ -1844,6 +1845,7 @@ Rules:
       {showAISettings && (
         <APIKeySettings
           t={t}
+          language={i18n.language}
           onClose={() => setShowAISettings(false)}
           currentMode={mode}
           onModeChange={onModeChange}

@@ -1973,6 +1973,7 @@ Rules:
               isRTL={isRTL}
               onEventClick={ev => { navigateTo('list', ev.parentId); }}
             />
+            <AppFooter t={t} />
           </div>
         )}
       </div>
@@ -2025,6 +2026,7 @@ Rules:
       {showAISettings && (
         <APIKeySettings
           t={t}
+          language={lang}
           onClose={() => setShowAISettings(false)}
           currentMode={MODE}
           onModeChange={onModeChange}
