@@ -1,7 +1,18 @@
 import { getCollectionName } from './statuses';
 import { clearPendingIds } from './utils/pendingSync';
 
-const firebaseConfig = {
+// Firebase web config is a public client identifier, not a secret — it ships in
+// the client bundle by design (see .gitleaks.toml and README's "Firebase & your
+// data"). Access is controlled by firestore.rules and by Authentication →
+// Authorized domains, not by hiding these values.
+//
+// VITE_FIREBASE_* wins where it is set, so a fork or preview deploy can point
+// at its own project without editing this file. The app's own project is the
+// fallback: making config env-only would mean a deploy that had not set the
+// six variables silently shipped with cloud sync switched off, indistinguishable
+// from the feature having been removed. Editing this file directly (see README)
+// remains the other supported way to point a fork at a different project.
+const DEFAULT_FIREBASE_CONFIG = {
   apiKey: "AIzaSyBeEQR4lW_j0M53kAZMSagma1zo9mRonFw",
   authDomain: "jobflowtracker-7733e.firebaseapp.com",
   projectId: "jobflowtracker-7733e",
@@ -9,6 +20,32 @@ const firebaseConfig = {
   messagingSenderId: "163411158407",
   appId: "1:163411158407:web:042975ed70499f35a7de22"
 };
+
+/** Per-value precedence: a set VITE_FIREBASE_* variable, else the app's project. */
+export function resolveFirebaseConfig(env = import.meta.env) {
+  return {
+    apiKey: env.VITE_FIREBASE_API_KEY || DEFAULT_FIREBASE_CONFIG.apiKey,
+    authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || DEFAULT_FIREBASE_CONFIG.authDomain,
+    projectId: env.VITE_FIREBASE_PROJECT_ID || DEFAULT_FIREBASE_CONFIG.projectId,
+    storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || DEFAULT_FIREBASE_CONFIG.storageBucket,
+    messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || DEFAULT_FIREBASE_CONFIG.messagingSenderId,
+    appId: env.VITE_FIREBASE_APP_ID || DEFAULT_FIREBASE_CONFIG.appId,
+  };
+}
+
+const firebaseConfig = resolveFirebaseConfig();
+
+/**
+ * True when every Firebase value needed to sign in and sync is present.
+ *
+ * With the fallback above this only goes false if someone strips the defaults
+ * or overrides a variable with an empty string, but the checks that depend on
+ * it stay — an unconfigured build must still degrade gracefully rather than
+ * boot an SDK that cannot authenticate.
+ */
+export function isCloudConfigured() {
+  return Object.values(firebaseConfig).every((value) => value !== '');
+}
 
 // localStorage flags let us avoid touching Firebase on load for fresh visitors.
 // SESSION_FLAG marks a previously signed-in session worth restoring; REDIRECT_FLAG
@@ -71,6 +108,7 @@ function probePersistedAuthUser() {
 // fresh visitors; where it doesn't (Firefox) we probe directly, which self-cleans
 // any empty DB it has to create. Either way the Firebase SDK is never loaded here.
 export async function hasRestorableSession() {
+  if (!isCloudConfigured()) return false;
   if (readFlag(SESSION_FLAG)) return true;
   try {
     if (typeof window.indexedDB === 'undefined') return false;
@@ -87,6 +125,11 @@ export async function hasRestorableSession() {
 // sign in.
 let initPromise;
 function ensureInit() {
+  if (!isCloudConfigured()) {
+    throw new Error(
+      'Firebase is not configured. Set the VITE_FIREBASE_* variables (see .env.example) or edit src/firebase.js.',
+    );
+  }
   if (!initPromise) {
     initPromise = (async () => {
       const { initializeApp } = await import('firebase/app');
@@ -156,6 +199,7 @@ export function formatSignInError(err) {
 /** Call once on app load after Google redirect sign-in. No-op (and no SDK load)
  * unless a redirect sign-in is actually pending. */
 export async function completeRedirectSignIn() {
+  if (!isCloudConfigured()) return null;
   if (!readFlag(REDIRECT_FLAG)) return null;
   writeFlag(REDIRECT_FLAG, false);
   const { auth } = await ensureInit();
@@ -204,6 +248,13 @@ export async function signOut() {
 }
 
 export function onAuthChange(callback) {
+  if (!isCloudConfigured()) {
+    // Report "signed out" immediately so callers stop waiting on a session
+    // that can never arrive — otherwise a header watching this callback sits
+    // on "Checking…" forever.
+    callback(null);
+    return () => {};
+  }
   authCallbacks.add(callback);
   // Boot Firebase only to restore a previously signed-in session — never for
   // fresh, sync-free visitors. Covers both our own flag and (for users signed in

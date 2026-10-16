@@ -335,7 +335,10 @@ Skip this section if you are only using the hosted app.
 2. Enable **Authentication** → Google Sign-In provider
 3. Enable **Firestore Database** (start in production mode)
 4. Add a Web app to the project → copy the config object
-5. Replace the config in `src/firebase.js` with your project's values
+5. Point the app at it either by replacing the config in `src/firebase.js`, or by
+   copying [`.env.example`](.env.example) to `.env` and setting all six
+   `VITE_FIREBASE_*` variables — env vars win when set, so this doesn't
+   require editing source
 6. Add your deployment domain to **Authentication → Settings → Authorized domains**
 
 **Firestore security rules** — paste from [`firestore.rules`](firestore.rules):
