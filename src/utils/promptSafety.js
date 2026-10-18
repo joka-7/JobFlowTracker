@@ -11,3 +11,21 @@ export function delimUserField(value, maxLen = 500) {
     .trim();
   return `<<<${s}>>>`;
 }
+
+const isPromptSafeChar = (ch) => {
+  const code = ch.charCodeAt(0);
+  return code === 9 || code === 10 || (code >= 32 && code !== 127);
+};
+
+/** Fence multi-line user text (a resume, interview notes) in an LLM prompt.
+ * Keeps line breaks, which these texts need, but drops angle brackets so the
+ * content can never close its own `>>>` fence and continue as instructions.
+ */
+export function delimUserBlock(value, maxLen = 5000) {
+  const s = [...safeStr(value).replace(/\r\n?/g, '\n').slice(0, maxLen)]
+    .filter(isPromptSafeChar)
+    .join('')
+    .replace(/[<>]/g, '')
+    .trim();
+  return `<<<\n${s}\n>>>`;
+}
