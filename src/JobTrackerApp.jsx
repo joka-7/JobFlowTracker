@@ -100,7 +100,7 @@ const getDaysUntil = (dateString) => {
   return Math.ceil((date - today) / (1000 * 60 * 60 * 24));
 };
 
-const makeInitialFormState = (isRecruiter) => ({
+const makeInitialFormState = () => ({
   name: '', role: '', location: '', status: 'applied', priority: 'medium',
   website: '', linkedinCompany: '', linkedinHR: '', description: '', products: '',
   linkedinCandidate: '', currentRole: '', expectedSalary: '', source: '',
@@ -108,7 +108,6 @@ const makeInitialFormState = (isRecruiter) => ({
   interviews: [], homeworks: [], contacts: [], generalNotes: '',
   rejection: { date: '', method: '', notes: '' },
   cardColor: '',
-  ...(isRecruiter ? {} : {}),
 });
 
 export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
@@ -151,6 +150,12 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
   const [visibleCount, setVisibleCount] = useState(25);
   const [activeTab, setActiveTab] = useState('board');
   const { toastMessage, showToast } = useToast();
+  // A failed write keeps its id in the pending set (see utils/pendingSync), so
+  // the next pull retries it; the user still needs to know it hasn't landed.
+  const reportSyncError = useCallback((e) => {
+    console.error('Cloud sync failed:', e);
+    showToast(t('toast.syncFailed'));
+  }, [showToast, t]);
 
   const [showOnboarding, setShowOnboarding] = useState(() => {
     const key = isRecruiter ? STORAGE_KEYS.recruiterOnboarding : STORAGE_KEYS.jobSeekerOnboarding;
@@ -195,6 +200,9 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
     recordLocalChanges(mode, diffFingerprints(previous.fingerprint, next));
   }, [companies, mode]);
 
+  const initialFormState = useMemo(() => makeInitialFormState(), []);
+  const [formData, setFormData] = useState(() => makeInitialFormState());
+
   const prevModeRef = useRef(mode);
   useEffect(() => {
     if (prevModeRef.current === mode) return;
@@ -221,15 +229,12 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
     } catch { loadForMode([]); }
     setSelectedId(null);
     setIsEditing(false);
-    setFormData(makeInitialFormState(mode === 'recruiter'));
+    setFormData(makeInitialFormState());
     setFilterStatuses([]);
     setSearchText('');
     setActiveTab('board');
     setShowOnboarding(mode !== 'recruiter' && !localStorage.getItem(STORAGE_KEYS.jobSeekerOnboarding));
   }, [mode]);
-
-  const initialFormState = useMemo(() => makeInitialFormState(isRecruiter), [isRecruiter]);
-  const [formData, setFormData] = useState(() => makeInitialFormState(isRecruiter));
 
   useEffect(() => {
     try {
@@ -239,8 +244,11 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
         const timer = setTimeout(() => setIsSaved(true), 800);
         return () => clearTimeout(timer);
       }
-    } catch (e) { console.warn('LocalStorage error:', e); }
-  }, [companies, mode]);
+    } catch (e) {
+      console.error('Saving to localStorage failed:', e);
+      showToast(t('toast.storageFull'));
+    }
+  }, [companies, mode, showToast, t]);
 
   const { user, authResolved, syncing, syncNow } = useCloudSync({
     mode,
@@ -258,19 +266,19 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
       // and pin it against all future pulls.
       syncedSnapshotRef.current = { mode, fingerprint: fingerprintItems(merged) };
       setCompanies(merged);
-      if (pushToCloud) batchSaveItems(uid, mode, merged).catch(console.error);
+      if (pushToCloud) batchSaveItems(uid, mode, merged).catch(reportSyncError);
       // Replay deletes made while unsynced, or the next pull resurrects them.
-      deleteFromCloud.forEach((id) => deleteItem(uid, mode, id).catch(console.error));
+      deleteFromCloud.forEach((id) => deleteItem(uid, mode, id).catch(reportSyncError));
     },
     onSignedIn: (hasData) => showToast(hasData ? tMode('toast.driveConnectedWithData') : tMode('toast.driveConnectedEmpty')),
   });
 
   const openNewForm = useCallback(() => {
-    setFormData(makeInitialFormState(isRecruiter));
+    setFormData(makeInitialFormState());
     setSelectedId(null);
     setIsEditing(true);
     setActiveTab('list');
-  }, [isRecruiter]);
+  }, []);
 
   useEffect(() => {
     const handler = (e) => {
@@ -422,7 +430,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
     };
     if (dataToSave.id) {
       setCompanies(companies.map(c => String(c.id) === String(dataToSave.id) ? dataToSave : c));
-      if (user) updateItem(user.uid, mode, dataToSave).catch(console.error);
+      if (user) updateItem(user.uid, mode, dataToSave).catch(reportSyncError);
     } else {
       const newCompany = { ...dataToSave, id: generateId() };
       setCompanies([newCompany, ...companies]);
@@ -432,7 +440,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
         ...newCompany,
         rejection: newCompany.rejection || { date: '', method: '', notes: '' },
       });
-      if (user) updateItem(user.uid, mode, newCompany).catch(console.error);
+      if (user) updateItem(user.uid, mode, newCompany).catch(reportSyncError);
     }
     setIsEditing(false);
     showToast(tMode('toast.saved'));
@@ -444,7 +452,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
       setSelectedId(null);
       setIsEditing(false);
       showToast(tMode('toast.deleted'));
-      if (user) deleteItem(user.uid, mode, id).catch(console.error);
+      if (user) deleteItem(user.uid, mode, id).catch(reportSyncError);
     }
   };
 
@@ -467,7 +475,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
       setSelectedId(null);
       setIsEditing(false);
     }
-    if (user) ids.forEach(id => deleteItem(user.uid, mode, id).catch(console.error));
+    if (user) ids.forEach(id => deleteItem(user.uid, mode, id).catch(reportSyncError));
     clearSelection();
     showToast(tMode('toast.deleted'));
   };
@@ -476,7 +484,7 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
     const ids = selectedItems;
     const updated = companies.map(c => ids.has(String(c.id)) ? { ...c, status: statusId } : c);
     setCompanies(updated);
-    if (user) batchSaveItems(user.uid, mode, updated.filter(c => ids.has(String(c.id)))).catch(console.error);
+    if (user) batchSaveItems(user.uid, mode, updated.filter(c => ids.has(String(c.id)))).catch(reportSyncError);
     clearSelection();
     showToast(tMode('toast.saved'));
   };
@@ -495,8 +503,8 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
       generalNotes: appendNote(target.generalNotes, text),
     };
     setCompanies(prev => prev.map(c => String(c.id) === String(companyId) ? updated : c));
-    if (user) updateItem(user.uid, mode, updated).catch(console.error);
-  }, [companies, user, mode]);
+    if (user) updateItem(user.uid, mode, updated).catch(reportSyncError);
+  }, [companies, user, mode, reportSyncError]);
 
   const handleDeleteInterview = useCallback((companyId, interviewIndex) => {
     if (!window.confirm(tMode('detail.deleteInterviewConfirm'))) return;
@@ -504,9 +512,9 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
     if (!target || !Array.isArray(target.interviews)) return;
     const updated = { ...target, interviews: target.interviews.filter((_, i) => i !== interviewIndex) };
     setCompanies(prev => prev.map(c => String(c.id) === String(companyId) ? updated : c));
-    if (user) updateItem(user.uid, mode, updated).catch(console.error);
+    if (user) updateItem(user.uid, mode, updated).catch(reportSyncError);
     showToast(tMode('toast.deleted'));
-  }, [companies, user, mode, showToast, tMode]);
+  }, [companies, user, mode, showToast, tMode, reportSyncError]);
 
   const handleRejectionNoteSave = useCallback((text) => {
     if (!rejectionCompany) return;
@@ -517,8 +525,8 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
       generalNotes: appendNote(target.generalNotes, text),
     };
     setCompanies(prev => prev.map(c => c.id === rejectionCompany.id ? updated : c));
-    if (user) updateItem(user.uid, mode, updated).catch(console.error);
-  }, [companies, user, rejectionCompany, mode]);
+    if (user) updateItem(user.uid, mode, updated).catch(reportSyncError);
+  }, [companies, user, rejectionCompany, mode, reportSyncError]);
 
   const handleStartSimulation = useCallback((categoryKey) => {
     const cat = TEMPLATES[categoryKey];
@@ -611,9 +619,12 @@ Rules:
             unnamedLabel: tMode('alert.unnamedCompany'),
           });
           if (sanitizedData) {
-            setCompanies(filterItemsForMode(sanitizedData, mode));
+            // Upload exactly what is shown: a backup from the other mode would
+            // otherwise land in this mode's collection as invisible records.
+            const forMode = filterItemsForMode(sanitizedData, mode);
+            setCompanies(forMode);
             showToast(tMode('toast.imported'));
-            if (user) batchSaveItems(user.uid, mode, sanitizedData).catch(console.error);
+            if (user) batchSaveItems(user.uid, mode, forMode).catch(reportSyncError);
           } else {
             alert(tMode('alert.noCompanyData'));
           }
@@ -639,9 +650,9 @@ Rules:
     setCompanies(nextItems);
     showToast(tMode('toast.saved'));
     if (user && changed.length) {
-      batchSaveItems(user.uid, mode, changed).catch(console.error);
+      batchSaveItems(user.uid, mode, changed).catch(reportSyncError);
     }
-  }, [user, mode, tMode, showToast]);
+  }, [user, mode, tMode, showToast, reportSyncError]);
 
   const timelineBorder = isRTL ? 'border-r-2 pr-6' : 'border-l-2 pl-6';
   const timelineDot = isRTL ? '-right-[31px]' : '-left-[31px]';

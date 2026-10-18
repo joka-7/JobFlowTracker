@@ -181,7 +181,7 @@ Terminal (inactive pipeline): `rejected`, `withdrawn`, `offer_accepted`.
 
 | Field | Type | Description |
 |---|---|---|
-| `id` | `string` | `Date.now().toString() + Math.random()` at creation. |
+| `id` | `string` | `generateId()` (24 hex chars from Web Crypto) at creation. |
 | `title` | `string` | Step description. |
 | `status` | `'todo' \| 'in_progress' \| 'done' \| 'blocked'` | Default: `'todo'`. Cycled by clicking the status icon. |
 | `notes` | `string` | Optional details. |
@@ -221,8 +221,9 @@ place to keep in sync as the weights or windows change:
   `lastReminderKey` and any snooze, and only actually completes the task once the routine has
   passed its `endDate`. Wired into both `handleSave` (form) and `handleBoardReorder` (drag to the
   Completed column).
-- **Reminder polling** — a 30-second interval (only started when `Notification.permission ===
-  'granted'`) checks every task with `shouldNotifyTask`: due within `[minutesBefore, +5min]` of
+- **Reminder polling** — `hooks/useTaskReminders.js` keeps the notification permission in state,
+  so the 30-second interval starts as soon as the user grants it (not only on the next load), and
+  checks every task with `shouldNotifyTask`: due within `[minutesBefore, +5min]` of
   `dueDate`+`dueTime`, not already fired (`lastReminderKey`), and not snoozed. A fired reminder
   writes `lastReminderKey` (de-dupe) and shows the in-app snooze banner alongside the native
   `Notification`.
@@ -313,9 +314,9 @@ let config = {
 | `isAIReady` | `() => boolean` | Returns `true` if `config.provider === 'ollama'` OR `config.apiKey` is non-empty. |
 | `getCurrentProvider` | `() => string` | Returns `config.provider`. |
 
-### Streaming — delegated to `@joka-7/modeldispatcher-browser-agent`
+### Streaming — delegated to `modeldispatcher-browser-agent`
 
-The per-provider streaming functions that used to live here (`streamGemini`, `streamOpenAICompat`, `streamOllama`, `streamAnthropic` — including the `new Anthropic({ apiKey, dangerouslyAllowBrowser: true })` SDK call) are gone. All five providers' request/response translation, SSE/NDJSON parsing, retry, and timeout now live in [`@joka-7/modeldispatcher-browser-agent`](https://github.com/joka-7/ModelDispatcher/tree/main/clients/browser-agent), the shared core extracted from this file (and KanDOne/HighFive/StepByLearn, which had each independently built the same thing).
+The per-provider streaming functions that used to live here (`streamGemini`, `streamOpenAICompat`, `streamOllama`, `streamAnthropic` — including the `new Anthropic({ apiKey, dangerouslyAllowBrowser: true })` SDK call) are gone. All five providers' request/response translation, SSE/NDJSON parsing, retry, and timeout now live in [`modeldispatcher-browser-agent`](https://github.com/joka-7/ModelDispatcher/tree/main/clients/browser-agent), the shared core extracted from this file (and KanDOne/HighFive/StepByLearn, which had each independently built the same thing).
 
 | Function | Signature | Behavior |
 |---|---|---|
@@ -578,15 +579,10 @@ npm run build
 
 **Key dependencies bundled:**
 - `react` 19.x, `react-dom`
-- `@joka-7/modeldispatcher-browser-agent` (shared multi-provider AI client — see §5)
+- `modeldispatcher-browser-agent`, `modeldispatcher-react-ui` (shared multi-provider AI client and settings UI — see §5)
 - `firebase` 12.x (modular SDK — only `auth` and `firestore` modules imported)
 - `i18next`, `react-i18next`
 - `lucide-react` (icon components, tree-shaken)
-
-`@anthropic-ai/sdk` is still listed in `package.json` but no longer imported
-anywhere (left as a follow-up cleanup after the migration to the shared
-package above) — it doesn't actually end up in the bundle since nothing
-references it.
 
 **Dev dependencies (not in bundle):** `tailwindcss`, `vite`, `eslint`, `vitest`, `@testing-library/*`
 

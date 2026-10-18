@@ -78,6 +78,7 @@ JobFlowTracker/
 │   │   ├── APIKeySettings.modelPicker.test.jsx
 │   │   ├── APIKeySettings.test.jsx
 │   │   ├── App.integration.test.jsx
+│   │   ├── App.test.jsx
 │   │   ├── AppErrorBoundary.test.jsx
 │   │   ├── ChatModal.aiConfig.test.jsx
 │   │   ├── ChatModal.test.jsx
@@ -85,12 +86,15 @@ JobFlowTracker/
 │   │   ├── ModeSelection.test.jsx
 │   │   ├── Onboarding.test.jsx
 │   │   ├── TasksApp.logic.test.js
+│   │   ├── TasksApp.test.jsx
 │   │   ├── aiAssistant.rateLimiting.test.js
 │   │   ├── aiAssistant.test.js
 │   │   ├── boardOrder.test.js
 │   │   ├── cloudSync.test.js
+│   │   ├── crashBackup.test.js
 │   │   ├── csv.test.js
 │   │   ├── effortScale.test.js
+│   │   ├── firebase.test.js
 │   │   ├── journey.test.js
 │   │   ├── logic.test.js
 │   │   ├── normalizeInterviewType.test.js
@@ -108,6 +112,8 @@ JobFlowTracker/
 │   │   ├── taskTypes.test.js
 │   │   ├── templateQuestions.test.js
 │   │   ├── useBackGestureGuard.test.js
+│   │   ├── useTaskReminders.test.js
+│   │   ├── useToast.test.js
 │   │   └── utils.test.js
 │   ├── assets/                   # Static assets bundled by Vite
 │   │   ├── hero.png
@@ -152,6 +158,7 @@ JobFlowTracker/
 │   │   ├── useBackGestureGuard.js
 │   │   ├── useCloudSync.js
 │   │   ├── useModalA11y.js
+│   │   ├── useTaskReminders.js
 │   │   └── useToast.js
 │   ├── locales/                  # I18n translation files: English, Hebrew, French
 │   │   ├── templateQuestions/
@@ -167,6 +174,7 @@ JobFlowTracker/
 │   │   ├── avatarColor.js
 │   │   ├── boardOrder.js
 │   │   ├── cloudSync.js
+│   │   ├── crashBackup.js
 │   │   ├── csv.js
 │   │   ├── date.js
 │   │   ├── effortScale.js

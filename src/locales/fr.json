@@ -208,7 +208,9 @@
     "driveConnectedWithData": "Connecté — données chargées !",
     "driveConnectedEmpty": "Connecté — synchronisation automatique activée.",
     "driveFailed": "Échec de la connexion.",
-    "driveDisconnected": "Déconnecté."
+    "driveDisconnected": "Déconnecté.",
+    "syncFailed": "Échec de l'enregistrement dans le cloud. Nouvel essai à la prochaine synchronisation.",
+    "storageFull": "Le stockage du navigateur est plein : votre dernière modification n'a pas été enregistrée sur cet appareil. Exportez une sauvegarde ou connectez-vous pour synchroniser."
   },
   "onboarding": {
     "welcomeTitle": "Bienvenue sur JobFlowTracker !",
