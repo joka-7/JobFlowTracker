@@ -58,16 +58,18 @@ export default defineConfig({
         '**/*.config.js',
         'scripts/**',
       ],
-      // Floor set just below the current baseline (~36/28/25/40 at the time
-      // this was added) — a regression gate, not a target. Most of the gap
-      // is UI-heavy files (TasksApp.jsx, CalendarView.jsx, several modals)
-      // that need real component tests, not just more unit coverage; raise
-      // these as that work lands rather than chasing the number directly.
+      // Floor set ~2 points below the current baseline (53/42/41/57) — a
+      // regression gate, not a target. The original floors had fallen far
+      // behind the real numbers and no longer gated anything. Only files some
+      // test imports are counted, so a new test that loads a large, mostly
+      // untested module (firebase.js) lowers the total. Most of the remaining
+      // gap is UI-heavy files (TasksApp.jsx, CalendarView.jsx, several modals)
+      // that need real component tests; raise these as that work lands.
       thresholds: {
-        statements: 34,
-        branches: 26,
-        functions: 23,
-        lines: 38,
+        statements: 51,
+        branches: 40,
+        functions: 39,
+        lines: 55,
       },
     },
   },
