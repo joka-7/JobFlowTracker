@@ -48,7 +48,7 @@
     "language": "Langue",
     "savedInBrowser": "Enregistré",
     "saving": "Enregistrement...",
-    "subtitle": "Connectez-vous pour synchroniser · JSON pour sauvegarde hors ligne",
+    "subtitle": "Connectez Google Drive pour synchroniser · JSON pour sauvegarde hors ligne",
     "addCompany": "Ajouter une entreprise",
     "downloadTooltip": "Télécharger une copie de sauvegarde (Recommandé !)",
     "downloadCsvTooltip": "Télécharger en CSV (pour tableur)",
@@ -57,9 +57,9 @@
     "driveSyncing": "Synchronisation...",
     "checkingSession": "Vérification…",
     "syncNow": "Synchroniser",
-    "connectDrive": "Se connecter",
-    "driveOnTooltip": "Synchronisation active — cliquer pour déconnecter",
-    "connectDriveTooltip": "Se connecter avec Google pour synchroniser sur tous les appareils",
+    "connectDrive": "Connecter Drive",
+    "driveOnTooltip": "Synchro Drive active — cliquer pour déconnecter (supprime la copie sur cet appareil)",
+    "connectDriveTooltip": "Synchroniser dans un dossier privé de votre propre Google Drive",
     "aiSettings": "Paramètres",
     "installApp": "Installer l'app",
     "iosInstallHint": "Sur iPhone/iPad : touchez Partager (□↑) dans Safari, puis « Sur l'écran d'accueil ».",
@@ -205,8 +205,8 @@
     "exported": "Sauvegarde téléchargée !",
     "exportedCsv": "Fichier CSV téléchargé !",
     "imported": "Fichier chargé avec succès !",
-    "driveConnectedWithData": "Connecté — données chargées !",
-    "driveConnectedEmpty": "Connecté — synchronisation automatique activée.",
+    "driveConnectedWithData": "Drive connecté — données chargées !",
+    "driveConnectedEmpty": "Drive connecté — vos données seront synchronisées automatiquement.",
     "driveFailed": "Échec de la connexion.",
     "driveDisconnected": "Déconnecté.",
     "syncFailed": "Échec de l'enregistrement dans le cloud. Nouvel essai à la prochaine synchronisation.",
@@ -401,7 +401,10 @@
       "repoLabel": "Voir le dépôt",
       "emailLabel": "Envoyer un avis par e-mail",
       "issueLabel": "Signaler un problème"
-    }
+    },
+    "yourDataHeading": "Vos données",
+    "yourDataHint": "Synchronisées uniquement dans un dossier privé de votre propre Google Drive. Personne d'autre, y compris le développeur de l'application, ne peut les lire.",
+    "deleteSyncedData": "Supprimer les données synchronisées et déconnecter"
   },
   "rejection": {
     "analysisTitle": "Analyse du refus",
@@ -416,7 +419,11 @@
     "noCompanyData": "Aucune donnée d'entreprise trouvée dans le fichier.",
     "importError": "Erreur lors de l'importation. Vérifiez que le fichier JSON est valide.",
     "unnamedCompany": "Entreprise sans nom",
-    "noName": "Sans nom"
+    "noName": "Sans nom",
+    "unsyncedSignOut": "Certaines modifications n'ont pas encore atteint Google Drive et seront perdues. Déconnecter quand même ?",
+    "signOutConfirm": "Se déconnecter de Google Drive et supprimer la copie de vos données sur cet appareil ? Elles restent dans votre Drive et reviennent à la reconnexion.",
+    "deleteSyncedDataConfirm": "Supprimer définitivement toutes les données JobFlowTracker de votre Google Drive et vous déconnecter ? Les données de cet appareil sont aussi supprimées. Les appareils encore connectés renverront leurs copies : déconnectez-les d'abord. Action irréversible — téléchargez une sauvegarde avant si vous voulez la garder.",
+    "deleteSyncedDataFailed": "La suppression des données synchronisées n'a pas abouti ; certains fichiers sont peut-être déjà supprimés. Rien n'a été supprimé sur cet appareil — réessayez."
   },
   "tooltips": {
     "interviewType": "Sélectionnez le type d'entretien. RH = présélection, Technique = code/compétences, Manager = adéquation culturelle",
@@ -835,8 +842,8 @@
       "exported": "Sauvegarde téléchargée — conservez-la en lieu sûr !",
       "exportedCsv": "Fichier CSV téléchargé !",
       "imported": "Fichier chargé avec succès !",
-      "driveConnectedWithData": "Connecté — données chargées !",
-      "driveConnectedEmpty": "Connecté — sync automatique activée.",
+      "driveConnectedWithData": "Drive connecté — données chargées !",
+      "driveConnectedEmpty": "Drive connecté — vos données seront synchronisées automatiquement.",
       "driveFailed": "Échec de connexion.",
       "driveDisconnected": "Déconnecté."
     },

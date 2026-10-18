@@ -39,3 +39,8 @@ dist-ssr
 .agents/skills/
 .cursor/skills/
 .github/skills/
+
+# Android signing keys never enter the repo; CI reads them from secrets.
+*.jks
+*.keystore
+__pycache__/

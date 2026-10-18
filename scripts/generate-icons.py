@@ -1,16 +1,28 @@
 #!/usr/bin/env python3
-"""Generate favicon and PWA PNG sizes from the JF monogram master image."""
+"""Generate favicon, PWA and Android launcher/splash images from the JF monogram master image."""
 
 import base64
 import io
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[1]
 PUBLIC = ROOT / "public"
 MASTER = ROOT / "scripts" / "icon-master.png"
 BRAND_BLUE = (59, 130, 246)
+# The PWA manifest's background_color, so the Android splash matches the web app's.
+SPLASH_BACKGROUND = (248, 250, 252)
+ANDROID_RES = ROOT / "android" / "app" / "src" / "main" / "res"
+
+# Legacy launcher icon size per density; the adaptive foreground is 108/48 of it.
+ANDROID_DENSITIES = {"mdpi": 48, "hdpi": 72, "xhdpi": 96, "xxhdpi": 144, "xxxhdpi": 192}
+# Android keeps only the central 66/108 of an adaptive icon's foreground visible on every mask.
+ADAPTIVE_SAFE_ZONE = 66 / 108
+# The master's rounded square has a light anti-aliased rim. Android draws its own
+# mask, so its icons use the square's interior on the interior's own blue.
+ANDROID_INSET = 0.08
+ANDROID_BLUE = (40, 127, 252)
 
 SIZES = {
     "pwa-64x64.png": 64,
@@ -79,6 +91,64 @@ def write_favicon_svg(src: Image.Image, dest: Path) -> None:
     )
 
 
+def make_round(src: Image.Image, size: int) -> Image.Image:
+    icon = resize_square(src, size).convert("RGBA")
+    mask = Image.new("L", (size, size), 0)
+    ImageDraw.Draw(mask).ellipse((0, 0, size - 1, size - 1), fill=255)
+    icon.putalpha(mask)
+    return icon
+
+
+def make_adaptive_foreground(src: Image.Image, size: int) -> Image.Image:
+    canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    icon_size = int(size * ADAPTIVE_SAFE_ZONE)
+    offset = (size - icon_size) // 2
+    canvas.paste(resize_square(src, icon_size), (offset, offset))
+    return canvas
+
+
+def make_splash(src: Image.Image, width: int, height: int) -> Image.Image:
+    canvas = Image.new("RGB", (width, height), SPLASH_BACKGROUND)
+    icon_size = min(width, height) // 3
+    mask = Image.new("L", (icon_size, icon_size), 0)
+    ImageDraw.Draw(mask).rounded_rectangle((0, 0, icon_size - 1, icon_size - 1), radius=icon_size // 5, fill=255)
+    canvas.paste(resize_square(src, icon_size), ((width - icon_size) // 2, (height - icon_size) // 2), mask)
+    return canvas
+
+
+def android_glyph(master: Image.Image) -> Image.Image:
+    """The monogram on a solid square of the master's own blue, without its rounded rim."""
+    side = master.size[0]
+    inset = int(side * ANDROID_INSET)
+    interior = master.crop((inset, inset, side - inset, side - inset))
+    canvas = Image.new("RGB", master.size, ANDROID_BLUE)
+    canvas.paste(interior, (inset, inset))
+    return canvas
+
+
+def write_android_icons(master: Image.Image) -> None:
+    """Launcher icons per density, and every splash redrawn at the size the Android template uses."""
+    if not ANDROID_RES.exists():
+        print("skipped Android images (no android/ project)")
+        return
+    master = android_glyph(master)
+    for density, size in ANDROID_DENSITIES.items():
+        folder = ANDROID_RES / f"mipmap-{density}"
+        resize_square(master, size).save(folder / "ic_launcher.png", optimize=True)
+        make_round(master, size).save(folder / "ic_launcher_round.png", optimize=True)
+        foreground = size * 108 // 48
+        make_adaptive_foreground(master, foreground).save(folder / "ic_launcher_foreground.png", optimize=True)
+    for splash in sorted(ANDROID_RES.glob("drawable*/splash.png")):
+        width, height = Image.open(splash).size
+        make_splash(master, width, height).save(splash, optimize=True)
+    (ANDROID_RES / "values" / "ic_launcher_background.xml").write_text(
+        '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n'
+        '    <color name="ic_launcher_background">#%02X%02X%02X</color>\n</resources>\n' % ANDROID_BLUE,
+        encoding="utf-8",
+    )
+    print("wrote Android launcher icons and splash screens")
+
+
 def main() -> None:
     if not MASTER.exists():
         raise SystemExit(f"Master icon not found: {MASTER}")
@@ -105,6 +175,8 @@ def main() -> None:
     svg_path = PUBLIC / "favicon.svg"
     write_favicon_svg(master, svg_path)
     print(f"wrote {svg_path.name}")
+
+    write_android_icons(master)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 import { registerSW } from 'virtual:pwa-register';
+import { Capacitor } from '@capacitor/core';
 
 const listeners = new Set();
 let updateSW = null;
@@ -6,7 +7,9 @@ let updateSW = null;
 /** Register the service worker and notify subscribers when a new version is
  * waiting. Call once, at app startup. */
 export function initPwaUpdate() {
-  if (!import.meta.env.PROD) return;
+  // Inside the Android app the bundled files are the app: a service worker
+  // there would keep serving the previous build after an update.
+  if (!import.meta.env.PROD || Capacitor.isNativePlatform()) return;
   updateSW = registerSW({
     immediate: true,
     onNeedRefresh() {

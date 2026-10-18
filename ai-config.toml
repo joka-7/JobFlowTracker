@@ -6,7 +6,7 @@
 name = "JobFlowTracker"
 
 [stack]
-# React + Vite SPA (JavaScript), Firebase sync
+# React + Vite SPA (JavaScript), Google Drive sync, Capacitor Android app
 languages  = ["javascript"]
 frameworks = ["react"]
 practices  = ["testing", "git-commits", "security", "architecture", "documentation"]

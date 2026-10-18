@@ -3,10 +3,6 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import App from '../App';
 
-vi.mock('../firebase', () => ({
-  completeRedirectSignIn: vi.fn().mockResolvedValue(null),
-}));
-
 vi.mock('../JobTrackerApp', () => ({
   default: () => { throw new Error('tracker exploded'); },
 }));

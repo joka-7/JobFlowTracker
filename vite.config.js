@@ -30,16 +30,6 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/.*\.firebaseio\.com\/.*/i,
-            handler: 'NetworkFirst',
-          },
-          {
-            urlPattern: /^https:\/\/firestore\.googleapis\.com\/.*/i,
-            handler: 'NetworkFirst',
-          },
-        ],
       },
     }),
   ],
@@ -62,7 +52,7 @@ export default defineConfig({
       // regression gate, not a target. The original floors had fallen far
       // behind the real numbers and no longer gated anything. Only files some
       // test imports are counted, so a new test that loads a large, mostly
-      // untested module (firebase.js) lowers the total. Most of the remaining
+      // untested module lowers the total. Most of the remaining
       // gap is UI-heavy files (TasksApp.jsx, CalendarView.jsx, several modals)
       // that need real component tests; raise these as that work lands.
       thresholds: {

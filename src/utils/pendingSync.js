@@ -112,6 +112,12 @@ export function recordLocalChanges(mode, { edited = [], deleted = [] }, storage 
   writePending(mode, pending, storage);
 }
 
+/** How many records are waiting for a cloud write, for the sign-out warning. */
+export function countPending(mode, storage = browserStorage()) {
+  const { edited, deleted } = readPending(mode, storage);
+  return edited.size + deleted.size;
+}
+
 /** Drop ids whose cloud write has actually landed — they are no longer at risk. */
 export function clearPendingIds(mode, ids, storage = browserStorage()) {
   if (!ids || ids.length === 0) return;
@@ -123,4 +129,36 @@ export function clearPendingIds(mode, ids, storage = browserStorage()) {
     if (pending.deleted.delete(key)) changed = true;
   }
   if (changed) writePending(mode, pending, storage);
+}
+
+const OWNER_KEY = 'jft_data_owner_v1';
+
+/** The uid whose data is in local storage, or null for signed-out-created data. */
+export function readDataOwner(storage = browserStorage()) {
+  if (!storage) return null;
+  try {
+    return storage.getItem(OWNER_KEY) || null;
+  } catch {
+    return null;
+  }
+}
+
+export function writeDataOwner(uid, storage = browserStorage()) {
+  if (!storage) return;
+  try {
+    storage.setItem(OWNER_KEY, String(uid));
+  } catch {
+    // Unrecorded ownership degrades to treating the data as signed-out data.
+  }
+}
+
+/** Forget owner and pending state, as sign-out must before another account signs in. */
+export function clearLocalSyncState(modes, storage = browserStorage()) {
+  if (!storage) return;
+  try {
+    storage.removeItem(OWNER_KEY);
+    modes.forEach((mode) => storage.removeItem(pendingStorageKey(mode)));
+  } catch {
+    // Blocked storage has nothing persisted to clear.
+  }
 }

@@ -7,9 +7,9 @@ import {
   Cloud, CloudOff, BarChart2, Settings, MoreVertical, Smartphone, RefreshCw, FileSpreadsheet,
 } from 'lucide-react';
 import {
-  signInWithGoogle, signOut, updateItem, deleteItem,
+  signInWithGoogle, updateItem, deleteItem,
   batchSaveItems, formatSignInError,
-} from './firebase';
+} from './driveSync';
 import { initAI, getJobFinderSystemPrompt, getCandidateFinderSystemPrompt } from './services/aiAssistant';
 import {
   getStatuses, getTerminalStatuses, getRejectedStatuses, getFunnelOrder, getFunnelGroups,
@@ -43,7 +43,7 @@ import { sanitizeTrackerRecords, parseTrackerImportPayload, generateId, safeStr,
 import { pickAvatarColor, getInitials } from './utils/avatarColor';
 import { formatDate as formatDateShared } from './utils/date';
 import { appendNote } from './utils/notes';
-import { useCloudSync } from './hooks/useCloudSync';
+import { useCloudSync, countUnsyncedRecords } from './hooks/useCloudSync';
 import { unionOnSignIn } from './utils/cloudSync';
 import {
   fingerprintItems, diffFingerprints, readPending, recordLocalChanges,
@@ -250,27 +250,43 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
     }
   }, [companies, mode, showToast, t]);
 
-  const { user, authResolved, syncing, syncNow } = useCloudSync({
+  const {
+    user, authResolved, syncing, syncNow, cloudConfigured, signOutAndClear, deleteSyncedDataAndClear,
+  } = useCloudSync({
     mode,
     sanitizeAndFilter: (data, m) => filterItemsForMode(sanitizeTrackerRecords(data, { mode: m }), m),
     // Union-merge, not overwrite: a company typed locally since the last
     // pull — including during the brief window before a returning session
     // resolves (see useCloudSync's authResolved) — must survive a cloud pull
     // that doesn't have it yet, not be silently discarded by it.
-    onData: (cloudCompanies, uid) => {
-      const { merged, pushToCloud, deleteFromCloud } = unionOnSignIn(companiesRef.current, cloudCompanies, {
+    onData: (cloudCompanies, uid, { deletedIds }) => {
+      const { merged, pushIds, deleteFromCloud } = unionOnSignIn(companiesRef.current, cloudCompanies, {
         pending: readPending(mode),
+        cloudDeletedIds: deletedIds,
       });
       // The pull is the new baseline: without reseating the snapshot the effect
       // above would read every record the pull changed as a fresh local edit
       // and pin it against all future pulls.
       syncedSnapshotRef.current = { mode, fingerprint: fingerprintItems(merged) };
+      companiesRef.current = merged;
       setCompanies(merged);
-      if (pushToCloud) batchSaveItems(uid, mode, merged).catch(reportSyncError);
+      // Only what the cloud lacks or holds stale: every Drive write is stamped
+      // newest, so re-sending the rest would override other devices' edits.
+      const toPush = new Set(pushIds);
+      if (toPush.size) {
+        batchSaveItems(uid, mode, merged.filter((c) => toPush.has(String(c.id)))).catch(reportSyncError);
+      }
       // Replay deletes made while unsynced, or the next pull resurrects them.
       deleteFromCloud.forEach((id) => deleteItem(uid, mode, id).catch(reportSyncError));
     },
     onSignedIn: (hasData) => showToast(hasData ? tMode('toast.driveConnectedWithData') : tMode('toast.driveConnectedEmpty')),
+    // Another account's data was on this device; it must not reach this account's Drive.
+    onLocalDataDiscarded: () => {
+      syncedSnapshotRef.current = { mode, fingerprint: fingerprintItems([]) };
+      companiesRef.current = [];
+      setCompanies([]);
+    },
+    onSyncError: reportSyncError,
   });
 
   const openNewForm = useCallback(() => {
@@ -337,9 +353,26 @@ export default function JobTrackerApp({ mode = 'jobseeker', onModeChange }) {
     }
   };
 
-  const handleSignOut = () => {
-    signOut();
-    showToast(tMode('toast.driveDisconnected'));
+  const handleSignOut = async () => {
+    const message = countUnsyncedRecords() > 0
+      ? t('alert.unsyncedSignOut')
+      : t('alert.signOutConfirm');
+    if (!window.confirm(message)) return;
+    try {
+      await signOutAndClear();
+    } catch (e) {
+      reportSyncError(e);
+    }
+  };
+
+  const handleDeleteSyncedData = async () => {
+    if (!window.confirm(t('alert.deleteSyncedDataConfirm'))) return;
+    try {
+      await deleteSyncedDataAndClear();
+    } catch (e) {
+      console.error('Deleting synced data failed:', e);
+      showToast(t('alert.deleteSyncedDataFailed'));
+    }
   };
 
   const filteredCompanies = useMemo(() => {
@@ -1089,8 +1122,8 @@ Rules:
               <span className="shrink-0">{tMode('header.addCompany')}</span>
             </button>
 
-            {!authResolved ? (
-              // A restorable session was detected but Firebase hasn't
+            {!cloudConfigured ? null : !authResolved ? (
+              // A restorable session was detected but Drive hasn't
               // confirmed it yet — show a neutral placeholder rather than
               // "Connect Drive", which would wrongly invite the user to work
               // as if signed out right before the real session resolves.
@@ -1860,6 +1893,7 @@ Rules:
           onClose={() => setShowAISettings(false)}
           currentMode={mode}
           onModeChange={onModeChange}
+          onDeleteSyncedData={user ? handleDeleteSyncedData : undefined}
         />
       )}
 

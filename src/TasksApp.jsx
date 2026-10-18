@@ -15,9 +15,9 @@ import {
 import AppFooter from './components/AppFooter';
 import ChatModal from './components/ChatModal';
 import {
-  signInWithGoogle, signOut, formatSignInError,
+  signInWithGoogle, formatSignInError,
   updateItem, deleteItem, batchSaveItems,
-} from './firebase';
+} from './driveSync';
 import { getStorageKey, STATUSES_TASKS, filterItemsForMode } from './statuses';
 import ModeDropdown from './components/ModeDropdown';
 import LanguageSwitcher from './components/LanguageSwitcher';
@@ -39,7 +39,7 @@ import { toCSV } from './utils/csv';
 import { useBackGestureGuard } from './hooks/useBackGestureGuard';
 import { formatDate } from './utils/date';
 import { appendNote } from './utils/notes';
-import { useCloudSync } from './hooks/useCloudSync';
+import { useCloudSync, countUnsyncedRecords } from './hooks/useCloudSync';
 import { useTaskReminders } from './hooks/useTaskReminders';
 import { unionOnSignIn } from './utils/cloudSync';
 import {
@@ -106,7 +106,7 @@ export default function TasksApp({ onModeChange }) {
     () => parseTaskLabelsStoragePayload(localStorage.getItem(TASKS_LABELS_KEY)),
   );
   // Where small/medium/large fall on the effort ladder — a local preference,
-  // so it is not synced to Firestore alongside the tasks themselves.
+  // so it is not synced to Drive alongside the tasks themselves.
   const [effortTiers, setEffortTiers] = useState(
     () => parseEffortTiersPayload(localStorage.getItem(TASKS_EFFORT_TIERS_KEY)),
   );
@@ -204,28 +204,67 @@ export default function TasksApp({ onModeChange }) {
     initAI(provider, apiKey, model, ollamaUrl);
   }, []);
 
-  const { user, authResolved, syncing, syncNow } = useCloudSync({
+  const {
+    user, authResolved, syncing, syncNow, cloudConfigured, signOutAndClear, deleteSyncedDataAndClear,
+  } = useCloudSync({
     mode: MODE,
     sanitizeAndFilter: (data, m) => filterItemsForMode(sanitizeTaskRecords(data), m),
     // Union-merge, not overwrite: a task typed locally since the last pull —
     // including during the brief window before a returning session resolves
     // (see useCloudSync's authResolved) — must survive a cloud pull that
     // doesn't have it yet, not be silently discarded by it.
-    onData: (cloudTasks, uid) => {
-      const { merged, pushToCloud, deleteFromCloud } = unionOnSignIn(tasksRef.current, cloudTasks, {
+    onData: (cloudTasks, uid, { deletedIds }) => {
+      const { merged, pushIds, deleteFromCloud } = unionOnSignIn(tasksRef.current, cloudTasks, {
         pending: readPending(MODE),
+        cloudDeletedIds: deletedIds,
       });
       // The pull is the new baseline: without reseating the snapshot the effect
       // above would read every record the pull changed as a fresh local edit
       // and pin it against all future pulls.
       syncedSnapshotRef.current = fingerprintItems(merged);
+      tasksRef.current = merged;
       setTasks(merged);
-      if (pushToCloud) batchSaveItems(uid, MODE, merged).catch(reportSyncError);
+      // Only what the cloud lacks or holds stale: every Drive write is stamped
+      // newest, so re-sending the rest would override other devices' edits.
+      const toPush = new Set(pushIds);
+      if (toPush.size) {
+        batchSaveItems(uid, MODE, merged.filter((task) => toPush.has(String(task.id)))).catch(reportSyncError);
+      }
       // Replay deletes made while unsynced, or the next pull resurrects them.
       deleteFromCloud.forEach((id) => deleteItem(uid, MODE, id).catch(reportSyncError));
     },
     onSignedIn: (hasData) => { if (hasData) showToast(tt('toast.imported', 'Data loaded from cloud!')); },
+    // Another account's data was on this device; it must not reach this account's Drive.
+    onLocalDataDiscarded: () => {
+      syncedSnapshotRef.current = fingerprintItems([]);
+      tasksRef.current = [];
+      setTasks([]);
+      setLabels([]);
+    },
+    onSyncError: reportSyncError,
   });
+
+  const handleSignOut = async () => {
+    const message = countUnsyncedRecords() > 0
+      ? t('alert.unsyncedSignOut')
+      : t('alert.signOutConfirm');
+    if (!window.confirm(message)) return;
+    try {
+      await signOutAndClear();
+    } catch (e) {
+      reportSyncError(e);
+    }
+  };
+
+  const handleDeleteSyncedData = async () => {
+    if (!window.confirm(t('alert.deleteSyncedDataConfirm'))) return;
+    try {
+      await deleteSyncedDataAndClear();
+    } catch (e) {
+      console.error('Deleting synced data failed:', e);
+      showToast(t('alert.deleteSyncedDataFailed'));
+    }
+  };
 
   const saveTasks = useCallback(async (newTasks) => {
     setTasks(newTasks);
@@ -266,7 +305,7 @@ export default function TasksApp({ onModeChange }) {
     showToast(tt('reminder.snoozed', 'Reminder snoozed.'));
   }, [tasks, applyTaskUpdate, showToast, tt]);
 
-  // Side effects (notifications, prompt, Firestore writes) run here, outside
+  // Side effects (notifications, prompt, Drive writes) run here, outside
   // any setState updater — updaters must stay pure since React may invoke
   // them more than once per commit.
   const notifyDueTasks = useCallback((due) => {
@@ -407,7 +446,7 @@ export default function TasksApp({ onModeChange }) {
     showToast(tt('toast.deleted', 'Task deleted.'));
   };
 
-  // Reads the current task and writes outside setTasks: a Firestore write
+  // Reads the current task and writes outside setTasks: a Drive write
   // inside an updater runs twice whenever React replays it.
   const handleStepStatusToggle = useCallback((taskId, stepId) => {
     const task = tasksRef.current.find(t => t.id === taskId);
@@ -1761,8 +1800,8 @@ Rules:
               <span className="shrink-0">{tt('header.addTask', 'Add Task')}</span>
             </button>
 
-            {!authResolved ? (
-              // A restorable session was detected but Firebase hasn't
+            {!cloudConfigured ? null : !authResolved ? (
+              // A restorable session was detected but Drive hasn't
               // confirmed it yet — show a neutral placeholder rather than
               // "Connect Drive", which would wrongly invite the user to work
               // as if signed out right before the real session resolves.
@@ -1776,7 +1815,7 @@ Rules:
             ) : user ? (
               <>
                 <button
-                  onClick={() => signOut()}
+                  onClick={handleSignOut}
                   title={user.email}
                   className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-bold transition-colors border min-h-[44px] touch-manipulation ${syncing ? 'bg-yellow-500/20 border-yellow-400/30 text-yellow-100' : 'bg-green-500/20 border-green-400/30 text-green-100 hover:bg-red-500/20 hover:border-red-400/30 hover:text-red-100'}`}
                 >
@@ -2040,6 +2079,7 @@ Rules:
           onClose={() => setShowAISettings(false)}
           currentMode={MODE}
           onModeChange={onModeChange}
+          onDeleteSyncedData={user ? handleDeleteSyncedData : undefined}
         />
       )}
 

@@ -26,8 +26,8 @@ All state lives in `JobTrackerApp.jsx` using React `useState`. No external state
 | `selectedItems` | `Set<string>` | IDs (stringified) of companies checkbox-selected for bulk actions. Drives `BulkActionsBar` visibility and its bulk operations. |
 | `visibleCount` | `number` | Number of companies shown in the list panel (pagination). Starts at 25; increments by 25 on "Load More". Resets to 25 when `searchText` or `filterStatuses` changes. |
 | `activeTab` | `'board' \| 'list' \| 'timeline' \| 'stats'` | Which main view is rendered. |
-| `user` | `FirebaseUser \| null` | Currently authenticated Firebase user. `null` when signed out. |
-| `syncing` | `boolean` | True while `loadAllCompanies` is in flight after sign-in. Used to show pulsing cloud icon. |
+| `user` | `{ uid, email, displayName } \| null` | Connected Google account (from `useCloudSync` / `driveSync`). `null` when Drive is not connected. |
+| `syncing` | `boolean` | True while a Drive pull (`loadAllItems`) is in flight. Used to show pulsing cloud icon. |
 | `isSaved` | `boolean` | Flips to `false` on every `companies` change, then back to `true` after 800 ms. Drives the header badge (Saved / Saving…). |
 | `toastMessage` | `string` | Text for the ephemeral toast notification. Empty string means no toast is shown. Auto-clears after 3000 ms. |
 | `showOnboarding` | `boolean` | Controls visibility of the Onboarding modal. Set to `true` on mount if `localStorage.hasCompletedOnboarding` is absent. |
@@ -51,11 +51,11 @@ All state lives in `JobTrackerApp.jsx` using React `useState`. No external state
 
 ### Company Object
 
-All fields are stored as-is in Firestore and in localStorage.
+All fields are stored as-is in localStorage and in the Drive sync file.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `id` | `string` | Yes | `Date.now().toString()` at creation time. Used as Firestore document ID. |
+| `id` | `string` | Yes | `generateId()` (24 hex chars) at creation time. Key of the record's entry in the Drive sync file. |
 | `name` | `string` | Yes | Company name. |
 | `role` | `string` | No | Job title / position applied for. |
 | `location` | `string` | No | Job location (city, remote, etc.). |
@@ -151,7 +151,7 @@ Terminal (inactive pipeline): `rejected`, `withdrawn`, `offer_accepted`.
 | `searchQuery` | `string` | Filters `filteredTasks`. |
 | `statusFilter` | `string` | Status dropdown filter (`'all'` or a status ID). |
 | `typeFilter` | `string` | Type dropdown filter (`'all'`, `'untyped'`, or a type ID). |
-| `effortTiers` | `{ smallMaxIndex, mediumMaxIndex }` | User-chosen cut-points on the effort ladder (`utils/effortScale.js`); persisted to `tasksEffortTiersV1`, not synced to Firestore. |
+| `effortTiers` | `{ smallMaxIndex, mediumMaxIndex }` | User-chosen cut-points on the effort ladder (`utils/effortScale.js`); persisted to `tasksEffortTiersV1`, not synced to Drive. |
 | `reminderPrompt` | `{ taskId, name } \| null` | Snooze banner shown when a due-time reminder fires. |
 | `activeTab` | `'board' \| 'list' \| 'priority' \| 'type' \| 'timeline' \| 'calendar' \| 'stats'` | Which view is rendered. |
 | `user`, `syncing`, `isSaved`, `toastMessage` | — | Same pattern as `JobTrackerApp`. |
@@ -230,50 +230,68 @@ place to keep in sync as the weights or windows change:
 
 ---
 
-## 3. Firestore Structure
+## 3. Drive Sync File
 
-### Collection Layout
+### Layout
 
+Each device writes only its own file in the user's Drive `appDataFolder`
+(`jobflowtracker-<deviceId>.json`) and reads every device's file. Drive v3 has
+no conditional write, so one shared file would let two devices overwrite each
+other; with one writer per file there is nothing to overwrite.
+
+```json
+{
+  "version": 1,
+  "device": "<deviceId>",
+  "profile": { "appMode": { "value": "tasks", "at": 1760000000000 } },
+  "collections": {
+    "companies":  { "<id>": { "item": { "...": "..." }, "at": 1760000000000 } },
+    "candidates": { "<id>": { "item": null, "at": 1760000000500 } },
+    "tasks":      { "<id>": { "item": { "...": "..." }, "at": 1760000000900 } }
+  }
+}
 ```
-/users/{uid}                              — user profile (appMode, etc.)
-/users/{uid}/companies/{companyId}        — job seeker entities
-/users/{uid}/candidates/{candidateId}     — recruiter entities
-/users/{uid}/tasks/{taskId}              — task manager entities
-```
 
-The document ID is `String(item.id)`, which is a numeric timestamp string (e.g., `"1717600000000"`).
+- `item: null` is a delete tombstone, so the delete beats an older copy in another file.
+- Merge (`mergeDeviceDocuments`): per record, the newest `at` wins; a tie goes to the higher device id.
+- `at` is `max(now, newest stamp seen + 1)` (`nextStamp`), so a device whose clock runs behind still wins with a later edit.
+- A file that is permanently unreadable (404, corrupt, newer version) is skipped; any other error fails the whole pull, so a partial merge can't re-upload stale copies.
+- Idle files (no writes for 90 days) whose every entry is superseded elsewhere are deleted (`findCompactableFiles`), at most hourly.
 
 ### Write Strategies
 
-| Add / edit | `updateItem(uid, mode, item)` | `setDoc` on companies or candidates subcollection |
-| Delete | `deleteItem(uid, mode, id)` | `deleteDoc` |
-| JSON import | `batchSaveItems(uid, mode, items)` | Chunked `writeBatch` (490/batch) |
-| Load | `loadAllItems(uid, mode)` | Subcollection query; jobseeker legacy migration |
-| Profile | `loadUserProfile` / `saveUserProfile` | Root doc `users/{uid}` for `appMode` |
+| Operation | Function | Implementation |
+|---|---|---|
+| Add / edit | `updateItem(uid, mode, item)` | Queued upsert; flushed with others into one upload after 1.5 s |
+| Delete | `deleteItem(uid, mode, id)` | Queued tombstone |
+| Bulk / import | `batchSaveItems(uid, mode, items)` | Queued upserts, one upload |
+| Load | `loadAllItems(uid, mode)` | `{ items, deletedIds }` for the mode's collection, or `null` if Drive never held one |
+| Profile | `loadUserProfile` / `saveUserProfile` | `profile` map of the device file (`appMode`) |
 
-### Legacy Migration
-
-`loadAllCompanies(uid)` first queries the `/users/{uid}/companies` subcollection. If the subcollection returns documents, they are used directly. If it is empty, the function reads the root `/users/{uid}` document and checks for a `companies` array field (legacy format). If found, it immediately calls `batchSaveCompanies` to migrate to the subcollection format. The root document is not deleted (allows rollback if needed) but will be ignored on all subsequent sign-ins.
+Every write promise resolves only once the upload has landed, and only then
+clears the id from the pending set (`utils/pendingSync.js`).
 
 ---
 
-## 4. Firebase Module
+## 4. Drive Sync Module
 
-File: `src/firebase.js`
+File: `src/driveSync.js` (factory `createDriveSync`, dependencies injected for tests). Exports:
 
-| Export | Signature | Description |
-|---|---|---|
-| `auth` | `Auth` | Firebase Auth instance (exported for direct use if needed). |
-| `db` | `Firestore` | Firestore instance. |
-| `signInWithGoogle()` | `() => Promise<User>` | Opens Google OAuth popup. Returns the signed-in user. |
-| `signOut()` | `() => Promise<void>` | Signs out the current user. |
-| `onAuthChange(callback)` | `(callback: (user) => void) => Unsubscribe` | Subscribes to auth state changes. Returns the unsubscribe function. Used in a `useEffect` in `JobTrackerApp`. |
-| `loadAllCompanies(uid)` | `(uid: string) => Promise<Company[] \| null>` | Reads the subcollection. Falls back to legacy migration if subcollection is empty. Returns `null` if no data anywhere. |
-| `updateCompany(uid, company)` | `(uid: string, company: Company) => Promise<void>` | `setDoc` on `/users/{uid}/companies/{company.id}`. Creates or fully overwrites. |
-| `deleteFirestoreCompany(uid, id)` | `(uid: string, id: string) => Promise<void>` | `deleteDoc` on a single company document. |
-| `batchSaveCompanies(uid, companies)` | `(uid: string, companies: Company[]) => Promise<void>` | Writes all companies in chunks of 490 using `writeBatch`. Used for JSON import and legacy migration. |
-| `loadUserData(uid)` | `(uid: string) => Promise<Company[] \| null>` | Legacy alias for `loadAllCompanies`. |
-| `saveUserData(uid, companies)` | `(uid: string, companies: Company[]) => Promise<void>` | Legacy alias for `batchSaveCompanies`. |
+| Export | Description |
+|---|---|
+| `isCloudConfigured()` | `true` when `VITE_GOOGLE_CLIENT_ID` is set; otherwise Connect Drive is hidden. |
+| `hasRestorableSession()` | A usable stored token exists (or, on Android, one that can be renewed silently). |
+| `onAuthChange(cb)` | Calls back at once with the connected user (or `null`), then on every change of *who* is connected. Returns unsubscribe. |
+| `signInWithGoogle()` | Browser: Google Identity Services token popup. Android: OS account sheet via `nativeGoogleAuth.js`. |
+| `signOut()` | Drops queued writes and the session. Callers clear local data (`useCloudSync.signOutAndClear`). |
+| `deleteAllSyncedData()` | Deletes every `jobflowtracker-*.json` file, revokes the grant, signs out. |
+| `loadAllItems`, `updateItem`, `deleteItem`, `batchSaveItems`, `loadUserProfile`, `saveUserProfile` | See § 3. |
+| `formatSignInError(err)` | User-facing message for a failed Connect Drive. |
+
+Local bookkeeping in `localStorage`: `jobflowtracker_drive_session_v1` (token,
+expiry, user), `jobflowtracker_drive_device_v1` (device id; per tab in
+`sessionStorage` where Web Locks are missing), `jft_pending_sync_v1:<mode>`
+(unsynced ids) and `jft_data_owner_v1` (which account the local data belongs to).
 
 ---
 
@@ -580,7 +598,7 @@ npm run build
 **Key dependencies bundled:**
 - `react` 19.x, `react-dom`
 - `modeldispatcher-browser-agent`, `modeldispatcher-react-ui` (shared multi-provider AI client and settings UI — see §5)
-- `firebase` 12.x (modular SDK — only `auth` and `firestore` modules imported)
+- `@capacitor/core` (platform check; the Android plugin `@capgo/capacitor-social-login` is loaded only inside the app)
 - `i18next`, `react-i18next`
 - `lucide-react` (icon components, tree-shaken)
 
@@ -598,14 +616,46 @@ git push origin main
   → All unmatched routes → index.html  (SPA fallback)
 ```
 
-No environment variables are required at build time. The Firebase project config embedded in `src/firebase.js` is intentionally public (Firebase project config is not a secret; Firestore security rules enforce access control). AI API keys are entered by the user at runtime and stored only in their browser's `localStorage`.
+`VITE_GOOGLE_CLIENT_ID` (optional) enables Drive sync; see [`.env.example`](../.env.example). It is a public OAuth client ID, not a secret. AI API keys are entered by the user at runtime and stored only in their browser's `localStorage`.
 
 ### Testing
 
 | Suite | Command | Count | Scope |
 |-------|---------|-------|-------|
-| Unit + integration | `npm test` | 155 | `src/__tests__/` — jsdom, mocked Firebase |
+| Unit + integration | `npm test` | — | `src/__tests__/` — jsdom; Drive, Google sign-in and the Android plugin are faked |
 | E2E | `npm run test:e2e` | 12 | `e2e/` — Playwright, real browser, port 5199 |
 | All | `npm run test:all` | 167 | Both |
 
 Vitest excludes `e2e/` via `vite.config.js`. E2E starts Vite with `--strictPort 5199` to avoid port conflicts.
+
+---
+
+## Android app
+
+The same web build runs inside a Capacitor shell (`capacitor.config.json`:
+`io.github.joka7.jobflowtracker`, `webDir: dist`; native project in `android/`).
+
+- **Sign-in:** Google refuses OAuth inside a WebView, so `nativeGoogleAuth.js` asks Android for the `drive.appdata` token through `@capgo/capacitor-social-login` (online mode) and renews it silently, 5 s before expiry, on the next Drive call. `MainActivity.java` forwards Google's consent result to the plugin; without it there is no Drive scope.
+- **No service worker, no Install button** inside the app (`pwaUpdate.js`, `usePwaInstall.js`): the bundled files are the app, and a worker would keep serving the previous build after an update.
+- **`android:allowBackup="false"`:** Android's cloud backup would otherwise copy local data and the Drive token off the device.
+- **Icons and splash:** `python3 scripts/generate-icons.py` (same master image as the web icons).
+
+### Build and release (`.github/workflows/android.yml`)
+
+Every PR builds a signed APK as a workflow artifact; every push to `main`
+publishes it as release `android-1.0.<run>`, so the latest is always at
+`releases/latest/download/JobFlowTracker.apk`. `versionCode` is the run number,
+so each APK installs over the last.
+
+Required repository settings:
+
+| Name | Kind | Value |
+|---|---|---|
+| `VITE_GOOGLE_CLIENT_ID` | Actions **variable** | The OAuth *Web* client ID (Google matches it to the Android client) |
+| `ANDROID_KEYSTORE_B64`, `ANDROID_KEYSTORE_B64_2` | Actions secrets | The release keystore, base64, split in two (some clipboards cut lines at 2000 characters) |
+| `ANDROID_KEY_PASSWORD` | Actions secret | Keystore and key password; key alias `jobflowtracker` |
+
+The Android OAuth client in Google Cloud must list package
+`io.github.joka7.jobflowtracker` and the signing key's SHA-1. The workflow never
+falls back to a temporary key: a missing or wrong secret fails the job.
+

@@ -1,40 +1,12 @@
 rules_version = '2';
+
+// Firestore is no longer used: data syncs only to each user's own Google Drive
+// (src/driveSync.js). Deny everything so the old project can't hold or serve
+// anyone's data.
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
-    }
-
-    function isRecordCollection(name) {
-      return name in ['companies', 'candidates', 'tasks'];
-    }
-
-    // Profile doc. The client only ever writes `appMode` (useCloudSync); older
-    // docs may also hold the legacy `companies` array that loadAllItems
-    // migrates out of. Updates are checked by what they change, not by the
-    // whole doc, so a legacy field already present never locks the user out.
-    match /users/{userId} {
-      allow read, delete: if isOwner(userId);
-      allow create: if isOwner(userId)
-        && request.resource.data.keys().hasOnly(['appMode'])
-        && request.resource.data.appMode in ['jobseeker', 'recruiter', 'tasks'];
-      allow update: if isOwner(userId)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['appMode'])
-        && request.resource.data.appMode in ['jobseeker', 'recruiter', 'tasks'];
-    }
-
-    // One doc per record, keyed by the record's own id (firebase.js
-    // updateItem/batchSaveItems). Any other collection is denied.
-    match /users/{userId}/{collection}/{itemId} {
-      allow read, delete: if isOwner(userId) && isRecordCollection(collection);
-      allow create, update: if isOwner(userId)
-        && isRecordCollection(collection)
-        && itemId.size() <= 64
-        && string(request.resource.data.id) == itemId
-        // Records have ~30 whitelisted fields (sanitize.js); this caps abuse
-        // of the owner's own space with arbitrary extra keys.
-        && request.resource.data.size() <= 60;
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

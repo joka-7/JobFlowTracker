@@ -13,6 +13,7 @@ import { loadAIConfigFromStorage, isAIReady, PROVIDERS } from '../services/aiAss
 import { dispatcherFeatures } from '../modeldispatcher.config';
 import { STORAGE_KEYS, APP_MODES, getEnabledModes } from '../storageKeys';
 import { useModalA11y } from '../hooks/useModalA11y';
+import DriveDataSection from './DriveDataSection';
 
 const PROVIDER_ORDER = ['gemini', 'groq', 'ollama', 'anthropic', 'openai'];
 
@@ -98,7 +99,7 @@ function useEnabledModes() {
  * Live-saves on every change (ModelPicker's own convention), so there's
  * no separate "Save AI settings" step here; only Enabled Modes needs an
  * explicit Done. */
-function NewApiKeySettings({ t, language, onClose, currentMode, onModeChange }) {
+function NewApiKeySettings({ t, language, onClose, currentMode, onModeChange, onDeleteSyncedData }) {
   const [pickerConfig, setPickerConfig] = useState(loadConfig);
   const [favorite, setFavorite] = useState(loadExternalChatFavorite);
   const { enabledModes, toggleEnabledMode, persistAndMaybeSwitchMode } = useEnabledModes();
@@ -161,6 +162,8 @@ function NewApiKeySettings({ t, language, onClose, currentMode, onModeChange }) 
             {t('settings.done', 'Done')}
           </button>
 
+          <DriveDataSection t={t} onDeleteSyncedData={onDeleteSyncedData} />
+
           <div className="pt-2 border-t border-gray-100">
             <h3 className="text-xs font-bold text-gray-700 text-center mb-1.5">
               {t('settings.linksHeading', 'Links')}
@@ -197,7 +200,7 @@ function NewApiKeySettings({ t, language, onClose, currentMode, onModeChange }) 
 /** The app's original hand-built AI settings — single provider/key/model.
  * Kept byte-for-byte in behavior as the fallback when
  * `dispatcherFeatures.ui` is off (see modeldispatcher.config.js). */
-function LegacyApiKeySettings({ t, onClose, currentMode, onModeChange }) {
+function LegacyApiKeySettings({ t, onClose, currentMode, onModeChange, onDeleteSyncedData }) {
   const saved = {
     provider: localStorage.getItem('aiProvider') || 'gemini',
     apiKey: localStorage.getItem('aiApiKey') || '',
@@ -388,6 +391,8 @@ function LegacyApiKeySettings({ t, onClose, currentMode, onModeChange }) {
               </button>
             )}
           </div>
+
+          <DriveDataSection t={t} onDeleteSyncedData={onDeleteSyncedData} />
 
           <div className="pt-2 border-t border-gray-100">
             <h3 className="text-xs font-bold text-gray-700 text-center mb-1.5">

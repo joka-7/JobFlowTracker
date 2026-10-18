@@ -4,14 +4,15 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import '../i18n';
 import App from '../App';
-import { updateItem } from '../firebase';
+import { updateItem, batchSaveItems, loadAllItems } from '../driveSync';
 
 const fakeUser = { uid: 'user123', displayName: 'Test User' };
 
-vi.mock('../firebase', () => ({
+vi.mock('../driveSync', () => ({
+  isCloudConfigured: () => true,
+  deleteAllSyncedData: vi.fn(),
   hasRestorableSession: vi.fn().mockResolvedValue(true),
   onAuthChange: (cb) => { cb(fakeUser); return () => {}; },
-  completeRedirectSignIn: vi.fn().mockResolvedValue(null),
   signInWithGoogle: vi.fn(),
   signOut: vi.fn(),
   formatSignInError: vi.fn(),
@@ -77,5 +78,26 @@ describe('TasksApp cloud writes', () => {
     fireEvent.click(stepToggle);
 
     expect(await screen.findByText(/Couldn't save to the cloud/)).toBeInTheDocument();
+  });
+
+  it('on a pull, drops tasks deleted on another device and uploads only what Drive lacks', async () => {
+    vi.mocked(batchSaveItems).mockClear();
+    vi.mocked(loadAllItems).mockResolvedValueOnce({
+      items: [{ id: 'shared', name: 'In Drive', status: 'active', steps: [] }],
+      deletedIds: ['gone'],
+    });
+    localStorage.setItem('appMode', 'tasks');
+    localStorage.setItem('hasCompletedOnboarding_tasks', '1');
+    localStorage.setItem('jobTrackerAppV2Data_tasks', JSON.stringify([
+      { id: 'shared', name: 'In Drive', status: 'active', steps: [] },
+      { id: 'gone', name: 'Deleted Elsewhere', status: 'active', steps: [] },
+      { id: 'new', name: 'Only Here', status: 'active', steps: [] },
+    ]));
+
+    render(<App />);
+
+    await waitFor(() => expect(batchSaveItems).toHaveBeenCalled());
+    expect(vi.mocked(batchSaveItems).mock.calls[0][2].map((t) => t.id)).toEqual(['new']);
+    await waitFor(() => expect(screen.queryByText('Deleted Elsewhere')).not.toBeInTheDocument());
   });
 });

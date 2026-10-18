@@ -46,7 +46,7 @@ describe('unionOnSignIn', () => {
   });
 
   it('keeps a local-only record instead of discarding it — regression for the reconnect data-loss bug', () => {
-    // A record created while the header hadn't yet heard back from Firebase
+    // A record created while the header hadn't yet heard back from Drive
     // (or genuinely offline) must survive the cloud pull that follows, not
     // vanish the instant cloud data — which doesn't have it — arrives.
     const local = [
@@ -94,5 +94,30 @@ describe('unionOnSignIn', () => {
     const result = unionOnSignIn(local, cloud, { idOf: (item) => item.uid });
     expect(result.merged.map(i => i.name).sort()).toEqual(['Cloud', 'Local']);
     expect(result.pushToCloud).toBe(true);
+  });
+
+  it.each([
+    ['drops a local copy of a record another device deleted',
+      { local: [{ id: 'gone', name: 'Stale' }], cloudDeleted: ['gone'] }, [], []],
+    ['keeps a deleted-elsewhere record the user edited here since',
+      { local: [{ id: 'gone', name: 'Edited' }], cloudDeleted: ['gone'], edited: ['gone'] }, ['gone'], ['gone']],
+    ['keeps a record the cloud never saw and deleted nowhere',
+      { local: [{ id: 'new', name: 'Offline' }], cloudDeleted: ['other'] }, ['new'], ['new']],
+  ])('%s', (_name, { local, cloudDeleted, edited = [] }, expectedIds, expectedPushIds) => {
+    const result = unionOnSignIn(local, [], { pending: pendingOf({ edited }), cloudDeletedIds: cloudDeleted });
+
+    expect(result.merged.map((i) => i.id)).toEqual(expectedIds);
+    expect(result.pushIds).toEqual(expectedPushIds);
+  });
+
+  it('pushes only records the cloud lacks or holds stale, never unchanged shared ones', () => {
+    // Every Drive write is stamped newest: re-sending an unchanged record would
+    // let this device's old copy beat an edit made on another device meanwhile.
+    const local = [{ id: 'shared', name: 'Same' }, { id: 'edited', name: 'Mine' }, { id: 'new', name: 'New' }];
+    const cloud = [{ id: 'shared', name: 'Same' }, { id: 'edited', name: 'Theirs' }];
+
+    const result = unionOnSignIn(local, cloud, { pending: pendingOf({ edited: ['edited'] }) });
+
+    expect(result.pushIds.sort()).toEqual(['edited', 'new']);
   });
 });

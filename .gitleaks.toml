@@ -1,7 +1,8 @@
 title = "JobFlowTracker"
 
-# Firebase web client config in src/firebase.js is intentionally public.
-# Access control is enforced by Firestore security rules, not by hiding the apiKey.
+# Firebase web client config in src/firebase.js was intentionally public. The
+# file is gone (sync moved to Google Drive) but stays in git history, which
+# Gitleaks scans; the project's Firestore rules now deny all access.
 [[allowlists]]
 description = "Firebase web SDK config (public client credentials)"
 paths = [

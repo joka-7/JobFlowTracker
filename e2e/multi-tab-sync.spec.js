@@ -42,7 +42,7 @@ test.describe('Multi-Tab Synchronization', () => {
     // 1. Tab A and B both have cached companies
     // 2. User clears cache in Tab A
     // 3. Tab B should detect cache clear
-    // 4. Both tabs re-sync from Firebase
+    // 4. Both tabs re-sync from Google Drive
 
     test.skip();
   });

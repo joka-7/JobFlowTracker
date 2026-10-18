@@ -4,8 +4,9 @@ import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import '../i18n';
 
-vi.mock('../firebase', () => ({
-  auth: {},
+vi.mock('../driveSync', () => ({
+  isCloudConfigured: () => true,
+  deleteAllSyncedData: vi.fn(),
   hasRestorableSession: vi.fn().mockResolvedValue(false),
   onAuthChange: (cb) => { cb(null); return () => {}; },
   signInWithGoogle: vi.fn(),

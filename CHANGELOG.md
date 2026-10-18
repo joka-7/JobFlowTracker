@@ -16,7 +16,17 @@ cross-referenced the full audit document (not just the tracked GitHub
 issues) against everything that had actually shipped and closed the items
 that had been silently missed rather than deliberately deferred.
 
+### Changed
+- **Private by design:** sync moved from Firebase/Firestore to each user's
+  own Google Drive (`appDataFolder`). The operator no longer holds any copy
+  of user data; `firestore.rules` now denies everything. The header button is
+  **Connect Drive**; disconnecting removes the device's copy, and
+  **Settings → Your data** deletes everything synced and revokes access.
+
 ### Added
+- **Android app** (Capacitor), built and signed by
+  `.github/workflows/android.yml`; the latest APK is attached to the newest
+  GitHub release.
 - Task Manager: **Priority** (computed urgency × impact × effort score with a
   ranked Priority view — Do Now / Quick Wins / Big Projects / Fill-ins /
   Later), **Type** (a fixed action-verb taxonomy with its own By Type view

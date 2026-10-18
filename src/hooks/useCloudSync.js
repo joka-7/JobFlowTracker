@@ -1,108 +1,156 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   onAuthChange, loadAllItems, saveUserProfile, hasRestorableSession,
-} from '../firebase';
+  signOut, deleteAllSyncedData, isCloudConfigured,
+} from '../driveSync';
+import { getStorageKey } from '../statuses';
+import { APP_MODES, TASKS_LABELS_KEY } from '../storageKeys';
+import { isFocusPullDue } from '../utils/focusPull';
+import {
+  readDataOwner, writeDataOwner, clearLocalSyncState, countPending,
+} from '../utils/pendingSync';
+
+const ALL_MODES = Object.values(APP_MODES);
+
+/** Every key that holds one account's records. Mode choice and UI preferences stay. */
+const ACCOUNT_DATA_KEYS = [...ALL_MODES.map(getStorageKey), TASKS_LABELS_KEY];
+
+/** Remove this browser's copy of the account's data and its sync bookkeeping. */
+export function clearLocalAccountData(storage = window.localStorage) {
+  ACCOUNT_DATA_KEYS.forEach((key) => storage.removeItem(key));
+  clearLocalSyncState(ALL_MODES, storage);
+}
+
+/** Records in any mode still waiting for a Drive write. Only meaningful once a device has connected. */
+export function countUnsyncedRecords() {
+  return readDataOwner() ? ALL_MODES.reduce((sum, m) => sum + countPending(m), 0) : 0;
+}
 
 /**
- * Wires Firebase auth for a single synced collection: tracks the signed-in
- * user, loads cloud data on sign-in and on tab refocus, and exposes a
- * manual `syncNow` for a "sync" button. Callers own the collection's state;
- * this hook only decides when to (re)fetch it and hands sanitized results
- * back via `onData(cloudData, uid)` — the `uid` lets a caller that needs to
- * merge-and-push-back do so without racing this hook's own `user` state
- * (which lags a render behind the auth callback that triggered the fetch).
+ * Wires Google Drive sync for a single collection: tracks the connected
+ * account, pulls on connect, on tab refocus (at most every 30 s, see
+ * ../utils/focusPull) and on `syncNow`. Callers own the collection's state;
+ * this hook decides when to pull and hands the sanitized cloud records and
+ * tombstones to `onData(cloudItems, uid, { deletedIds })`. The merge runs even
+ * when Drive holds nothing yet, so a first connect uploads what is on the device.
  *
- * `sanitizeAndFilter`/`onData`/`onSignedIn` are read through a ref so the
- * auth/visibility subscriptions (kept alive for the component's lifetime)
- * always call the latest closures without needing to be memoized by the
- * caller or re-subscribing on every render.
+ * Local data owned by a different account is never merged into this one's
+ * Drive: it is cleared and `onLocalDataDiscarded` lets the caller drop its
+ * in-memory copy. Sign-out does the same up front (see `signOutAndClear`).
+ *
+ * Callbacks are read through a ref so the subscriptions (kept alive for the
+ * component's lifetime) always call the latest closures.
  */
-export function useCloudSync({ mode, sanitizeAndFilter, onData, onSignedIn }) {
+export function useCloudSync({
+  mode, sanitizeAndFilter, onData, onSignedIn, onLocalDataDiscarded, onSyncError,
+}) {
   const [user, setUser] = useState(null);
-  // onAuthChange only starts the (async) Firebase auth watcher — and only
-  // calls back at all — for a session hasRestorableSession() says exists;
-  // for a fresh visitor it never fires, by design (see ../firebase), so
-  // `user` staying null there is already the right answer. The gap this
-  // flag closes is the returning-user case: `user` stays null for a beat
-  // while that restorable session is actually being confirmed, and without
-  // this flag a header can't tell that apart from "definitely signed out" —
-  // it would show a false "disconnected" Connect button, inviting the user
-  // to work as if offline right before the real session resolves and pulls
-  // cloud data on top of whatever they just typed.
+  // onAuthChange answers at once with the stored session (or none). Until it
+  // has, a header can't tell "checking" from "signed out" and would offer
+  // Connect Drive right before the real session resolves.
   const [authResolved, setAuthResolved] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const userRef = useRef(null);
   useEffect(() => { userRef.current = user; }, [user]);
 
-  const callbacksRef = useRef({ sanitizeAndFilter, onData, onSignedIn });
+  const callbacksRef = useRef({ sanitizeAndFilter, onData, onSignedIn, onLocalDataDiscarded, onSyncError });
   useEffect(() => {
-    callbacksRef.current = { sanitizeAndFilter, onData, onSignedIn };
+    callbacksRef.current = { sanitizeAndFilter, onData, onSignedIn, onLocalDataDiscarded, onSyncError };
   });
 
-  const fetchAndApply = useCallback(async (uid) => {
-    const data = await loadAllItems(uid, mode);
-    if (data && data.length > 0) {
-      const { sanitizeAndFilter: sanitize, onData: apply } = callbacksRef.current;
-      apply(sanitize(data, mode), uid);
-      return true;
-    }
-    return false;
+  const reportError = useCallback((e) => {
+    const { onSyncError: report } = callbacksRef.current;
+    if (report) report(e);
+    else console.error(e);
+  }, []);
+
+  // The mode currently on screen. A pull started for another mode that lands
+  // after a switch must not reach `onData`, which by then is the new mode's.
+  const modeRef = useRef(mode);
+  useEffect(() => { modeRef.current = mode; }, [mode]);
+
+  const lastPullAtRef = useRef(null);
+  const pull = useCallback(async (uid) => {
+    lastPullAtRef.current = Date.now();
+    const cloud = await loadAllItems(uid, mode);
+    if (modeRef.current !== mode) return false;
+    const { sanitizeAndFilter: sanitize, onData: apply } = callbacksRef.current;
+    apply(sanitize(cloud?.items ?? [], mode), uid, { deletedIds: cloud?.deletedIds ?? [] });
+    return (cloud?.items.length ?? 0) > 0;
   }, [mode]);
 
   useEffect(() => {
     let cancelled = false;
-    // Fast path: hasRestorableSession() is a cheap local check (our own
-    // flag, or an IndexedDB probe — never a network round-trip), so for a
-    // fresh visitor with nothing to restore we know immediately there's no
-    // session coming and can resolve right away instead of waiting on the
-    // fallback timer below. For a returning user it resolves true, and
-    // `authResolved` instead waits for onAuthChange's real callback, which
-    // is guaranteed to fire in that case (see ../firebase).
     hasRestorableSession().then((restorable) => {
       if (!cancelled && !restorable) setAuthResolved(true);
     });
-    const unsub = onAuthChange(async (firebaseUser) => {
+    const unsub = onAuthChange(async (driveUser) => {
       setAuthResolved(true);
-      setUser(firebaseUser);
-      if (firebaseUser) {
-        setSyncing(true);
-        try {
-          await saveUserProfile(firebaseUser.uid, { appMode: mode });
-          const hasData = await fetchAndApply(firebaseUser.uid);
-          const { onSignedIn: notify } = callbacksRef.current;
-          if (notify) notify(hasData);
-        } catch (e) { console.error(e); }
-        setSyncing(false);
-      }
+      setUser(driveUser);
+      if (!driveUser) return;
+      setSyncing(true);
+      try {
+        const owner = readDataOwner();
+        if (owner && owner !== driveUser.uid) {
+          clearLocalAccountData();
+          const { onLocalDataDiscarded: discard } = callbacksRef.current;
+          if (discard) discard();
+        }
+        writeDataOwner(driveUser.uid);
+        await saveUserProfile(driveUser.uid, { appMode: mode });
+        const hasData = await pull(driveUser.uid);
+        const { onSignedIn: notify } = callbacksRef.current;
+        if (notify) notify(hasData);
+      } catch (e) { reportError(e); }
+      setSyncing(false);
     });
-    // Belt-and-suspenders: if a restorable session was detected but the
-    // actual Firebase bootstrap that follows never completes (blocked
-    // network, ad blocker), don't leave the header stuck on "checking…"
-    // forever — fall back to showing the disconnected state so the user can
-    // still act (and manually connect, if the session really is gone).
+    // If the stored session never confirms (blocked network, ad blocker),
+    // don't leave the header stuck on "checking…".
     const fallbackTimer = setTimeout(() => setAuthResolved(true), 4000);
     return () => { cancelled = true; unsub(); clearTimeout(fallbackTimer); };
-  }, [mode, fetchAndApply]);
+  }, [mode, pull, reportError]);
 
   useEffect(() => {
     const handleVisibility = async () => {
-      const firebaseUser = userRef.current;
-      if (document.visibilityState === 'visible' && firebaseUser) {
-        setSyncing(true);
-        try { await fetchAndApply(firebaseUser.uid); } catch (e) { console.error(e); }
-        setSyncing(false);
-      }
+      const driveUser = userRef.current;
+      if (document.visibilityState !== 'visible' || !driveUser
+        || !isFocusPullDue(lastPullAtRef.current, Date.now())) return;
+      setSyncing(true);
+      try { await pull(driveUser.uid); } catch (e) { reportError(e); }
+      setSyncing(false);
     };
     document.addEventListener('visibilitychange', handleVisibility);
     return () => document.removeEventListener('visibilitychange', handleVisibility);
-  }, [fetchAndApply]);
+  }, [pull, reportError]);
 
   const syncNow = useCallback(async () => {
     if (!user || syncing) return;
     setSyncing(true);
-    try { await fetchAndApply(user.uid); } catch (e) { console.error(e); }
+    try { await pull(user.uid); } catch (e) { reportError(e); }
     setSyncing(false);
-  }, [user, syncing, fetchAndApply]);
+  }, [user, syncing, pull, reportError]);
 
-  return { user, authResolved, syncing, syncNow };
+  /**
+   * Disconnect and remove this device's copy of the account's data, so the
+   * next person to connect here neither sees it nor gets it merged into their
+   * Drive. Throws (leaving everything in place) if sign-out itself fails.
+   */
+  const signOutAndClear = useCallback(async () => {
+    await signOut();
+    clearLocalAccountData();
+    window.location.reload();
+  }, []);
+
+  /** Delete every synced file from Drive, revoke access, and clear this device. */
+  const deleteSyncedDataAndClear = useCallback(async () => {
+    await deleteAllSyncedData();
+    clearLocalAccountData();
+    window.location.reload();
+  }, []);
+
+  return {
+    user, authResolved, syncing, syncNow,
+    cloudConfigured: isCloudConfigured(),
+    signOutAndClear, deleteSyncedDataAndClear,
+  };
 }
