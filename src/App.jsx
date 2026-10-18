@@ -38,9 +38,11 @@ export default function App() {
 
   return (
     <Suspense fallback={<AppLoadingFallback />}>
-      {mode === 'tasks'
-        ? <AppErrorBoundary><TasksApp key="tasks" onModeChange={setMode} /></AppErrorBoundary>
-        : <JobTrackerApp mode={mode} onModeChange={setMode} />}
+      <AppErrorBoundary key={mode === 'tasks' ? 'tasks' : 'tracker'} mode={mode}>
+        {mode === 'tasks'
+          ? <TasksApp key="tasks" onModeChange={setMode} />
+          : <JobTrackerApp mode={mode} onModeChange={setMode} />}
+      </AppErrorBoundary>
     </Suspense>
   );
 }

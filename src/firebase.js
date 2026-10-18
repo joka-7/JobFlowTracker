@@ -1,5 +1,6 @@
 import { getCollectionName } from './statuses';
 import { clearPendingIds } from './utils/pendingSync';
+import { sanitizeTrackerRecords } from './sanitize';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBeEQR4lW_j0M53kAZMSagma1zo9mRonFw",
@@ -144,8 +145,11 @@ export function formatSignInError(err) {
       ? `Add "${host}" in Firebase → Authentication → Settings → Authorized domains.`
       : 'This site is not in Firebase Authentication → Authorized domains.';
   }
+  // The fix for this belongs to whoever deploys the site (add its domain to the
+  // key's HTTP-referrer allowlist, per SECURITY.md) — never to the end user,
+  // and never by loosening the restriction.
   if (/referrer|API key|API_KEY/i.test(msg)) {
-    return 'Google API key blocked this site. In Cloud Console set Browser key → Application restrictions to None (see SECURITY.md).';
+    return "This site isn't allowed to use Google sign-in yet. Please let the site owner know.";
   }
   if (/requested action is invalid/i.test(msg)) {
     return 'Google sign-in config error. Check Firebase Authorized domains and API key restrictions (SECURITY.md).';
@@ -244,7 +248,10 @@ export async function loadAllItems(uid, mode = 'jobseeker') {
   const rootRef = doc(db, 'users', uid);
   const rootSnap = await getDoc(rootRef);
   if (rootSnap.exists()) {
-    const companies = rootSnap.data().companies || [];
+    // Legacy entries were never sanitized: one with no id would be written to
+    // a doc named "undefined", which firestore.rules rejects along with the
+    // whole batch — and with it, this user's migration.
+    const companies = sanitizeTrackerRecords(rootSnap.data().companies || [], { mode });
     if (companies.length > 0) {
       await batchSaveItems(uid, mode, companies);
       return companies;

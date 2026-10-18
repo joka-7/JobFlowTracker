@@ -6,16 +6,12 @@ import { snapToTick } from './utils/effortScale.js';
 import { IMPACT_LEVELS, URGENCY_CHOICES } from './utils/taskPriority.js';
 import { TASK_TYPES } from './utils/taskTypes.js';
 
-/** Generate a cryptographically random ID (fallback to timestamp if crypto unavailable) */
+/** A cryptographically random 24-hex-char id. Web Crypto exists in every
+ * supported browser and in Node, so there is no weaker fallback to hide behind. */
 export function generateId() {
-  if (typeof window !== 'undefined' && window.crypto?.getRandomValues) {
-    // Browser environment - use crypto
-    const arr = new Uint8Array(12);
-    window.crypto.getRandomValues(arr);
-    return Array.from(arr, byte => byte.toString(16).padStart(2, '0')).join('');
-  }
-  // Fallback: timestamp + random suffix
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const arr = new Uint8Array(12);
+  globalThis.crypto.getRandomValues(arr);
+  return Array.from(arr, byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
 export function safeStr(val) {

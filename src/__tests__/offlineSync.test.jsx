@@ -1,8 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import '../i18n';
 import App from '../App';
+import { batchSaveItems } from '../firebase';
 import { pendingStorageKey } from '../utils/pendingSync';
 
 /**
@@ -49,6 +50,12 @@ function seedJobSeekerApp(companies) {
 }
 
 describe('Offline sync fallback (real JobTrackerApp auth effect)', () => {
+  beforeAll(async () => {
+    // App lazy-loads JobTrackerApp; transforming that module cold outlasts
+    // findBy*'s 1s timeout, so the first test failed whenever this file ran alone.
+    await import('../JobTrackerApp');
+  });
+
   beforeEach(() => {
     localStorage.clear();
     loadAllItemsMock = vi.fn();
@@ -144,6 +151,44 @@ describe('Offline sync fallback (real JobTrackerApp auth effect)', () => {
 
     expect(await screen.findByText('Recruit Co')).toBeInTheDocument();
     expect(localStorage.getItem(pendingStorageKey('recruiter'))).toBeNull();
+  });
+
+  it('uploads only this mode\'s records when a mixed-mode backup is imported while signed in', async () => {
+    seedJobSeekerApp([]);
+    loadAllItemsMock.mockResolvedValue(null);
+    const backup = [
+      { id: 'j1', mode: 'jobseeker', name: 'Seeker Co', status: 'applied' },
+      { id: 'r1', mode: 'recruiter', name: 'Candidate Jane', status: 'screening' },
+    ];
+    const { container } = render(<App />);
+    await screen.findByRole('heading', { name: 'Job Search Tracker', exact: true });
+    vi.mocked(batchSaveItems).mockClear();
+
+    const file = new File([JSON.stringify(backup)], 'backup.json', { type: 'application/json' });
+    fireEvent.change(container.querySelector('#main-file-upload'), { target: { files: [file] } });
+
+    await waitFor(() => expect(batchSaveItems).toHaveBeenCalled());
+    const uploadedIds = vi.mocked(batchSaveItems).mock.calls[0][2].map((c) => c.id);
+    expect(uploadedIds).toEqual(['j1']);
+  });
+
+  it('warns the user when this browser\'s storage is full instead of losing the save silently', async () => {
+    seedJobSeekerApp([{ id: '1', name: 'Big Co', role: 'Engineer', status: 'applied' }]);
+    loadAllItemsMock.mockResolvedValue(null);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const realSetItem = Storage.prototype.setItem;
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function setItem(key, value) {
+      if (key === 'jobTrackerAppV2Data_jobseeker') throw new DOMException('full', 'QuotaExceededError');
+      return realSetItem.call(this, key, value);
+    });
+
+    try {
+      render(<App />);
+
+      expect(await screen.findByText(/storage is full/)).toBeInTheDocument();
+    } finally {
+      setItemSpy.mockRestore();
+    }
   });
 
   it('does not crash and falls back to empty state on corrupted localStorage JSON', async () => {

@@ -1,4 +1,4 @@
-import { delimUserField } from '../utils/promptSafety';
+import { delimUserField, delimUserBlock } from '../utils/promptSafety';
 import {
   streamComplete as agentStreamComplete,
   buildMessages as agentBuildMessages,
@@ -313,10 +313,8 @@ Company: ${delimUserField(company.name)}
 ${company.role ? `Role: ${delimUserField(company.role)}` : ''}
 ${company.location ? `Location: ${delimUserField(company.location)}` : ''}
 
-Resume content:
----
-${resumeText.slice(0, 3000)}
----
+Resume content (between <<< and >>>):
+${delimUserBlock(resumeText, 3000)}
 
 Based on the resume above, suggest 3 specific experiences or achievements to highlight for this application. For each:
 - Start with a **bold title** naming the experience
@@ -401,12 +399,10 @@ ${langInstruction}`;
 
 export async function debriefInterview(notes, context, language = 'en', onChunk, { signal } = {}) {
   checkRateLimit('interview-debrief');
-  const prompt = `You are an expert interview coach. Analyze these post-interview notes written by the candidate:
+  const prompt = `You are an expert interview coach. Analyze these post-interview notes written by the candidate (between <<< and >>>):
 
----
-${notes}
----
-${context ? `\nContext: ${context}` : ''}
+${delimUserBlock(notes, 20000)}
+${context ? `\nContext: ${delimUserField(context)}` : ''}
 
 Provide a structured debrief with these 4 sections:
 

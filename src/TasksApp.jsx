@@ -40,6 +40,7 @@ import { useBackGestureGuard } from './hooks/useBackGestureGuard';
 import { formatDate } from './utils/date';
 import { appendNote } from './utils/notes';
 import { useCloudSync } from './hooks/useCloudSync';
+import { useTaskReminders } from './hooks/useTaskReminders';
 import { unionOnSignIn } from './utils/cloudSync';
 import {
   fingerprintItems, diffFingerprints, readPending, recordLocalChanges,
@@ -64,7 +65,7 @@ import { parseEffortTiersPayload, sanitizeEffortTiers } from './utils/effortScal
 import { TASK_TYPES } from './utils/taskTypes';
 import { applyTaskStatusChange } from './utils/recurrence';
 import {
-  buildReminderKey, formatDueDateTime, requestReminderPermission, shouldNotifyTask,
+  buildReminderKey, formatDueDateTime,
   snoozeTaskReminder, isReminderSnoozed, SNOOZE_MINUTES,
 } from './utils/reminders';
 import {
@@ -92,7 +93,7 @@ export default function TasksApp({ onModeChange }) {
   const isRTL = i18n.language === 'he';
   const lang = i18n.language;
 
-  const tt = (key, fb) => t(`tasks.${key}`, fb);
+  const tt = useCallback((key, fb) => t(`tasks.${key}`, fb), [t]);
   const BackArrow = isRTL ? ArrowRight : ArrowLeft;
 
   const [tasks, setTasks] = useState(() => {
@@ -120,6 +121,12 @@ export default function TasksApp({ onModeChange }) {
   const [typeFilter, setTypeFilter] = useState('all');
   const [reminderPrompt, setReminderPrompt] = useState(null);
   const { toastMessage, showToast } = useToast();
+  // A failed write keeps its id in the pending set (see utils/pendingSync), so
+  // the next pull retries it; the user still needs to know it hasn't landed.
+  const reportSyncError = useCallback((e) => {
+    console.error('Cloud sync failed:', e);
+    showToast(t('toast.syncFailed'));
+  }, [showToast, t]);
   const [isSaved, setIsSaved] = useState(true);
   const [newStepTitle, setNewStepTitle] = useState('');
   const [visibleCount, setVisibleCount] = useState(25);
@@ -144,8 +151,11 @@ export default function TasksApp({ onModeChange }) {
         const timer = setTimeout(() => setIsSaved(true), 800);
         return () => clearTimeout(timer);
       }
-    } catch { /* ignore */ }
-  }, [tasks]);
+    } catch (e) {
+      console.error('Saving tasks to localStorage failed:', e);
+      showToast(t('toast.storageFull'));
+    }
+  }, [tasks, showToast, t]);
 
   // One place that notices every local task change, whatever mutated it, and
   // records the touched ids as not-yet-in-the-cloud. Hooking the state instead
@@ -165,12 +175,22 @@ export default function TasksApp({ onModeChange }) {
   }, [tasks]);
 
   useEffect(() => {
-    try { localStorage.setItem(TASKS_LABELS_KEY, JSON.stringify(labels)); } catch { /* ignore */ }
-  }, [labels]);
+    try {
+      localStorage.setItem(TASKS_LABELS_KEY, JSON.stringify(labels));
+    } catch (e) {
+      console.error('Saving labels to localStorage failed:', e);
+      showToast(t('toast.storageFull'));
+    }
+  }, [labels, showToast, t]);
 
   useEffect(() => {
-    try { localStorage.setItem(TASKS_EFFORT_TIERS_KEY, JSON.stringify(effortTiers)); } catch { /* ignore */ }
-  }, [effortTiers]);
+    try {
+      localStorage.setItem(TASKS_EFFORT_TIERS_KEY, JSON.stringify(effortTiers));
+    } catch (e) {
+      console.error('Saving effortTiers to localStorage failed:', e);
+      showToast(t('toast.storageFull'));
+    }
+  }, [effortTiers, showToast, t]);
 
   const handleEffortTiersChange = useCallback((next) => {
     setEffortTiers(sanitizeEffortTiers(next));
@@ -200,9 +220,9 @@ export default function TasksApp({ onModeChange }) {
       // and pin it against all future pulls.
       syncedSnapshotRef.current = fingerprintItems(merged);
       setTasks(merged);
-      if (pushToCloud) batchSaveItems(uid, MODE, merged).catch(() => {});
+      if (pushToCloud) batchSaveItems(uid, MODE, merged).catch(reportSyncError);
       // Replay deletes made while unsynced, or the next pull resurrects them.
-      deleteFromCloud.forEach((id) => deleteItem(uid, MODE, id).catch(() => {}));
+      deleteFromCloud.forEach((id) => deleteItem(uid, MODE, id).catch(reportSyncError));
     },
     onSignedIn: (hasData) => { if (hasData) showToast(tt('toast.imported', 'Data loaded from cloud!')); },
   });
@@ -212,37 +232,30 @@ export default function TasksApp({ onModeChange }) {
     if (user) {
       try {
         await batchSaveItems(user.uid, MODE, newTasks);
-      } catch { /* ignore */ }
+      } catch (e) { reportSyncError(e); }
     }
-  }, [user]);
+  }, [user, reportSyncError]);
 
   const saveTask = useCallback(async (task) => {
     setTasks(prev => mergeTaskIntoList(prev, task));
     if (user) {
-      try { await updateItem(user.uid, MODE, task); } catch { /* ignore */ }
+      try { await updateItem(user.uid, MODE, task); } catch (e) { reportSyncError(e); }
     }
-  }, [user]);
+  }, [user, reportSyncError]);
 
   const deleteTask = useCallback(async (id) => {
     setTasks(prev => prev.filter(t => t.id !== id));
     if (user) {
-      try { await deleteItem(user.uid, MODE, id); } catch { /* ignore */ }
+      try { await deleteItem(user.uid, MODE, id); } catch (e) { reportSyncError(e); }
     }
-  }, [user]);
-
-  const handleReminderEnable = useCallback(async () => {
-    const result = await requestReminderPermission();
-    if (result === 'denied') {
-      alert(tt('reminder.permissionDenied', 'Enable notifications in your browser settings to use reminders.'));
-    }
-  }, [tt]);
+  }, [user, reportSyncError]);
 
   const applyTaskUpdate = useCallback(async (updated) => {
     setTasks(prev => prev.map(t => (t.id === updated.id ? updated : t)));
     if (user) {
-      try { await updateItem(user.uid, MODE, updated); } catch { /* ignore */ }
+      try { await updateItem(user.uid, MODE, updated); } catch (e) { reportSyncError(e); }
     }
-  }, [user]);
+  }, [user, reportSyncError]);
 
   const handleSnoozeReminder = useCallback(async (taskId, minutes) => {
     const task = tasks.find(t => t.id === taskId);
@@ -256,41 +269,47 @@ export default function TasksApp({ onModeChange }) {
   // Side effects (notifications, prompt, Firestore writes) run here, outside
   // any setState updater — updaters must stay pure since React may invoke
   // them more than once per commit.
-  useEffect(() => {
-    if (!('Notification' in window) || Notification.permission !== 'granted') return undefined;
-    const runReminders = () => {
-      const pending = tasksRef.current.filter(shouldNotifyTask);
-      if (pending.length === 0) return;
-      const pendingIds = new Set(pending.map(p => p.id));
-
-      const first = pending[0];
-      setReminderPrompt({ taskId: first.id, name: first.name || tt('reminder.defaultTitle', 'Task reminder') });
-      pending.forEach(task => {
-        try {
-          new Notification(task.name || tt('reminder.defaultTitle', 'Task reminder'), {
-            body: formatDueDateTime(task.dueDate, task.dueTime, lang, formatDate)
-              || tt('reminder.body', 'Your task is coming up.'),
-            tag: `tasks-reminder-${task.id}-${buildReminderKey(task)}`,
-          });
-        } catch { /* ignore */ }
-      });
-
-      setTasks(prev => prev.map(task => (
-        pendingIds.has(task.id)
-          ? { ...task, lastReminderKey: buildReminderKey(task) }
-          : task
-      )));
-
-      if (user) {
-        pending.forEach(task => {
-          updateItem(user.uid, MODE, { ...task, lastReminderKey: buildReminderKey(task) }).catch(() => {});
+  const notifyDueTasks = useCallback((due) => {
+    const dueIds = new Set(due.map(p => p.id));
+    const first = due[0];
+    setReminderPrompt({ taskId: first.id, name: first.name || tt('reminder.defaultTitle', 'Task reminder') });
+    due.forEach(task => {
+      try {
+        new Notification(task.name || tt('reminder.defaultTitle', 'Task reminder'), {
+          body: formatDueDateTime(task.dueDate, task.dueTime, lang, formatDate)
+            || tt('reminder.body', 'Your task is coming up.'),
+          tag: `tasks-reminder-${task.id}-${buildReminderKey(task)}`,
         });
+      } catch (e) {
+        // The in-app prompt above still shows; only the OS banner is lost.
+        console.warn('Notification failed:', e);
       }
-    };
-    runReminders();
-    const timer = setInterval(runReminders, 30_000);
-    return () => clearInterval(timer);
-  }, [lang, tt, user]);
+    });
+
+    setTasks(prev => prev.map(task => (
+      dueIds.has(task.id)
+        ? { ...task, lastReminderKey: buildReminderKey(task) }
+        : task
+    )));
+
+    if (user) {
+      due.forEach(task => {
+        updateItem(user.uid, MODE, { ...task, lastReminderKey: buildReminderKey(task) }).catch(reportSyncError);
+      });
+    }
+  }, [lang, tt, user, reportSyncError]);
+
+  const { requestPermission: requestReminderPermission } = useTaskReminders({
+    getTasks: () => tasksRef.current,
+    onDue: notifyDueTasks,
+  });
+
+  const handleReminderEnable = useCallback(async () => {
+    const result = await requestReminderPermission();
+    if (result === 'denied') {
+      alert(tt('reminder.permissionDenied', 'Enable notifications in your browser settings to use reminders.'));
+    }
+  }, [requestReminderPermission, tt]);
 
   const openNewForm = useCallback(() => {
     setFormData(makeInitialTask());
@@ -388,22 +407,16 @@ export default function TasksApp({ onModeChange }) {
     showToast(tt('toast.deleted', 'Task deleted.'));
   };
 
-  const handleStepStatusToggle = useCallback(async (taskId, stepId) => {
-    setTasks(prev => {
-      const updated = prev.map(task => {
-        if (task.id !== taskId) return task;
-        const steps = (task.steps || []).map(s =>
-          s.id === stepId ? { ...s, status: cycleStepStatus(s.status) } : s
-        );
-        return { ...task, steps };
-      });
-      const task = updated.find(t => t.id === taskId);
-      if (task && user) {
-        updateItem(user.uid, MODE, task).catch(() => {});
-      }
-      return updated;
-    });
-  }, [user]);
+  // Reads the current task and writes outside setTasks: a Firestore write
+  // inside an updater runs twice whenever React replays it.
+  const handleStepStatusToggle = useCallback((taskId, stepId) => {
+    const task = tasksRef.current.find(t => t.id === taskId);
+    if (!task) return;
+    const steps = (task.steps || []).map(s =>
+      s.id === stepId ? { ...s, status: cycleStepStatus(s.status) } : s
+    );
+    applyTaskUpdate({ ...task, steps });
+  }, [applyTaskUpdate]);
 
   const handleFormStepToggle = (stepId) => {
     setFormData(prev => ({
@@ -494,9 +507,9 @@ export default function TasksApp({ onModeChange }) {
     setTasks(finalItems);
     showToast(tt('toast.saved', 'Saved!'));
     if (user && advanced.length) {
-      batchSaveItems(user.uid, MODE, advanced).catch(() => {});
+      batchSaveItems(user.uid, MODE, advanced).catch(reportSyncError);
     }
-  }, [user, showToast, tt]);
+  }, [user, showToast, tt, reportSyncError]);
 
   const handleExport = async () => {
     const saved = await saveJsonFile(`tasks-backup-${Date.now()}.json`, tasks);
@@ -545,13 +558,10 @@ export default function TasksApp({ onModeChange }) {
   const selectedTask = selectedId ? tasks.find(t => t.id === selectedId) : null;
 
   const handleSaveToTask = useCallback((taskId, text) => {
-    setTasks(prev => prev.map(t => {
-      if (t.id !== taskId) return t;
-      const merged = { ...t, notes: appendNote(t.notes, text) };
-      if (user) updateItem(user.uid, MODE, merged).catch(() => {});
-      return merged;
-    }));
-  }, [user]);
+    const task = tasksRef.current.find(t => t.id === taskId);
+    if (!task) return;
+    applyTaskUpdate({ ...task, notes: appendNote(task.notes, text) });
+  }, [applyTaskUpdate]);
 
   const handleStartSimulation = useCallback((categoryKey) => {
     const cat = TASK_TEMPLATES[categoryKey];

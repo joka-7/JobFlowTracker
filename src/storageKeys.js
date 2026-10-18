@@ -10,7 +10,7 @@ export const STORAGE_KEYS = {
   tasksWelcome: 'hasCompletedOnboarding_tasks',
 };
 
-/** Shared task/step label library (localStorage; synced to Firestore when signed in). */
+/** Shared task/step label library (localStorage only — not synced to Firestore). */
 export const TASKS_LABELS_KEY = 'tasksLabelsV1';
 
 /** User-chosen small/medium/large cut-points on the effort ladder (localStorage). */

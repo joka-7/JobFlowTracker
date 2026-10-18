@@ -41,4 +41,4 @@ CI also runs Gitleaks, `npm audit`, Trivy, and CodeQL on pushes and PRs to `main
 
 - Publish Firestore rules from [`firestore.rules`](firestore.rules).
 - Restrict the Firebase web API key (HTTP referrers) in Google Cloud Console.
-- Vercel serves additional headers via [`vercel.json`](vercel.json) (`X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, `frame-ancestors`).
+- Vercel serves the security headers via [`vercel.json`](vercel.json) (`Content-Security-Policy`, `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, HSTS). It is the only copy of the CSP — `index.html` deliberately has no `<meta>` CSP, so the two can't drift apart. `script-src` has no `'unsafe-inline'`: the Vite build emits no inline scripts.
