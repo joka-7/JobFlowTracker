@@ -23,4 +23,4 @@ Fixes #<!-- issue number, or remove -->
 
 **Notes:**
 
-<!-- Anything reviewers should know (Firebase project used, screenshots, etc.) -->
+<!-- Anything reviewers should know (Drive account used, screenshots, etc.) -->

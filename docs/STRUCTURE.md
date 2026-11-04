@@ -13,12 +13,97 @@ JobFlowTracker/
 │   │   ├── config.yml
 │   │   └── feature_request.md    # GitHub issue template: feature request
 │   ├── workflows/
+│   │   ├── android.yml
 │   │   ├── ci.yml
 │   │   ├── docs.yml
 │   │   └── security.yml
 │   ├── copilot-instructions.md   # Copilot's copy of AGENTS.md (generated)
 │   ├── dependabot.yml
 │   └── pull_request_template.md  # Summary
+├── android/
+│   ├── app/
+│   │   ├── src/
+│   │   │   └── main/
+│   │   │       ├── java/
+│   │   │       │   └── io/
+│   │   │       │       └── github/
+│   │   │       │           └── joka7/
+│   │   │       │               └── jobflowtracker/
+│   │   │       │                   └── MainActivity.java
+│   │   │       ├── res/
+│   │   │       │   ├── drawable/
+│   │   │       │   │   ├── ic_launcher_background.xml
+│   │   │       │   │   └── splash.png
+│   │   │       │   ├── drawable-land-hdpi/
+│   │   │       │   │   └── splash.png
+│   │   │       │   ├── drawable-land-mdpi/
+│   │   │       │   │   └── splash.png
+│   │   │       │   ├── drawable-land-xhdpi/
+│   │   │       │   │   └── splash.png
+│   │   │       │   ├── drawable-land-xxhdpi/
+│   │   │       │   │   └── splash.png
+│   │   │       │   ├── drawable-land-xxxhdpi/
+│   │   │       │   │   └── splash.png
+│   │   │       │   ├── drawable-port-hdpi/
+│   │   │       │   │   └── splash.png
+│   │   │       │   ├── drawable-port-mdpi/
+│   │   │       │   │   └── splash.png
+│   │   │       │   ├── drawable-port-xhdpi/
+│   │   │       │   │   └── splash.png
+│   │   │       │   ├── drawable-port-xxhdpi/
+│   │   │       │   │   └── splash.png
+│   │   │       │   ├── drawable-port-xxxhdpi/
+│   │   │       │   │   └── splash.png
+│   │   │       │   ├── drawable-v24/
+│   │   │       │   │   └── ic_launcher_foreground.xml
+│   │   │       │   ├── layout/
+│   │   │       │   │   └── activity_main.xml
+│   │   │       │   ├── mipmap-anydpi-v26/
+│   │   │       │   │   ├── ic_launcher.xml
+│   │   │       │   │   └── ic_launcher_round.xml
+│   │   │       │   ├── mipmap-hdpi/
+│   │   │       │   │   ├── ic_launcher.png
+│   │   │       │   │   ├── ic_launcher_foreground.png
+│   │   │       │   │   └── ic_launcher_round.png
+│   │   │       │   ├── mipmap-mdpi/
+│   │   │       │   │   ├── ic_launcher.png
+│   │   │       │   │   ├── ic_launcher_foreground.png
+│   │   │       │   │   └── ic_launcher_round.png
+│   │   │       │   ├── mipmap-xhdpi/
+│   │   │       │   │   ├── ic_launcher.png
+│   │   │       │   │   ├── ic_launcher_foreground.png
+│   │   │       │   │   └── ic_launcher_round.png
+│   │   │       │   ├── mipmap-xxhdpi/
+│   │   │       │   │   ├── ic_launcher.png
+│   │   │       │   │   ├── ic_launcher_foreground.png
+│   │   │       │   │   └── ic_launcher_round.png
+│   │   │       │   ├── mipmap-xxxhdpi/
+│   │   │       │   │   ├── ic_launcher.png
+│   │   │       │   │   ├── ic_launcher_foreground.png
+│   │   │       │   │   └── ic_launcher_round.png
+│   │   │       │   ├── values/
+│   │   │       │   │   ├── ic_launcher_background.xml
+│   │   │       │   │   ├── strings.xml
+│   │   │       │   │   └── styles.xml
+│   │   │       │   └── xml/
+│   │   │       │       └── file_paths.xml
+│   │   │       └── AndroidManifest.xml
+│   │   ├── .gitignore
+│   │   ├── build.gradle
+│   │   ├── capacitor.build.gradle
+│   │   └── proguard-rules.pro
+│   ├── gradle/
+│   │   └── wrapper/
+│   │       ├── gradle-wrapper.jar
+│   │       └── gradle-wrapper.properties
+│   ├── .gitignore
+│   ├── build.gradle
+│   ├── capacitor.settings.gradle
+│   ├── gradle.properties
+│   ├── gradlew
+│   ├── gradlew.bat
+│   ├── settings.gradle
+│   └── variables.gradle
 ├── docs/
 │   ├── screenshots/              # Screenshots referenced from README.md
 │   │   ├── calendar-day-detail.png
@@ -51,7 +136,6 @@ JobFlowTracker/
 │   ├── ai-rate-limiting.spec.js
 │   ├── chat-simulation.spec.js
 │   ├── dark-mode.spec.js
-│   ├── firebase-security-rules.spec.js
 │   ├── helpers.js
 │   ├── jobseeker-flow.spec.js
 │   ├── mode-selection.spec.js
@@ -71,13 +155,14 @@ JobFlowTracker/
 ├── scripts/                      # Bundle-size check + icon generation scripts
 │   ├── check-bundle-size.mjs
 │   ├── check-npm-audit.mjs
-│   ├── generate-icons.py         # Generate favicon and PWA PNG sizes from the JF monogram master image.
+│   ├── generate-icons.py         # Generate favicon, PWA and Android launcher/splash images from the JF monogram…
 │   └── icon-master.png
 ├── src/                          # App source — mode gate, per-mode UIs, shared services
 │   ├── __tests__/                # Vitest unit + integration tests
 │   │   ├── APIKeySettings.modelPicker.test.jsx
 │   │   ├── APIKeySettings.test.jsx
 │   │   ├── App.integration.test.jsx
+│   │   ├── App.test.jsx
 │   │   ├── AppErrorBoundary.test.jsx
 │   │   ├── ChatModal.aiConfig.test.jsx
 │   │   ├── ChatModal.test.jsx
@@ -85,18 +170,24 @@ JobFlowTracker/
 │   │   ├── ModeSelection.test.jsx
 │   │   ├── Onboarding.test.jsx
 │   │   ├── TasksApp.logic.test.js
+│   │   ├── TasksApp.test.jsx
 │   │   ├── aiAssistant.rateLimiting.test.js
 │   │   ├── aiAssistant.test.js
 │   │   ├── boardOrder.test.js
 │   │   ├── cloudSync.test.js
+│   │   ├── crashBackup.test.js
 │   │   ├── csv.test.js
+│   │   ├── driveSync.test.js
 │   │   ├── effortScale.test.js
+│   │   ├── focusPull.test.js
 │   │   ├── journey.test.js
 │   │   ├── logic.test.js
+│   │   ├── nativeGoogleAuth.test.js
 │   │   ├── normalizeInterviewType.test.js
 │   │   ├── offlineSync.test.jsx
 │   │   ├── pendingSync.test.js
 │   │   ├── promptSafety.test.js
+│   │   ├── pwaUpdate.test.js
 │   │   ├── recurrence.test.js
 │   │   ├── reminders.test.js
 │   │   ├── sanitize.test.js
@@ -108,6 +199,10 @@ JobFlowTracker/
 │   │   ├── taskTypes.test.js
 │   │   ├── templateQuestions.test.js
 │   │   ├── useBackGestureGuard.test.js
+│   │   ├── useCloudSync.test.js
+│   │   ├── usePwaInstall.test.js
+│   │   ├── useTaskReminders.test.js
+│   │   ├── useToast.test.js
 │   │   └── utils.test.js
 │   ├── assets/                   # Static assets bundled by Vite
 │   │   ├── hero.png
@@ -123,6 +218,7 @@ JobFlowTracker/
 │   │   ├── CalendarView.jsx
 │   │   ├── CardColorPicker.jsx
 │   │   ├── ChatModal.jsx
+│   │   ├── DriveDataSection.jsx
 │   │   ├── EffortPicker.jsx
 │   │   ├── GithubIcon.jsx
 │   │   ├── KanbanDndBoard.jsx
@@ -152,6 +248,7 @@ JobFlowTracker/
 │   │   ├── useBackGestureGuard.js
 │   │   ├── useCloudSync.js
 │   │   ├── useModalA11y.js
+│   │   ├── useTaskReminders.js
 │   │   └── useToast.js
 │   ├── locales/                  # I18n translation files: English, Hebrew, French
 │   │   ├── templateQuestions/
@@ -167,9 +264,11 @@ JobFlowTracker/
 │   │   ├── avatarColor.js
 │   │   ├── boardOrder.js
 │   │   ├── cloudSync.js
+│   │   ├── crashBackup.js
 │   │   ├── csv.js
 │   │   ├── date.js
 │   │   ├── effortScale.js
+│   │   ├── focusPull.js
 │   │   ├── labelColors.js
 │   │   ├── notes.js
 │   │   ├── pendingSync.js
@@ -184,17 +283,19 @@ JobFlowTracker/
 │   ├── App.jsx                   # Mode gate — lazy-loads JobTrackerApp or TasksApp so a user in one mode never…
 │   ├── JobTrackerApp.jsx         # Job seeker + recruiter UI
 │   ├── TasksApp.jsx              # Task manager UI with step management
-│   ├── firebase.js               # Auth + mode-aware Firestore helpers
+│   ├── driveSync.js              # Google Drive appDataFolder sync (one file per device)
 │   ├── i18n.js                   # React-i18next setup
 │   ├── index.css
 │   ├── main.jsx
 │   ├── modeldispatcher.config.js
+│   ├── nativeGoogleAuth.js
 │   ├── pwaUpdate.js
 │   ├── sanitize.js
 │   ├── statuses.js               # Status configs for all 3 modes, storage keys
 │   ├── storageKeys.js
 │   └── usePwaInstall.js
 ├── .ai                           # Ogen-ai submodule — the shared source of rules, skills and the ai-sync…
+├── .env.example
 ├── .gitignore
 ├── .gitleaks.toml
 ├── .gitmodules
@@ -210,6 +311,7 @@ JobFlowTracker/
 ├── README.md                     # JobFlowTracker
 ├── SECURITY.md                   # Security Policy
 ├── ai-config.toml                # Which rule fragments and target tools ai-sync compiles for this repo
+├── capacitor.config.json
 ├── eslint.config.js
 ├── firestore.rules
 ├── index.html

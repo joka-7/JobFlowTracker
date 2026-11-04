@@ -2,68 +2,46 @@
 
 ## 1. Overview
 
-JobFlowTracker is a single-page application (SPA) for tracking a job search, a recruiter hiring pipeline, or multi-step task management. Users choose a starting mode on first visit and can switch freely at any time using the header mode switcher. All modes use a kanban-based UI with mode-specific statuses and form fields. Each mode's data is stored in its own scoped localStorage key and Firestore subcollection — switching modes never affects other modes' data.
+JobFlowTracker is a single-page application (SPA) for tracking a job search, a recruiter hiring pipeline, or multi-step task management. Users choose a starting mode on first visit and can switch freely at any time using the header mode switcher. All modes use a kanban-based UI with mode-specific statuses and form fields. Each mode's data is stored in its own scoped localStorage key and its own collection of the Drive sync file — switching modes never affects other modes' data. The same build ships as a website (Vercel) and as an Android app (Capacitor).
 
 **Key design principles:**
 
-- **No custom backend.** All business logic runs in the browser. Firebase provides auth and a database; Vercel provides static hosting.
+- **No custom backend, private by design.** All business logic runs in the browser. Optional sync goes straight from the browser to the user's **own** Google Drive (`appDataFolder`, `drive.appdata` scope), so the operator holds no copy of anyone's data. Vercel provides static hosting only.
 - **Three modes, freely switchable.** `App.jsx` gates on `localStorage.appMode`. `ModeDropdown` in every header lets users move between modes at runtime. Each mode's data persists independently.
 - **Client-side AI (all three modes, scope varies).** AI requests run from the browser with the user's API key. Every mode has a mode-specific AI action (Find Jobs / Find Candidates / Goals & Tasks, via `ChatModal`); the full floating AI Assistant panel — interview prep, rejection analysis, pattern analysis, debrief, smart scheduling, resume tailoring, multi-turn chat — is job seeker only (`AIAssistant.jsx`, hidden when `isRecruiter` and never rendered by `TasksApp.jsx`).
-- **User-isolated data.** Firestore rules allow each user read/write on `users/{userId}/**`.
+- **User-isolated data.** Each user's data is in their own Drive, readable only by this OAuth client. Local data is tagged with its owner's account and never merged into a different account's Drive (`readDataOwner`).
 - **Offline-first local cache.** Data is written to mode-scoped localStorage keys on every mutation.
-- **Granular writes.** Each mutation calls `updateItem(uid, mode, item)` for the affected document only.
+- **Granular writes.** Each mutation calls `updateItem(uid, mode, item)` for the affected record only; `driveSync` batches them into one upload of this device's file (1.5 s debounce).
 
 ---
 
 ## 2. Architecture Diagram
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│                        Browser                               │
-│                                                              │
-│  ┌─────────────────────────────────────────────────────┐     │
-│  │              React 19 SPA (Vite build)              │     │
-│  │                                                     │     │
-│  │  App.jsx  (mode gate + autoOnboarding flag)         │     │
-│  │    ├── ModeSelection  (first visit, 3 options)      │     │
-│  │    ├── JobTrackerApp  (job seeker | recruiter)      │     │
-│  │    │     ├── Kanban Board (drag & drop)             │     │
-│  │    │     ├── List / Edit view                       │     │
-│  │    │     ├── Timeline view                          │     │
-│  │    │     ├── Calendar view (interviews + deadlines) │     │
-│  │    │     └── Stats view (Hiring Funnel)             │     │
-│  │    └── TasksApp  (task manager)                     │     │
-│  │          ├── Kanban Board (4 columns)               │     │
-│  │          ├── List / Step-detail view                │     │
-│  │          ├── Calendar view (task due dates)         │     │
-│  │          └── Stats view                             │     │
-│  │                                                     │     │
-│  │  Shared: ModeDropdown, AIAssistant, APIKeySettings, │     │
-│  │    ChatModal, ResumeReview, RejectionAnalysis,      │     │
-│  │    TemplateLibrary, Onboarding, Tooltip             │     │
-│  │                                                     │     │
-│  │  Services: aiAssistant.js (provider abstraction)   │     │
-│  │  Firebase module: firebase.js                       │     │
-│  │  i18n: react-i18next  (EN / HE / FR)               │     │
-│  │                                                     │     │
-│  │  localStorage: appMode, per-mode data cache, AI cfg │     │
-│  └───────────────┬─────────────────────┬───────────────┘     │
-└──────────────────┼─────────────────────┼─────────────────────┘
-                   │ HTTPS               │ HTTPS
-         ┌─────────┴──────────┐    ┌─────┴──────────────────────┐
-         │   Firebase (GCP)   │    │      AI Providers          │
-         │                    │    │                            │
-         │  Firebase Auth     │    │  Google Gemini SSE         │
-         │  (Google OIDC)     │    │  Groq (OpenAI-compat SSE)  │
-         │                    │    │  Anthropic (fetch SSE)      │
-         │  Firestore         │    │  OpenAI (SSE)              │
-         │  /users/{uid}/     │    │  Ollama (local NDJSON)     │
-         │    companies/      │    └────────────────────────────┘
-         │    candidates/     │
-         │    tasks/          │    ┌──────────────────────┐
-         │                    │    │   Vercel CDN         │
-         └────────────────────┘    │  (static hosting)    │
-                                   └──────────────────────┘
+```mermaid
+flowchart LR
+  subgraph Device["Browser tab or Android app (Capacitor WebView)"]
+    App["App.jsx<br/>mode gate + error boundary"]
+    JTA["JobTrackerApp<br/>job seeker / recruiter"]
+    TA["TasksApp<br/>task manager"]
+    Sync["useCloudSync<br/>pull, merge, owner check"]
+    Drive["driveSync.js<br/>device-file sync client"]
+    Native["nativeGoogleAuth.js<br/>Android only"]
+    LS[("localStorage<br/>per-mode records,<br/>pending set, owner")]
+    AI["services/aiAssistant.js"]
+    App --> JTA & TA
+    JTA & TA --> Sync --> Drive
+    Drive -. Android .-> Native
+    JTA & TA --> LS
+    JTA & TA --> AI
+  end
+  GIS["Google Identity Services<br/>(token popup)"]
+  GDrive[("User's own Google Drive<br/>appDataFolder:<br/>jobflowtracker-&lt;device&gt;.json")]
+  Providers["AI providers<br/>Gemini · Groq · Anthropic · OpenAI · Ollama"]
+  Vercel["Vercel CDN<br/>static files only"]
+  Drive --> GIS
+  Drive --> GDrive
+  AI --> Providers
+  Vercel -. serves .-> Device
 ```
 
 ---
@@ -76,15 +54,17 @@ JobFlowTracker is a single-page application (SPA) for tracking a job search, a r
 | `src/statuses.js` | Config | `STATUSES_JOBSEEKER`, `STATUSES_RECRUITER`, `STATUSES_TASKS`, `STEP_STATUSES`, storage keys, `getCollectionName`, `resolveInitialAppMode` |
 | `src/components/ModeSelection.jsx` | Full-screen | First-launch 3-mode picker (job seeker / recruiter / task manager) |
 | `src/components/ModeDropdown.jsx` | Header widget | Dropdown button (icon buttons collapse to a single control when only one mode is enabled); updates `localStorage.appMode` and calls `onModeChange` |
-| `src/JobTrackerApp.jsx` | Main component | Mode-aware UI for job seeker and recruiter; all tabs, Firestore integration |
+| `src/JobTrackerApp.jsx` | Main component | Mode-aware UI for job seeker and recruiter; all tabs, Drive sync wiring |
 | `src/TasksApp.jsx` | Main component | Task manager UI: board, list+step-detail, Priority (ranked by a computed urgency×impact×effort score), By Type, timeline, calendar, stats; step status cycling; routine advancement and due-time reminder polling |
-| `src/components/AppErrorBoundary.jsx` | Error boundary | Wraps `TasksApp` only (job seeker/recruiter data isn't touched by a Tasks-mode crash); offers a localStorage JSON backup before reload |
-| `src/firebase.js` | Module | Auth, mode-aware `loadAllItems(uid, mode)`, profile `appMode`, legacy migration; clears a record from the pending set once its write lands |
-| `src/hooks/useCloudSync.js` | Hook | Owns one collection's auth/pull lifecycle: `hasRestorableSession()` fast path, `authResolved`, sign-in and refocus pulls, manual `syncNow` |
+| `src/components/AppErrorBoundary.jsx` | Error boundary | Wraps whichever app the mode gate renders (`App.jsx`); offers a localStorage JSON backup of that mode's data (`buildCrashBackup`) before reload |
+| `src/driveSync.js` | Module | Google Drive `appDataFolder` sync: one file per device, newest entry wins per record, delete tombstones, clock-skew guard, Web Locks across tabs, retries; `deleteAllSyncedData`. Same API the Firestore module had, except `loadAllItems` returns `{ items, deletedIds }` |
+| `src/nativeGoogleAuth.js` | Module | Android only: Drive access token from the OS via `@capgo/capacitor-social-login`, renewed silently |
+| `src/hooks/useTaskReminders.js` | Hook | Tracks notification permission in state and polls for due task reminders every 30 s once granted |
+| `src/hooks/useCloudSync.js` | Hook | One collection's sync lifecycle: `authResolved`, connect/refocus/`syncNow` pulls (focus pulls at most every 30 s, `utils/focusPull.js`), discards another account's local data, `signOutAndClear` / `deleteSyncedDataAndClear` |
 | `src/utils/cloudSync.js` | Module | `unionOnSignIn` — reconciles a cloud pull against local state using the pending set |
 | `src/utils/pendingSync.js` | Module | Which record ids changed locally without a confirmed cloud write, per collection |
 | `src/components/Onboarding.jsx` | Modal | 5-step wizard (job seeker only, skipped when switching from another mode) |
-| `src/services/aiAssistant.js` | Module | Thin wrapper over the shared `@joka-7/modeldispatcher-browser-agent` package (also used by KanDOne/HighFive/StepByLearn) — provider configuration, `initAI`, `isAIReady`, rate limiting, and this app's job-search prompts; streaming/parsing itself lives in the shared package |
+| `src/services/aiAssistant.js` | Module | Thin wrapper over the shared `modeldispatcher-browser-agent` package (also used by KanDOne/HighFive/StepByLearn) — provider configuration, `initAI`, `isAIReady`, rate limiting, and this app's job-search prompts; streaming/parsing itself lives in the shared package |
 | `src/components/AIAssistant.jsx` | Floating panel (job seeker only) | Sparkles button, menu screen, debrief; launches ChatModal and ResumeReview |
 | `src/components/APIKeySettings.jsx` | Modal | Provider selector, API key / Ollama URL input, saves to localStorage |
 | `src/components/ChatModal.jsx` | Modal | Multi-turn AI chat with streaming, company context, save-to-notes |
@@ -106,20 +86,24 @@ JobFlowTracker is a single-page application (SPA) for tracking a job search, a r
 
 ## 4. Data Flow
 
-### 4.1 Sign-In Flow
+### 4.1 Connect Drive Flow
 
-```
-User clicks "Sign In" / Cloud icon
-  → signInWithGoogle()
-  → onAuthStateChanged fires
-  → loadUserProfile(uid) → confirm or update appMode
-  → saveUserProfile(uid, { appMode })
-  → loadAllItems(uid, mode)
-      → getDocs(/users/{uid}/companies OR /candidates OR /tasks)
-      → jobseeker only: legacy root-doc migration if subcollection empty
-  → unionOnSignIn(localState, cloudData, { pending: readPending(mode) })
-  → setCompanies / setTasks(merged)
-  → batchSaveItems for records local won; deleteItem for pending local deletes
+```mermaid
+sequenceDiagram
+  actor U as User
+  participant H as useCloudSync
+  participant D as driveSync
+  participant G as Google
+  U->>D: Connect Drive (signInWithGoogle)
+  D->>G: token popup (browser) / OS sheet (Android)
+  G-->>D: access token, then userinfo (uid)
+  D-->>H: onAuthChange(user)
+  H->>H: owner on device ≠ uid? clear local data
+  H->>D: saveUserProfile({ appMode }), loadAllItems(uid, mode)
+  D->>G: list + download every jobflowtracker-*.json
+  D-->>H: { items, deletedIds } (merged, newest wins)
+  H->>H: unionOnSignIn(local, items, pending, deletedIds)
+  H->>D: batchSaveItems(only pushIds), deleteItem(pending deletes)
 ```
 
 #### Reconciling a pull against local state
@@ -127,7 +111,7 @@ User clicks "Sign In" / Cloud icon
 Cloud is not authoritative for every id, because a local write can fail — or
 never be attempted, because the session had not resolved yet. `utils/pendingSync.js`
 records which record ids changed locally without a confirmed cloud write
-(`firebase.js` clears an id once its write lands), and `utils/cloudSync.js`
+(`driveSync.js` clears an id once its write lands), and `utils/cloudSync.js`
 consults that set:
 
 | Case | Winner |
@@ -136,6 +120,11 @@ consults that set:
 | Shared id, pending local edit | Local, pushed to cloud |
 | Shared id, no pending local change | Cloud |
 | Id only in cloud, pending local delete | Dropped, delete replayed to cloud |
+| Id only in local state, deleted on another device | Dropped (unless edited here since) |
+
+Only the ids the cloud lacks or holds stale (`pushIds`) are uploaded: every
+Drive write is stamped newest, so re-sending an unchanged record would beat an
+edit made on another device in the meantime.
 
 The third row is what keeps a stale device from resurrecting old data; the
 second is what stops a pull from discarding work typed before a returning
@@ -161,7 +150,7 @@ Switching via ModeDropdown (any time)
 
 ### 4.3 Data Mutation Flow
 
-Every mutation follows the same pattern: update React state → write localStorage → Firestore write in background.
+Every mutation follows the same pattern: update React state → write localStorage → Drive write in background (batched per device file).
 
 ```
 User action (add / edit / drag-drop / step status toggle)
@@ -177,12 +166,12 @@ Delete
 
 JSON import
   → setState(sanitizedData)
-  → if (user) batchSaveItems(uid, mode, sanitizedData)   [chunked writeBatch, 490/batch]
+  → if (user) batchSaveItems(uid, mode, records for this mode)   [one upload of this device's file]
 ```
 
 ### 4.4 Task Step Status Toggle
 
-Steps are cycled without entering edit mode. A click on a step's status icon in the detail panel calls `handleStepStatusToggle(taskId, stepId)`, which updates the task's `steps` array in state and fires `updateItem(uid, 'tasks', task)` to Firestore.
+Steps are cycled without entering edit mode. A click on a step's status icon in the detail panel calls `handleStepStatusToggle(taskId, stepId)`, which updates the task's `steps` array in state and fires `updateItem(uid, 'tasks', task)` to Drive.
 
 Cycle order: `todo → in_progress → done → blocked → todo`
 
@@ -192,7 +181,7 @@ Cycle order: `todo → in_progress → done → blocked → todo`
 
 ### Provider Abstraction
 
-Request/response translation, SSE/NDJSON stream parsing, retry, and timeout for every provider live in [`@joka-7/modeldispatcher-browser-agent`](https://github.com/joka-7/ModelDispatcher/tree/main/clients/browser-agent) — the shared browser-native AI core extracted from this app's own `aiAssistant.js` (and KanDOne/HighFive/StepByLearn, which had each independently built the same thing). `aiAssistant.js` keeps only what's genuinely app-specific: the `PROVIDERS` table's own copy/wording (rendered verbatim in `APIKeySettings`), the module-level `config` object (set by `initAI()`), rate limiting, and this app's own job-search/recruiting system prompts (`getInterviewPrep`, `analyzeRejection`, `analyzePatterns`, `getSchedulingAdvice`, `getResumeAdvice`, `getJobFinderSystemPrompt`, `getCandidateFinderSystemPrompt`, `getGoalsTasksSystemPrompt`, `debriefInterview`). All of them funnel through the internal `runStream(prompt, onChunk)` dispatcher, or `streamChat` for multi-turn chat — both now just call the shared package's `streamComplete`.
+Request/response translation, SSE/NDJSON stream parsing, retry, and timeout for every provider live in [`modeldispatcher-browser-agent`](https://github.com/joka-7/ModelDispatcher/tree/main/clients/browser-agent) — the shared browser-native AI core extracted from this app's own `aiAssistant.js` (and KanDOne/HighFive/StepByLearn, which had each independently built the same thing). `aiAssistant.js` keeps only what's genuinely app-specific: the `PROVIDERS` table's own copy/wording (rendered verbatim in `APIKeySettings`), the module-level `config` object (set by `initAI()`), rate limiting, and this app's own job-search/recruiting system prompts (`getInterviewPrep`, `analyzeRejection`, `analyzePatterns`, `getSchedulingAdvice`, `getResumeAdvice`, `getJobFinderSystemPrompt`, `getCandidateFinderSystemPrompt`, `getGoalsTasksSystemPrompt`, `debriefInterview`). All of them funnel through the internal `runStream(prompt, onChunk)` dispatcher, or `streamChat` for multi-turn chat — both now just call the shared package's `streamComplete`.
 
 `buildApiMessages` (chat-history normalization: user-first ordering, strict alternation, injection-safe role validation) delegates to the shared package's `buildMessages`, keeping this app's own `SIM_TRIGGER`/`appendSimBegin` mapping for the mock-interview simulation trigger.
 
@@ -216,14 +205,12 @@ All functions accumulate a `full` string and call `onChunk(full)` on each token.
 
 ## 6. Security Model
 
-### Firestore Rules
+### Drive sync
 
-```
-/users/{uid}                          — read/write: only if request.auth.uid == uid
-/users/{uid}/companies/{companyId}    — read/write: only if request.auth.uid == uid
-/users/{uid}/candidates/{candidateId} — read/write: only if request.auth.uid == uid
-/users/{uid}/tasks/{taskId}           — read/write: only if request.auth.uid == uid
-```
+- Scope `drive.appdata` only: the app sees its own hidden folder, not the rest of the user's Drive.
+- The access token lives in `localStorage` (`jobflowtracker_drive_session_v1`) for its one-hour life; the browser never renews it without a click, the Android app renews it through the OS.
+- Sign-out clears the device's copy of every mode; connecting as a different account discards the previous account's local data instead of merging it.
+- `firestore.rules` denies everything: Firestore is no longer used.
 
 ### API Keys
 
@@ -247,4 +234,5 @@ git push origin main
 - **Build command:** `vite build`
 - **Output directory:** `dist/`
 - **Framework preset:** Vite
-- **Environment variables:** None required. Firebase config is in `src/firebase.js` (public project config). AI keys are runtime browser-only.
+- **Environment variables:** `VITE_GOOGLE_CLIENT_ID` (optional, the OAuth Web client ID — public, not a secret). Without it **Connect Drive** is hidden and the app is offline-only. AI keys are runtime browser-only.
+- **Android:** `.github/workflows/android.yml` builds and signs the APK on every PR (artifact) and publishes it as a release on `main` — see [LLD § Android app](LLD.md#android-app).

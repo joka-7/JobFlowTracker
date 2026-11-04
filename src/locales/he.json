@@ -48,7 +48,7 @@
     "language": "שפה",
     "savedInBrowser": "שמור בדפדפן",
     "saving": "שומר...",
-    "subtitle": "התחבר לסנכרון בין מכשירים · השתמש ב-JSON לגיבוי אופליין",
+    "subtitle": "חברו את Google Drive לסנכרון בין מכשירים · השתמשו ב-JSON לגיבוי אופליין",
     "addCompany": "הוסף חברה",
     "downloadTooltip": "הורד עותק גיבוי למחשב (מומלץ!)",
     "downloadCsvTooltip": "הורד כקובץ CSV (לגיליון אלקטרוני)",
@@ -57,9 +57,9 @@
     "driveSyncing": "מסנכרן...",
     "checkingSession": "בודק חיבור…",
     "syncNow": "סנכרן עכשיו",
-    "connectDrive": "התחברות",
-    "driveOnTooltip": "סנכרון פעיל — לחץ לניתוק",
-    "connectDriveTooltip": "התחברות עם Google לסנכרון בין מכשירים",
+    "connectDrive": "חיבור ל-Drive",
+    "driveOnTooltip": "סנכרון Drive פעיל — לחצו לניתוק (העותק במכשיר הזה יימחק)",
+    "connectDriveTooltip": "סנכרון לתיקייה פרטית ב-Google Drive שלך",
     "aiSettings": "הגדרות",
     "installApp": "התקנת אפליקציה",
     "iosInstallHint": "ב-iPhone/iPad: הקש Share (□↑) ב-Safari, ואז «הוסף למסך הבית».",
@@ -205,17 +205,23 @@
     "exported": "קובץ גיבוי הורד בהצלחה - שמור אותו במקום בטוח!",
     "exportedCsv": "קובץ CSV הורד!",
     "imported": "הקובץ נטען בהצלחה!",
-    "driveConnectedWithData": "מחובר — הנתונים נטענו!",
-    "driveConnectedEmpty": "מחובר — הנתונים יסונכרנו אוטומטית.",
+    "driveConnectedWithData": "Drive מחובר — הנתונים נטענו!",
+    "driveConnectedEmpty": "Drive מחובר — הנתונים יסונכרנו אוטומטית.",
     "driveFailed": "ההתחברות נכשלה.",
-    "driveDisconnected": "ההתחברות נותקה."
+    "driveDisconnected": "ההתחברות נותקה.",
+    "syncFailed": "השמירה לענן נכשלה. ננסה שוב בסנכרון הבא.",
+    "storageFull": "האחסון בדפדפן מלא, ולכן השינוי האחרון לא נשמר במכשיר הזה. ייצאו גיבוי או התחברו כדי לסנכרן."
   },
   "alert": {
     "deleteConfirm": "האם אתה בטוח שברצונך למחוק חברה זו?",
     "noCompanyData": "לא זוהו נתוני חברות בקובץ שהועלה.",
     "importError": "שגיאה בייבוא הקובץ. ודא שזהו קובץ JSON חוקי ששמרת מקודם.",
     "unnamedCompany": "חברה ללא שם",
-    "noName": "ללא שם"
+    "noName": "ללא שם",
+    "unsyncedSignOut": "חלק מהשינויים עדיין לא הגיעו ל-Google Drive ויאבדו. לנתק בכל זאת?",
+    "signOutConfirm": "לנתק מ-Google Drive ולמחוק את העותק של הנתונים במכשיר הזה? הם נשארים ב-Drive שלך וחוזרים כשמתחברים שוב.",
+    "deleteSyncedDataConfirm": "למחוק לצמיתות את כל נתוני JobFlowTracker מ-Google Drive שלך ולנתק? גם הנתונים במכשיר הזה יימחקו. מכשירים שעדיין מחוברים יעלו שוב את העותקים שלהם, לכן נתקו אותם קודם. אי אפשר לבטל — הורידו גיבוי קודם אם תרצו לשמור.",
+    "deleteSyncedDataFailed": "מחיקת הנתונים המסונכרנים לא הושלמה; ייתכן שחלק מהקבצים כבר נמחקו. שום דבר במכשיר הזה לא נמחק — נסו שוב."
   },
   "onboarding": {
     "welcomeTitle": "ברוך הבא ל-JobFlowTracker!",
@@ -406,7 +412,10 @@
       "repoLabel": "צפייה בקוד המקור",
       "emailLabel": "שליחת משוב באימייל",
       "issueLabel": "דיווח על בעיה"
-    }
+    },
+    "yourDataHeading": "הנתונים שלך",
+    "yourDataHint": "מסונכרנים רק לתיקייה פרטית ב-Google Drive שלך. אף אחד אחר, כולל מפתח האפליקציה, לא יכול לקרוא אותם.",
+    "deleteSyncedData": "מחיקת הנתונים המסונכרנים וניתוק"
   },
   "rejection": {
     "analysisTitle": "ניתוח דחייה",
@@ -833,8 +842,8 @@
       "exported": "קובץ הגיבוי הורד - שמור אותו במקום בטוח!",
       "exportedCsv": "קובץ CSV הורד!",
       "imported": "הקובץ נטען בהצלחה!",
-      "driveConnectedWithData": "מחובר — הנתונים נטענו!",
-      "driveConnectedEmpty": "מחובר — הנתונים יסונכרנו אוטומטית.",
+      "driveConnectedWithData": "Drive מחובר — הנתונים נטענו!",
+      "driveConnectedEmpty": "Drive מחובר — הנתונים יסונכרנו אוטומטית.",
       "driveFailed": "ההתחברות נכשלה.",
       "driveDisconnected": "ההתחברות נותקה."
     },

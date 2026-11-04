@@ -1,20 +1,17 @@
 import React from 'react';
-import { getStorageKey } from '../statuses';
-import { TASKS_LABELS_KEY } from '../storageKeys.js';
 import { saveJsonFile } from '../utils/saveFile';
-
-const MODE = 'tasks';
+import { buildCrashBackup } from '../utils/crashBackup';
 
 /**
- * Last-resort fallback for a render error in Tasks mode. Deliberately has no
- * dependency on app state, i18n, or any component that could itself be the
- * cause of the crash — it reads localStorage directly so a backup is still
- * possible even if the in-memory React tree is broken.
+ * Last-resort fallback for a render error. Deliberately has no dependency on
+ * app state, i18n, or any component that could itself be the cause of the
+ * crash — it reads localStorage directly so a backup is still possible even
+ * if the in-memory React tree is broken.
  */
 export default class AppErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { error: null };
+    this.state = { error: null, exportFailed: false };
   }
 
   static getDerivedStateFromError(error) {
@@ -22,22 +19,16 @@ export default class AppErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, info) {
-    console.error('Tasks mode crashed:', error, info);
+    console.error(`${this.props.mode ?? 'tasks'} mode crashed:`, error, info);
   }
 
   handleExport = async () => {
+    const mode = this.props.mode ?? 'tasks';
     try {
-      const tasksRaw = localStorage.getItem(getStorageKey(MODE));
-      const labelsRaw = localStorage.getItem(TASKS_LABELS_KEY);
-      const payload = {
-        version: 2,
-        tasks: tasksRaw ? JSON.parse(tasksRaw) : [],
-        labels: labelsRaw ? JSON.parse(labelsRaw) : [],
-      };
-      await saveJsonFile(`tasks-backup-${Date.now()}.json`, payload);
+      await saveJsonFile(`${mode}-backup-${Date.now()}.json`, buildCrashBackup(mode));
     } catch (e) {
       console.error('Crash-recovery export failed:', e);
-      alert('Could not export automatically. Open your browser devtools console and copy localStorage manually.');
+      this.setState({ exportFailed: true });
     }
   };
 
@@ -54,7 +45,7 @@ export default class AppErrorBoundary extends React.Component {
           <p className="text-4xl mb-3">⚠️</p>
           <h1 className="text-lg font-bold text-gray-800 mb-2">Something went wrong</h1>
           <p className="text-sm text-gray-500 mb-5">
-            Tasks hit an unexpected error. Your data is still in this browser's
+            The app hit an unexpected error. Your data is still in this browser's
             storage — export a backup before reloading, just in case.
           </p>
           <div className="flex flex-col gap-2">
@@ -73,6 +64,11 @@ export default class AppErrorBoundary extends React.Component {
               Reload app
             </button>
           </div>
+          {this.state.exportFailed && (
+            <p role="alert" className="text-xs text-red-600 mt-4">
+              Could not export automatically. Open your browser devtools console and copy localStorage manually.
+            </p>
+          )}
           {this.state.error?.message && (
             <p className="text-xs text-gray-400 mt-4 break-words">{this.state.error.message}</p>
           )}

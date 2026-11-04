@@ -1,10 +1,9 @@
-import { useState, useEffect, Suspense, lazy } from 'react';
+import { useState, Suspense, lazy } from 'react';
 import { Loader2 } from 'lucide-react';
 import ModeSelection from './components/ModeSelection';
 import UpdateBanner from './components/UpdateBanner';
 import AppErrorBoundary from './components/AppErrorBoundary';
 import { resolveInitialAppMode } from './statuses';
-import { completeRedirectSignIn } from './firebase';
 
 // Job seeker/recruiter and task manager are two separate large UIs — a user
 // in one mode never needs the other's code, so split them at the mode gate
@@ -23,10 +22,6 @@ function AppLoadingFallback() {
 export default function App() {
   const [mode, setMode] = useState(() => resolveInitialAppMode());
 
-  useEffect(() => {
-    completeRedirectSignIn().catch((e) => console.error('Redirect sign-in:', e));
-  }, []);
-
   if (!mode) {
     return (
       <>
@@ -38,9 +33,11 @@ export default function App() {
 
   return (
     <Suspense fallback={<AppLoadingFallback />}>
-      {mode === 'tasks'
-        ? <AppErrorBoundary><TasksApp key="tasks" onModeChange={setMode} /></AppErrorBoundary>
-        : <JobTrackerApp mode={mode} onModeChange={setMode} />}
+      <AppErrorBoundary key={mode === 'tasks' ? 'tasks' : 'tracker'} mode={mode}>
+        {mode === 'tasks'
+          ? <TasksApp key="tasks" onModeChange={setMode} />
+          : <JobTrackerApp mode={mode} onModeChange={setMode} />}
+      </AppErrorBoundary>
     </Suspense>
   );
 }

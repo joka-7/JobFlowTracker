@@ -4,7 +4,7 @@
 
 # JobFlowTracker
 
-Personal **job search**, **recruiter pipeline**, and **task management** tracker with AI assistance, kanban board, multi-language (EN/עב/FR), Firebase sync, and offline backup.
+Personal **job search**, **recruiter pipeline**, and **task management** tracker with AI assistance, kanban board, multi-language (EN/עב/FR), private Google Drive sync, an Android app, and offline backup.
 
 **Live app:** https://job-flow-tracker-ten.vercel.app
 
@@ -112,8 +112,9 @@ Supports Google Gemini, Groq (free tier), Ollama (free/local), Anthropic Claude,
 - **Multi-turn AI chat** — open-ended conversation with full company context loaded
 
 ### Data & Sync
-- **Google Sign-In** — private, isolated data per user; no accounts to create
-- **Firestore sync** — subcollection-based storage with granular writes
+- **Private by design** — data lives on your device and, if you connect it, in a hidden app-only folder of **your own** Google Drive. There is no JobFlowTracker server or database, so the developer can't read anyone's data
+- **Google Drive sync** — each device writes its own file; the newest version of each record wins, and deletes sync too
+- **Disconnect / delete** — disconnecting removes this device's copy; **Settings → Your data** deletes everything synced to Drive and revokes access
 - **Offline backup** — export and import your full dataset as JSON at any time
 - **CSV export** — download your data as a spreadsheet-ready `.csv` alongside the JSON backup (export only — CSV isn't used for restore)
 - Each mode's data is stored independently: switching modes never loses data from other modes
@@ -141,7 +142,7 @@ Supports Google Gemini, Groq (free tier), Ollama (free/local), Anthropic Claude,
 
 **Job seeker only:** A 5-step onboarding wizard may appear after mode selection. Click through or dismiss with **X**.
 
-Sign in with Google using **Sign In** in the header. Your data is private and tied to your Google account.
+To sync across devices, click **Connect Drive** in the header and allow access to the app's own Drive folder. Without it the app works fully offline.
 
 ### 2. Job seeker — Adding Your First Company
 
@@ -228,9 +229,10 @@ Once a provider is configured, open any company and click the **AI Assistant** b
 |---|---|
 | Frontend | React 19, Vite |
 | Styling | Tailwind CSS |
-| Auth + DB | Firebase (Authentication + Firestore) |
+| Sync | Google Drive `appDataFolder` (each user's own Drive) via Google Identity Services |
+| Android | Capacitor (`android/`), Google sign-in via `@capgo/capacitor-social-login` |
 | i18n | react-i18next (EN / עב / FR) |
-| AI providers | Anthropic SDK, Groq, Gemini, OpenAI, Ollama |
+| AI providers | `modeldispatcher-browser-agent`: Anthropic, Groq, Gemini, OpenAI, Ollama (user's own key) |
 | Icons | lucide-react |
 | Hosting | Vercel |
 
@@ -242,12 +244,14 @@ Once a provider is configured, open any company and click the **AI Assistant** b
 ```text
 JobFlowTracker/
 ├── .github/
+├── android/
 ├── docs/
 ├── e2e/             # Playwright end-to-end tests
 ├── public/
 ├── scripts/         # Bundle-size check + icon generation scripts
 ├── src/             # App source — mode gate, per-mode UIs, shared services
 ├── .ai              # Ogen-ai submodule — the shared source of rules, skills and the ai-sync…
+├── .env.example
 ├── .gitignore
 ├── .gitleaks.toml
 ├── .gitmodules
@@ -263,6 +267,7 @@ JobFlowTracker/
 ├── README.md        # JobFlowTracker
 ├── SECURITY.md      # Security Policy
 ├── ai-config.toml   # Which rule fragments and target tools ai-sync compiles for this repo
+├── capacitor.config.json
 ├── eslint.config.js
 ├── firestore.rules
 ├── index.html
@@ -317,13 +322,19 @@ OLLAMA_ORIGINS=* ollama serve
 
 ---
 
-## Firebase & your data
+## Google Drive & your data
 
-**Using the [live app](https://job-flow-tracker-ten.vercel.app)?** You do not need a Firebase account or any backend setup.
+**Using the [live app](https://job-flow-tracker-ten.vercel.app)?** Nothing to set up.
 
-1. Open the app and sign in with Google (**Sign In** in the header).
-2. Your data is stored under your personal user ID (`users/{your-uid}/...`).
-3. Firestore security rules ensure you can only read and write **your own** data.
+1. Click **Connect Drive** in the header and approve access. The app asks only for `drive.appdata`: a hidden folder that only this app can see, not the rest of your Drive.
+2. Each device writes its own `jobflowtracker-<device>.json` there; every device reads them all and keeps the newest version of each record.
+3. **Disconnect** (click your name in the header) removes this device's copy. **Settings → Your data → Delete synced data** removes every file from your Drive and revokes the app's access.
+
+---
+
+## Android app
+
+Download **JobFlowTracker.apk** from the [latest release](https://github.com/joka-7/JobFlowTracker/releases/latest/download/JobFlowTracker.apk) on the phone and open it (allow installing from this source when asked). Every push to `main` builds a new signed APK (`.github/workflows/android.yml`) that installs over the previous one.
 
 ---
 
@@ -331,33 +342,12 @@ OLLAMA_ORIGINS=* ollama serve
 
 Skip this section if you are only using the hosted app.
 
-1. Create a project at https://console.firebase.google.com
-2. Enable **Authentication** → Google Sign-In provider
-3. Enable **Firestore Database** (start in production mode)
-4. Add a Web app to the project → copy the config object
-5. Replace the config in `src/firebase.js` with your project's values
-6. Add your deployment domain to **Authentication → Settings → Authorized domains**
+1. In a Google Cloud project, enable the **Google Drive API** and add the `https://www.googleapis.com/auth/drive.appdata` scope to the OAuth consent screen (non-sensitive: no verification needed).
+2. Create an OAuth client of type **Web application**; add your site's origin under **Authorized JavaScript origins**.
+3. Set `VITE_GOOGLE_CLIENT_ID` to that client ID (see [`.env.example`](.env.example)) locally and in Vercel. Without it the app runs offline-only and hides **Connect Drive**.
+4. Android builds also need an **Android** OAuth client (package `io.github.joka7.jobflowtracker` + the signing key's SHA-1), the `VITE_GOOGLE_CLIENT_ID` repository variable, and the `ANDROID_KEYSTORE_B64`, `ANDROID_KEYSTORE_B64_2` and `ANDROID_KEY_PASSWORD` secrets — see [docs/LLD.md](docs/LLD.md#android-app).
 
-**Firestore security rules** — paste from [`firestore.rules`](firestore.rules):
-
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      match /{document=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-    }
-  }
-}
-```
-
-Deploy:
-```bash
-firebase deploy --only firestore:rules
-```
+[`firestore.rules`](firestore.rules) denies all access: Firestore is no longer used.
 
 ---
 
@@ -366,7 +356,8 @@ firebase deploy --only firestore:rules
 1. Push to GitHub
 2. Import the repo at https://vercel.com
 3. Framework preset: **Vite**
-4. Deploy — no build configuration needed
+4. Set the `VITE_GOOGLE_CLIENT_ID` environment variable (optional — enables Drive sync)
+5. Deploy
 
 ---
 
@@ -396,7 +387,7 @@ chmod +x ~/.local/bin/gitleaks
 gitleaks detect --source .
 ```
 
-The repo includes `.gitleaks.toml` which allowlists `src/firebase.js` (public project config, intentional).
+The repo includes `.gitleaks.toml`, which allowlists the old `src/firebase.js` (a public project config, still in git history).
 
 ---
 

@@ -19,15 +19,11 @@ npm run dev
 
 Open http://localhost:5173
 
-### Firebase when developing
+### Google Drive sync when developing
 
-The repo includes a Firebase web config for the hosted app. For everyday UI work you can use local-only mode without signing in.
+Everyday UI work needs nothing: without `VITE_GOOGLE_CLIENT_ID` the app runs offline-only and hides **Connect Drive**.
 
-If you need Firestore sync or Google Sign-In during development:
-
-1. Create your own Firebase project (see [README — Backend setup](README.md#backend-setup-maintainers--self-hosters-only)).
-2. Replace the config in `src/firebase.js` with your project's values.
-3. Deploy rules from [`firestore.rules`](firestore.rules).
+To work on sync, create your own OAuth Web client (see [README — Backend setup](README.md#backend-setup-maintainers--self-hosters-only)), add `http://localhost:5173` to its authorized origins, and put the client ID in `.env.local` (copy [`.env.example`](.env.example)).
 
 **Do not commit API keys, service account JSON, or `.env` files with secrets.**
 
@@ -83,12 +79,13 @@ The repository owner can merge their own PRs after CI passes without a separate 
 |------|----------|
 | Main UI | `src/JobTrackerApp.jsx`, `src/components/` |
 | Modes / statuses | `src/statuses.js`, `docs/LLD.md` |
-| Firebase | `src/firebase.js`, `firestore.rules` |
+| Drive sync | `src/driveSync.js`, `src/hooks/useCloudSync.js`, `src/utils/cloudSync.js`, `src/utils/pendingSync.js` |
+| Android | `android/`, `capacitor.config.json`, `src/nativeGoogleAuth.js`, `.github/workflows/android.yml` |
 | AI | `src/services/aiAssistant.js`, `src/components/AIAssistant.jsx` |
 | Tests | `src/__tests__/`, `e2e/` |
 | i18n | `src/locales/*.json` |
 
-When changing Firestore rules, update `firestore.rules`, the README rules snippet, and `docs/HLD.md` if behavior changes.
+When changing how sync merges or stores data, update `docs/HLD.md` (data flow) and `docs/LLD.md` (§ 3–4) in the same commit.
 
 ## License
 

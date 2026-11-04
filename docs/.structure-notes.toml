@@ -9,7 +9,7 @@
 "src/JobTrackerApp.jsx" = "Job seeker + recruiter UI"
 "src/TasksApp.jsx" = "Task manager UI with step management"
 "src/statuses.js" = "Status configs for all 3 modes, storage keys"
-"src/firebase.js" = "Auth + mode-aware Firestore helpers"
+"src/driveSync.js" = "Google Drive appDataFolder sync (one file per device)"
 "src/i18n.js" = "react-i18next setup"
 "src/components" = "UI components, one file per component"
 "src/components/ModeSelection.jsx" = "First-launch 3-mode picker"

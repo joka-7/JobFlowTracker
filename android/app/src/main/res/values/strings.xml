@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">JobFlowTracker</string>
+    <string name="title_activity_main">JobFlowTracker</string>
+    <string name="package_name">io.github.joka7.jobflowtracker</string>
+    <string name="custom_url_scheme">io.github.joka7.jobflowtracker</string>
+</resources>

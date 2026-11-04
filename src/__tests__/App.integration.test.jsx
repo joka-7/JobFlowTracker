@@ -4,11 +4,11 @@ import '@testing-library/jest-dom';
 import '../i18n';
 import App from '../App';
 
-vi.mock('../firebase', () => ({
-  auth: {},
+vi.mock('../driveSync', () => ({
+  isCloudConfigured: () => true,
+  deleteAllSyncedData: vi.fn(),
   hasRestorableSession: vi.fn().mockResolvedValue(false),
   onAuthChange: (cb) => { cb(null); return () => {}; },
-  completeRedirectSignIn: vi.fn().mockResolvedValue(null),
   signInWithGoogle: vi.fn(),
   signOut: vi.fn(),
   loadAllItems: vi.fn().mockResolvedValue(null),

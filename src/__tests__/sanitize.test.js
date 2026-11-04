@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sanitizeTaskRecords } from '../sanitize';
+import { sanitizeTaskRecords, generateId } from '../sanitize';
 
 describe('sanitizeTaskRecords', () => {
   it('defaults impact, urgency and type for a bare-minimum row', () => {
@@ -72,5 +72,14 @@ describe('sanitizeTaskRecords', () => {
       steps: [{ id: 's1', title: 'Step', effort: { value: 3, unit: 'hour' } }],
     }]);
     expect(task.steps[0].effort).toEqual({ value: 2, unit: 'hour' });
+  });
+});
+
+describe('generateId', () => {
+  it('returns 24 lowercase hex characters, unique across calls', () => {
+    const ids = Array.from({ length: 200 }, () => generateId());
+
+    expect(ids.every((id) => /^[0-9a-f]{24}$/.test(id))).toBe(true);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });
