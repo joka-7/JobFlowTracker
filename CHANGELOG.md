@@ -24,6 +24,7 @@ that had been silently missed rather than deliberately deferred.
   **Settings → Your data** deletes everything synced and revokes access.
 
 ### Added
+- A privacy page (`/privacy.html`), linked from Settings → Links, saying what stays on the device and what goes to the user's own Google Drive or AI provider. Google's OAuth branding page requires its link.
 - **Android app** (Capacitor), built and signed by
   `.github/workflows/android.yml`; the latest APK is attached to the newest
   GitHub release.
