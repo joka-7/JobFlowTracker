@@ -30,6 +30,9 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        // The privacy page is a separate static file; without this an installed
+        // app would answer /privacy.html with the app shell instead.
+        navigateFallbackDenylist: [/^\/privacy\.html$/],
       },
     }),
   ],

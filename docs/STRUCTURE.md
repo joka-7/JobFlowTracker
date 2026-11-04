@@ -141,6 +141,7 @@ JobFlowTracker/
 │   ├── mode-selection.spec.js
 │   ├── multi-tab-sync.spec.js
 │   ├── performance-large-dataset.spec.js
+│   ├── privacy.spec.js
 │   └── recruiter-flow.spec.js
 ├── public/
 │   ├── apple-touch-icon-180x180.png
@@ -149,6 +150,7 @@ JobFlowTracker/
 │   ├── github-repo-icon.png
 │   ├── icons.svg
 │   ├── maskable-icon-512x512.png
+│   ├── privacy.html
 │   ├── pwa-192x192.png
 │   ├── pwa-512x512.png
 │   └── pwa-64x64.png

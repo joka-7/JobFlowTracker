@@ -407,6 +407,7 @@
     "links": {
       "site": "Site",
       "code": "Code",
+      "privacy": "Privacy",
       "email": "Email",
       "feedback": "Feedback",
       "repoLabel": "View repository",

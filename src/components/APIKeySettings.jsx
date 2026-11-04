@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { X, Eye, EyeOff, ExternalLink, CheckCircle, Trash2, Settings, Briefcase, Users, ClipboardList, Globe, FolderGit2, Mail, MessageSquare } from 'lucide-react';
+import { X, Eye, EyeOff, ExternalLink, CheckCircle, Trash2, Settings, Briefcase, Users, ClipboardList, Globe, FolderGit2, Mail, MessageSquare, ShieldCheck } from 'lucide-react';
 import GithubIcon from './GithubIcon';
 import { ModelPicker } from 'modeldispatcher-react-ui';
 import 'modeldispatcher-react-ui/styles.css';
@@ -180,6 +180,10 @@ function NewApiKeySettings({ t, language, onClose, currentMode, onModeChange, on
               <a href="https://github.com/joka-7/JobFlowTracker" target="_blank" rel="noreferrer" aria-label={t('settings.links.repoLabel', 'View repository')} title={t('settings.links.repoLabel', 'View repository')} className="tap-fx text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 active:scale-90 transition-all inline-flex flex-col items-center justify-center gap-0.5">
                 <FolderGit2 size={16} />
                 <span className="text-[9px] leading-none">{t('settings.links.code', 'Code')}</span>
+              </a>
+              <a href="/privacy.html" aria-label={t('settings.links.privacy', 'Privacy')} title={t('settings.links.privacy', 'Privacy')} className="tap-fx text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 active:scale-90 transition-all inline-flex flex-col items-center justify-center gap-0.5">
+                <ShieldCheck size={16} />
+                <span className="text-[9px] leading-none">{t('settings.links.privacy', 'Privacy')}</span>
               </a>
               <a href="mailto:joka.dev.7@gmail.com" rel="noreferrer" aria-label={t('settings.links.emailLabel', 'Send feedback by email')} title={t('settings.links.emailLabel', 'Send feedback by email')} className="tap-fx text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 active:scale-90 transition-all inline-flex flex-col items-center justify-center gap-0.5">
                 <Mail size={16} />
@@ -410,6 +414,10 @@ function LegacyApiKeySettings({ t, onClose, currentMode, onModeChange, onDeleteS
               <a href="https://github.com/joka-7/JobFlowTracker" target="_blank" rel="noreferrer" aria-label={t('settings.links.repoLabel', 'View repository')} title={t('settings.links.repoLabel', 'View repository')} className="tap-fx text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 active:scale-90 transition-all inline-flex flex-col items-center justify-center gap-0.5">
                 <FolderGit2 size={16} />
                 <span className="text-[9px] leading-none">{t('settings.links.code', 'Code')}</span>
+              </a>
+              <a href="/privacy.html" aria-label={t('settings.links.privacy', 'Privacy')} title={t('settings.links.privacy', 'Privacy')} className="tap-fx text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 active:scale-90 transition-all inline-flex flex-col items-center justify-center gap-0.5">
+                <ShieldCheck size={16} />
+                <span className="text-[9px] leading-none">{t('settings.links.privacy', 'Privacy')}</span>
               </a>
               <a href="mailto:joka.dev.7@gmail.com" rel="noreferrer" aria-label={t('settings.links.emailLabel', 'Send feedback by email')} title={t('settings.links.emailLabel', 'Send feedback by email')} className="tap-fx text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 active:scale-90 transition-all inline-flex flex-col items-center justify-center gap-0.5">
                 <Mail size={16} />
