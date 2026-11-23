@@ -1,12 +1,1 @@
-# GHSA-vfj7-8cjw-p6xm — braces: stack-exhaustion DoS via deeply nested
-# patterns, pulled in transitively by tailwindcss@3's chokidar. braces
-# hasn't shipped a release past 3.0.3 (the version this repo already has)
-# to fix it. The only route npm offers is tailwindcss@4, a breaking
-# major-version migration (new engine, new config format) tracked as its
-# own separate task, not folded into a dependency-audit fix.
-# https://github.com/advisories/GHSA-vfj7-8cjw-p6xm
-#
-# `exp:` sets a review-by date, past which Trivy stops ignoring the
-# finding and CI goes red again — that's the forcing function to re-check
-# whether a fix exists yet. Bump the date if it still doesn't.
-GHSA-vfj7-8cjw-p6xm exp:2027-01-26
+
